@@ -26,7 +26,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
 
       <footer className="border-t py-4 bg-background">
         <div className="container text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} VentureConnect. All rights reserved.
+          &copy; {new Date().getFullYear()} LaunchPad. All rights reserved.
         </div>
       </footer>
     </div>

@@ -56,8 +56,9 @@ export default function AdminSettingsPage() {
                   <Label htmlFor="site-name">Site Name</Label>
                   <Input
                     id="site-name"
-                    defaultValue="VentureConnect"
+                    name="site-name"
                     placeholder="Enter site name"
+                    defaultValue="LaunchPad"
                   />
                 </div>
                 
@@ -200,20 +201,20 @@ export default function AdminSettingsPage() {
                   <div className="grid gap-3">
                     <Label htmlFor="welcome-email">Welcome Email Template</Label>
                     <Textarea
-                      id="welcome-email"
-                      placeholder="Enter welcome email template"
-                      defaultValue="Welcome to VentureConnect! We're excited to have you join our platform..."
-                      className="min-h-24"
+                      className="min-h-32 w-full"
+                      id="welcome_email_template"
+                      name="welcome_email_template"
+                      defaultValue="Welcome to LaunchPad! We're excited to have you join our platform..."
                     />
                   </div>
                   
                   <div className="grid gap-3">
                     <Label htmlFor="approval-email">Startup Approval Email</Label>
                     <Textarea
-                      id="approval-email"
-                      placeholder="Enter approval email template"
-                      defaultValue="Congratulations! Your startup has been approved on VentureConnect..."
-                      className="min-h-24"
+                      className="min-h-32 w-full"
+                      id="approval_email_template"
+                      name="approval_email_template"
+                      defaultValue="Congratulations! Your startup has been approved on LaunchPad..."
                     />
                   </div>
                 </div>

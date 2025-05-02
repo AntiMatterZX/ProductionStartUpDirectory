@@ -89,7 +89,7 @@ export default function HomePage() {
             Where Startups Connect With Ideal Investors
           </h1>
           <p className="mx-auto my-4 max-w-3xl text-center text-base text-muted-foreground leading-relaxed md:my-6 md:text-xl md:leading-relaxed">
-            VentureConnect is the premier platform for startups to showcase innovations 
+            LaunchPad is the premier platform for startups to showcase innovations 
             and connect with investors looking for the next breakthrough opportunity.
           </p>
           
@@ -117,7 +117,7 @@ export default function HomePage() {
                 <span className="size-2 rounded-full bg-green-400" />
               </div>
               <span className="rounded bg-zinc-600 px-2 py-0.5 text-xs text-zinc-100">
-                ventureconnect.com/dashboard
+                launchpad.com/dashboard
               </span>
               <FiChevronDown className="text-white" />
             </div>
@@ -127,7 +127,7 @@ export default function HomePage() {
                   <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
                     <Rocket className="h-4 w-4" />
                   </div>
-                  <span className="font-semibold text-sm">VentureConnect</span>
+                  <span className="font-semibold text-sm">LaunchPad</span>
                 </div>
                 <div className="mt-3 space-y-1.5">
                   <span className="flex items-center gap-1.5 text-xs text-primary">
@@ -181,7 +181,7 @@ export default function HomePage() {
       <section ref={statsRef} className="py-20 border-y bg-background/50 backdrop-blur-sm">
         <div className="container px-4 sm:px-6">
           <div className="flex flex-col items-center justify-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-10 text-center">The VentureConnect Journey</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-10 text-center">The LaunchPad Journey</h2>
             <SpinningBoxText />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
               {[
@@ -218,7 +218,7 @@ export default function HomePage() {
             <div className="inline-block mb-4 px-4 py-1.5 bg-primary/10 rounded-full text-primary text-sm font-medium">
               Simple yet powerful
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">How VentureConnect Works</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">How LaunchPad Works</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Our platform makes it seamless for startups and investors to connect, collaborate, and grow together.
             </p>
@@ -289,14 +289,14 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                quote: "VentureConnect helped us secure our seed round in just 60 days. The quality of investors and the streamlined process made all the difference.",
+                quote: "LaunchPad helped us secure our seed round in just 60 days. The quality of investors and the streamlined process made all the difference.",
                 author: "Sarah Johnson",
                 role: "Founder, TechNova",
                 image: "https://randomuser.me/api/portraits/women/44.jpg",
                 delay: 0.1,
               },
               {
-                quote: "As an investor, I've discovered some of my best performing startups through VentureConnect. The vetting process and detailed profiles save me countless hours.",
+                quote: "As an investor, I've discovered some of my best performing startups through LaunchPad. The vetting process and detailed profiles save me countless hours.",
                 author: "Michael Chen",
                 role: "Partner, Horizon Ventures",
                 image: "https://randomuser.me/api/portraits/men/54.jpg",
@@ -356,7 +356,7 @@ export default function HomePage() {
             >
               <div className="space-y-8">
                 <div>
-                  <h2 className="text-3xl md:text-4xl font-bold mb-6">Why Choose VentureConnect?</h2>
+                  <h2 className="text-3xl md:text-4xl font-bold mb-6">Why Choose LaunchPad?</h2>
                   <p className="text-muted-foreground mb-8">
                     Our platform offers unique advantages for both startups and investors,
                     creating an ecosystem designed for successful connections.
@@ -444,7 +444,7 @@ export default function HomePage() {
           >
             <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to transform your startup journey?</h2>
             <p className="text-primary-foreground text-lg opacity-90 mb-10 max-w-xl mx-auto">
-              Join thousands of founders and investors already using VentureConnect to create the next generation of successful companies.
+              Join thousands of founders and investors already using LaunchPad to create the next generation of successful companies.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
