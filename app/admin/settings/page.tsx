@@ -78,7 +78,7 @@ export default function AdminSettingsPage() {
                     <Input
                       id="contact-email"
                       type="email"
-                      defaultValue="admin@ventureconnect.com"
+                      defaultValue="admin@LaunchPad.com"
                       placeholder="Enter contact email"
                     />
                   </div>
@@ -88,7 +88,7 @@ export default function AdminSettingsPage() {
                     <Input
                       id="support-email"
                       type="email"
-                      defaultValue="support@ventureconnect.com"
+                      defaultValue="support@LaunchPad.com"
                       placeholder="Enter support email"
                     />
                   </div>

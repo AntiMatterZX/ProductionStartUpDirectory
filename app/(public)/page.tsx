@@ -62,7 +62,7 @@ export default function HomePage() {
   const ctaInView = useInView(ctaRef, { once: true, amount: 0.2 })
 
   return (
-    <div className="dark">
+    <>
       {/* Hero Section */}
       <section className="overflow-hidden bg-background">
         <div className="relative flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] px-6 md:px-12 pb-48 pt-12 md:pt-24">
@@ -471,7 +471,7 @@ export default function HomePage() {
           </MotionDiv>
         </div>
       </section>
-    </div>
+    </>
   )
 }
 

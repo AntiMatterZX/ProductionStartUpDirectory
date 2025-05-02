@@ -147,7 +147,7 @@ async function seedStartups() {
     
     // Create a test user if it doesn't exist
     const testUser = {
-      email: 'demo@ventureconnect.example.com',
+      email: 'demo@LaunchPad.example.com',
       password: 'password123',
       full_name: 'Demo User'
     };

@@ -27,7 +27,7 @@ node scripts/add-admin.js varunbhole@gmail.com
 
 Once the user has admin privileges:
 
-1. Log in to VentureConnect with the admin email and password
+1. Log in to LaunchPad with the admin email and password
 2. Navigate to the admin panel URL: `/dashboard/admin/moderation`
 3. The admin panel provides access to:
    - Startup moderation (approve/reject)

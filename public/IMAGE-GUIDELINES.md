@@ -1,4 +1,4 @@
-# VentureConnect Landing Page Image Guidelines
+# LaunchPad Landing Page Image Guidelines
 
 This document outlines all image assets needed for the landing page, their dimensions, and placement.
 
@@ -9,7 +9,7 @@ This document outlines all image assets needed for the landing page, their dimen
 - **Dimensions**: 1200×700px
 - **Location**: Hero section
 - **Purpose**: Showcase the platform's dashboard interface
-- **Placeholder URL**: `https://placehold.co/1200x700/4f46e5/ffffff?text=VentureConnect+Dashboard`
+- **Placeholder URL**: `https://placehold.co/1200x700/4f46e5/ffffff?text=LaunchPad+Dashboard`
 
 ### 2. Matching Interface Preview
 - **File**: `/matching-preview.png`
@@ -76,7 +76,7 @@ Align images with the platform's color scheme:
 All images have fallback mechanisms:
 ```javascript
 onError={(e) => {
-  e.currentTarget.src = "https://placehold.co/1200x700/4f46e5/ffffff?text=VentureConnect+Dashboard"
+  e.currentTarget.src = "https://placehold.co/1200x700/4f46e5/ffffff?text=LaunchPad+Dashboard"
 }}
 ```
 

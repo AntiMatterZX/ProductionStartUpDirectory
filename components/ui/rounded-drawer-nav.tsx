@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ModeToggle } from "@/components/theme/mode-toggle";
 
 interface Sublink {
   title: string;
@@ -88,6 +89,7 @@ export const RoundedDrawerNav: React.FC<RoundedDrawerNavProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
+              <ModeToggle />
               {user ? (
                 <>
                   <Button 

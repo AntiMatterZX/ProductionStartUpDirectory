@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
+import { ModeToggle } from "@/components/theme/mode-toggle"
 
 interface DashboardHeaderProps {
   user: User
@@ -97,6 +98,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
         </div>
         
         <div className="flex items-center gap-2">
+          <ModeToggle />
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
             <span className="absolute right-1 top-1 flex h-2 w-2">

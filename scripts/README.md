@@ -1,4 +1,4 @@
-# VentureConnect Database Seeding Scripts
+# LaunchPad Database Seeding Scripts
 
 This directory contains scripts to seed the Venture Connect database with sample data.
 
