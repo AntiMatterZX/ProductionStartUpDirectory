@@ -6,8 +6,9 @@ import type { Database } from "@/types/database"
 
 // For server-side usage (SSR)
 export const createServerComponentClient = async <T = Database>() => {
-  // In Next.js 15, cookies() is no longer needed to be awaited - use directly
+  // Await cookies() before using it
+  const cookieStore = await cookies()
   return createServerClient<T>({
-    cookies
+    cookies: () => cookieStore
   })
 } 

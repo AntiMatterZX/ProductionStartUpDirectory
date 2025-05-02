@@ -17,7 +17,7 @@ const mono = JetBrains_Mono({
 })
 
 export const metadata = {
-  title: 'VentureConnect',
+  title: 'LaunchPad',
   description: 'Connect startups with investors and resources',
 }
 
