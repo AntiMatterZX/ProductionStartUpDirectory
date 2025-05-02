@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Grid Pattern Preview</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f5f5;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      margin-top: 0;
+    }
+    
+    .preview {
+      margin: 20px 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .cta-section {
+      position: relative;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    .gradient-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom right, #4f46e5, #6366f1);
+      opacity: 0.9;
+    }
+    
+    .grid-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('/grid-pattern.svg');
+      opacity: 0.1;
+    }
+    
+    .content {
+      position: relative;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      z-index: 10;
+    }
+    
+    pre {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Grid Pattern Preview</h1>
+    <p>This shows how the grid pattern looks in the CTA section of the landing page.</p>
+    
+    <div class="preview">
+      <div class="cta-section">
+        <div class="gradient-bg"></div>
+        <div class="grid-overlay"></div>
+        <div class="content">
+          <h2>Ready to transform your startup journey?</h2>
+          <p>This section uses a gradient background with the grid pattern overlay for visual interest.</p>
+        </div>
+      </div>
+    </div>
+    
+    <h2>Usage in Code</h2>
+    <p>The grid pattern is applied in the landing page CTA section:</p>
+    <pre>
+&lt;section className="py-24 relative overflow-hidden"&gt;
+  &lt;div className="absolute inset-0 bg-gradient-to-br from-primary to-indigo-600 opacity-90"&gt;&lt;/div&gt;
+  &lt;div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10"&gt;&lt;/div&gt;
+  
+  &lt;!-- Content here --&gt;
+&lt;/section&gt;
+    </pre>
+    
+    <h2>SVG Pattern</h2>
+    <p>The pattern is defined in <code>public/grid-pattern.svg</code>:</p>
+    <pre>
+&lt;svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"&gt;
+  &lt;defs&gt;
+    &lt;pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"&gt;
+      &lt;path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" stroke-width="0.5" stroke-opacity="0.2" /&gt;
+    &lt;/pattern&gt;
+  &lt;/defs&gt;
+  &lt;rect width="100%" height="100%" fill="url(#grid)" /&gt;
+&lt;/svg&gt;
+    </pre>
+  </div>
+</body>
+</html> 

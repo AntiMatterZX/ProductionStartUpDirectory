@@ -1,0 +1,14 @@
+{
+  "name": "venture-connect-seeding",
+  "version": "1.0.0",
+  "description": "Seeding scripts for Venture Connect",
+  "main": "seed-startups.js",
+  "scripts": {
+    "seed": "node seed-startups.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4",
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.1"
+  }
+} 
