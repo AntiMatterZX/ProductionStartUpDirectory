@@ -1,0 +1,85 @@
+.swaggerUIContainer {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.swaggerUIContainer :global(.swagger-ui .topbar) {
+  display: none;
+}
+
+.swaggerUIContainer :global(.swagger-ui .info) {
+  margin: 30px 0;
+}
+
+.swaggerUIContainer :global(.swagger-ui .info .title) {
+  font-size: 2.5rem;
+  color: #333;
+}
+
+.swaggerUIContainer :global(.swagger-ui .opblock-tag) {
+  font-size: 1.5rem;
+  border-bottom: 1px solid #eee;
+  padding: 10px 0;
+}
+
+.swaggerUIContainer :global(.swagger-ui .opblock) {
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  margin-bottom: 15px;
+}
+
+.swaggerUIContainer :global(.swagger-ui .opblock .opblock-summary) {
+  padding: 10px;
+}
+
+.swaggerUIContainer :global(.swagger-ui .scheme-container) {
+  box-shadow: none;
+  margin: 0 0 20px 0;
+}
+
+/* Dark mode styles */
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .info .title),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .opblock-tag),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .opblock .opblock-summary-description),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .opblock-description-wrapper p),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .opblock-section-header h4),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .parameter__name),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .response-col_status),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui label),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .responses-inner h4),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .response-col_links),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .parameters-col_description p),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .tab li),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui table thead tr td),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui table thead tr th) {
+  color: #eee;
+}
+
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .opblock-section-header),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .opblock .opblock-section-header) {
+  background: transparent;
+}
+
+:global(.dark) .swaggerUIContainer :global(.swagger-ui input),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui textarea) {
+  background: #333;
+  color: #eee;
+}
+
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .model-box) {
+  background: #222;
+}
+
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .model) {
+  color: #eee;
+}
+
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .opblock-description),
+:global(.dark) .swaggerUIContainer :global(.swagger-ui .opblock-external-docs-wrapper) {
+  background: #333;
+}
+
+:global(.dark) .swaggerUIContainer :global(.swagger-ui) {
+  color: #eee;
+} 

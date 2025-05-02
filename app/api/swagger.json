@@ -1,0 +1,608 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "LaunchPad API",
+    "description": "API for connecting startups with investors and resources",
+    "version": "1.0.0",
+    "contact": {
+      "name": "LaunchPad Support",
+      "email": "support@launchpad.io",
+      "url": "https://launchpad.io/docs"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://launchpad.io/api",
+      "description": "Production API"
+    },
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development API"
+    }
+  ],
+  "tags": [
+    {
+      "name": "startups",
+      "description": "Startup-related endpoints"
+    },
+    {
+      "name": "auth",
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "users",
+      "description": "User profile operations"
+    },
+    {
+      "name": "investors",
+      "description": "Investor-related endpoints"
+    }
+  ],
+  "paths": {
+    "/startups": {
+      "get": {
+        "tags": ["startups"],
+        "summary": "Get a list of startups",
+        "description": "Returns a list of startups based on query parameters",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of results per page",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Filter by startup category",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stage",
+            "in": "query",
+            "description": "Filter by funding stage",
+            "schema": {
+              "type": "string",
+              "enum": ["seed", "pre-seed", "series-a", "series-b", "series-c", "growth"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of startups",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Startup"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "page": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "totalPages": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["startups"],
+        "summary": "Create a new startup",
+        "description": "Create a new startup profile",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartupCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Startup created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Startup"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid input data"
+          },
+          "401": {
+            "description": "Unauthorized - authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/startups/{id}": {
+      "get": {
+        "tags": ["startups"],
+        "summary": "Get a startup by ID",
+        "description": "Returns a single startup by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the startup to retrieve",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Startup found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Startup"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - authentication required"
+          },
+          "404": {
+            "description": "Startup not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": ["startups"],
+        "summary": "Update a startup",
+        "description": "Update a startup profile by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the startup to update",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartupUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Startup updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Startup"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid input data"
+          },
+          "401": {
+            "description": "Unauthorized - authentication required"
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions"
+          },
+          "404": {
+            "description": "Startup not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["startups"],
+        "summary": "Delete a startup",
+        "description": "Delete a startup profile by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the startup to delete",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Startup deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized - authentication required"
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions"
+          },
+          "404": {
+            "description": "Startup not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/auth/signin": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Sign in",
+        "description": "Authenticate a user with email and password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 8
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "token": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid credentials or bad request"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "full_name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["user", "startup", "investor", "admin"]
+          },
+          "avatar_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Startup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tagline": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "logo_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri"
+          },
+          "founded_year": {
+            "type": "integer"
+          },
+          "location": {
+            "type": "string"
+          },
+          "team_size": {
+            "type": "integer"
+          },
+          "category_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "funding_stage": {
+            "type": "string",
+            "enum": ["pre-seed", "seed", "series-a", "series-b", "series-c", "growth"]
+          },
+          "funding_goal": {
+            "type": "number",
+            "format": "float"
+          },
+          "pitch_deck_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "video_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StartupCreate": {
+        "type": "object",
+        "required": ["name", "tagline", "description", "category_id", "funding_stage"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tagline": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "logo_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri"
+          },
+          "founded_year": {
+            "type": "integer"
+          },
+          "location": {
+            "type": "string"
+          },
+          "team_size": {
+            "type": "integer"
+          },
+          "category_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "funding_stage": {
+            "type": "string",
+            "enum": ["pre-seed", "seed", "series-a", "series-b", "series-c", "growth"]
+          },
+          "funding_goal": {
+            "type": "number",
+            "format": "float"
+          },
+          "pitch_deck_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "video_url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "StartupUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tagline": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "logo_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri"
+          },
+          "founded_year": {
+            "type": "integer"
+          },
+          "location": {
+            "type": "string"
+          },
+          "team_size": {
+            "type": "integer"
+          },
+          "category_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "funding_stage": {
+            "type": "string",
+            "enum": ["pre-seed", "seed", "series-a", "series-b", "series-c", "growth"]
+          },
+          "funding_goal": {
+            "type": "number",
+            "format": "float"
+          },
+          "pitch_deck_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "video_url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    }
+  }
+} 

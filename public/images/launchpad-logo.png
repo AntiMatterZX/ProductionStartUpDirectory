@@ -1,0 +1,24 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gradient background -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#9333EA" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.2" />
+    </filter>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="90" fill="url(#grad1)" filter="url(#shadow)" />
+  
+  <!-- Rocket -->
+  <g transform="translate(60, 40) scale(0.8)">
+    <path d="M40 120C26 132 26 156 26 156C26 156 50 156 62 142M116 44C116 44 80 20 44 56C8 92 32 154 32 154C32 154 94 178 130 142C166 106 116 44 116 44ZM102 58L104 60M84 76L96 88M112 43L126 57" 
+      stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  
+  <!-- LaunchPad text -->
+  <text x="100" y="170" font-family="'Arial', sans-serif" font-weight="700" font-size="18" fill="white" text-anchor="middle">LAUNCHPAD</text>
+</svg> 
