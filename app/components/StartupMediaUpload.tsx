@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Loader2 } from "lucide-react";
 import { createClientComponentClient } from "@/lib/supabase/client-component";
 
 interface UploadProps {
@@ -32,26 +32,26 @@ export default function StartupMediaUpload({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClientComponentClient();
 
-  // Set default accepted file types based on media type
-  useEffect(() => {
-    if (!acceptedFileTypes) {
-      switch (mediaType) {
-        case "logo":
-        case "image":
-          acceptedFileTypes = "image/*";
-          break;
-        case "document":
-        case "pitch_deck":
-          acceptedFileTypes = ".pdf,.doc,.docx,.ppt,.pptx";
-          break;
-        case "video":
-          acceptedFileTypes = "video/*";
-          break;
-      }
+  // Determine accepted file types
+  const getAcceptedFileTypes = () => {
+    if (acceptedFileTypes) return acceptedFileTypes;
+    
+    switch (mediaType) {
+      case "logo":
+      case "image":
+        return "image/*";
+      case "document":
+      case "pitch_deck":
+        return ".pdf,.doc,.docx,.ppt,.pptx";
+      case "video":
+        return "video/*";
+      default:
+        return "";
     }
-  }, [mediaType, acceptedFileTypes]);
+  };
 
   // File selection handler
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,6 +65,10 @@ export default function StartupMediaUpload({
           description: `Maximum file size is ${maxSizeMB}MB`,
           variant: "destructive",
         });
+        // Reset the file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
         return;
       }
       
@@ -74,7 +78,14 @@ export default function StartupMediaUpload({
 
   // Upload the file to Supabase storage
   const uploadFile = async () => {
-    if (!selectedFile || !startupId) return;
+    if (!selectedFile || !startupId) {
+      toast({
+        title: "Error",
+        description: "No file selected or startup ID missing",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsUploading(true);
     setUploadProgress(0);
@@ -99,15 +110,6 @@ export default function StartupMediaUpload({
         filePath = `${startupId}/videos/${fileName}`;
       }
       
-      // Track upload progress manually
-      const xhr = new XMLHttpRequest();
-      xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable) {
-          const percent = Math.round((event.loaded / event.total) * 100);
-          setUploadProgress(percent);
-        }
-      });
-      
       // Upload to Supabase storage
       const { data, error } = await supabase.storage
         .from(bucketName)
@@ -119,6 +121,17 @@ export default function StartupMediaUpload({
       if (error) {
         throw new Error(`Upload failed: ${error.message}`);
       }
+      
+      // Track upload progress manually (since we can't easily do this with Supabase)
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 5;
+        if (progress >= 100) {
+          clearInterval(interval);
+          progress = 100;
+        }
+        setUploadProgress(progress);
+      }, 100);
       
       // Get the public URL
       const { data: publicUrlData } = supabase.storage
@@ -140,6 +153,9 @@ export default function StartupMediaUpload({
         }),
       });
       
+      clearInterval(interval);
+      setUploadProgress(100);
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(`Failed to update database: ${errorData.message}`);
@@ -151,8 +167,15 @@ export default function StartupMediaUpload({
         description: `${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} uploaded successfully.`,
       });
       
+      // Reset state
       setIsOpen(false);
       setSelectedFile(null);
+      setUploadProgress(0);
+      
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       
       // Notify parent component if callback provided
       if (onUploaded) {
@@ -165,20 +188,52 @@ export default function StartupMediaUpload({
         description: error.message || "There was a problem uploading your file.",
         variant: "destructive",
       });
+      
+      // Reset progress
+      setUploadProgress(0);
     } finally {
       setIsUploading(false);
     }
   };
 
+  // Handle close/cancel
+  const handleClose = () => {
+    if (isUploading) {
+      toast({
+        title: "Upload in progress",
+        description: "Please wait for the upload to complete or try again later.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsOpen(false);
+    setSelectedFile(null);
+    setUploadProgress(0);
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    
+    if (onCancelled) {
+      onCancelled();
+    }
+  };
+
   return (
     <>
-      <Button onClick={() => setIsOpen(true)} variant="outline" size="sm">
-        <Upload className="h-4 w-4 mr-2" />
-        {buttonLabel}
+      <Button 
+        onClick={() => setIsOpen(true)} 
+        variant="outline" 
+        size="sm"
+        className="flex items-center gap-1"
+      >
+        <Upload className="h-4 w-4" />
+        <span className="hidden sm:inline">{buttonLabel}</span>
       </Button>
       
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-md max-w-[calc(100%-2rem)]">
           <DialogHeader>
             <DialogTitle>
               Upload {mediaType.charAt(0).toUpperCase() + mediaType.slice(1).replace("_", " ")}
@@ -186,15 +241,18 @@ export default function StartupMediaUpload({
           </DialogHeader>
           
           <div className="space-y-4">
-            <div className="grid w-full max-w-sm items-center gap-1.5">
+            <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="file-upload">Select File</Label>
               <Input 
                 id="file-upload" 
+                ref={fileInputRef}
                 type="file" 
                 onChange={handleFileChange} 
-                accept={acceptedFileTypes}
+                accept={getAcceptedFileTypes()}
                 disabled={isUploading}
+                className="cursor-pointer file:cursor-pointer"
               />
+              <p className="text-xs text-muted-foreground">Maximum size: {maxSizeMB}MB</p>
             </div>
             
             {selectedFile && (
@@ -203,20 +261,28 @@ export default function StartupMediaUpload({
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => setSelectedFile(null)}
+                  onClick={() => {
+                    setSelectedFile(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = "";
+                    }
+                  }}
                   disabled={isUploading}
+                  aria-label="Remove file"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             )}
             
-            {isUploading && uploadProgress > 0 && (
-              <div className="w-full bg-muted rounded-full h-2.5">
-                <div 
-                  className="bg-primary h-2.5 rounded-full" 
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
+            {isUploading && (
+              <div className="space-y-2">
+                <div className="w-full bg-muted rounded-full h-2.5">
+                  <div 
+                    className="bg-primary h-2.5 rounded-full" 
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
                 <p className="text-xs text-muted-foreground mt-1 text-right">
                   {uploadProgress}%
                 </p>
@@ -224,22 +290,28 @@ export default function StartupMediaUpload({
             )}
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="sm:justify-between flex-col sm:flex-row gap-2">
             <Button 
               variant="outline" 
-              onClick={() => {
-                setIsOpen(false);
-                if (onCancelled) onCancelled();
-              }}
+              onClick={handleClose}
               disabled={isUploading}
+              className="sm:order-1 order-2 w-full sm:w-auto"
             >
               Cancel
             </Button>
             <Button 
               onClick={uploadFile} 
               disabled={!selectedFile || isUploading}
+              className="sm:order-2 order-1 w-full sm:w-auto"
             >
-              {isUploading ? "Uploading..." : "Upload"}
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <span>Uploading...</span>
+                </>
+              ) : (
+                "Upload"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
