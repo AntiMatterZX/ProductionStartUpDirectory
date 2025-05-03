@@ -133,7 +133,7 @@ export function DashboardSidebar() {
                 href="/dashboard/startups" 
                 icon={Package} 
                 label="My Startups" 
-                isActive={pathname.startsWith("/dashboard/startups")} 
+                isActive={(pathname ?? '').startsWith("/dashboard/startups")} 
                 isOpen={open} 
               />
               <NavItem 
@@ -186,7 +186,7 @@ export function DashboardSidebar() {
                     href="/admin" 
                     icon={Home} 
                     label="Admin Panel" 
-                    isActive={pathname.startsWith("/admin")} 
+                    isActive={(pathname ?? '').startsWith("/admin")} 
                     isOpen={open} 
                   />
                 </>

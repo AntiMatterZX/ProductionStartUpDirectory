@@ -43,6 +43,25 @@ export default async function PublicLayout({ children }: { children: React.React
         userRole={role}
       >
         <main className="flex-1">{children}</main>
+        
+        <footer className="border-t border-border py-6 md:py-0">
+          <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+            <p className="text-center text-sm text-muted-foreground">
+              &copy; {new Date().getFullYear()} LaunchPad. All rights reserved.
+            </p>
+            <div className="flex items-center gap-4">
+              <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Terms
+              </Link>
+              <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Privacy
+              </Link>
+              <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Contact
+              </Link>
+            </div>
+          </div>
+        </footer>
       </RoundedDrawerNav>
     </div>
   )
