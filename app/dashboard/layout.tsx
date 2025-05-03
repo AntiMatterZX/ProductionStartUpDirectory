@@ -21,15 +21,16 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen bg-background">
+        {/* Sidebar */}
         <DashboardSidebar />
         
         {/* Main content container */}
         <div className="flex flex-col flex-1 w-full md:pl-0">
-          {/* Header with padding for mobile menu button */}
+          {/* Header */}
           <DashboardHeader user={user} />
           
           {/* Main content with proper padding */}
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 pt-16 md:pt-6">
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 pt-6">
             <div className="mx-auto max-w-7xl">
               {children}
             </div>
@@ -42,7 +43,9 @@ export default async function DashboardLayout({
                 <p className="hidden md:block">© {new Date().getFullYear()} LaunchPad. All rights reserved.</p>
                 <p className="md:hidden">© {new Date().getFullYear()} LaunchPad</p>
               </div>
-              <ModeToggle />
+              <div className="md:hidden">
+                <ModeToggle />
+              </div>
             </div>
           </footer>
         </div>

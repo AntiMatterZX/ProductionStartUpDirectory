@@ -140,7 +140,11 @@ export function DashboardSidebar() {
     if (!pathname) return false
     if (href === "/dashboard") return pathname === href
     if (href === "/admin") return pathname.startsWith(href)
-    if (href === "/dashboard/startups") return pathname.startsWith(href)
+    if (href === "/dashboard/startups") {
+      return pathname === href || 
+             pathname.startsWith(href + "/") && 
+             !pathname.includes('/create')
+    }
     return pathname === href
   }
 
@@ -151,18 +155,18 @@ export function DashboardSidebar() {
         variant="ghost" 
         size="icon" 
         onClick={() => setOpenMobile(true)}
-        className="fixed top-3 left-3 z-50 md:hidden"
+        className="fixed top-3 left-3 z-50 md:hidden bg-background/80 backdrop-blur-sm"
       >
         <Menu className="h-5 w-5" />
       </Button>
       
       <Sidebar 
         variant="sidebar" 
-        className="border-0"
+        className="border-0 z-40" 
         collapsible="offcanvas"
         side="left"
       >
-        <SidebarHeader className="p-4 flex items-center justify-between">
+        <SidebarHeader className="p-4 flex items-center justify-between border-b border-border/50">
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <Rocket className="h-5 w-5" />
@@ -184,12 +188,10 @@ export function DashboardSidebar() {
           </Button>
         </SidebarHeader>
 
-        <SidebarSeparator />
-
-        <SidebarContent>
+        <SidebarContent className="px-2 py-3">
           {Object.entries(groupedNavItems).map(([section, items]) => (
             <SidebarGroup key={section}>
-              <SidebarGroupLabel>{section}</SidebarGroupLabel>
+              <SidebarGroupLabel className="px-3 py-2">{section}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {items.map((item) => (
@@ -215,7 +217,7 @@ export function DashboardSidebar() {
           ))}
         </SidebarContent>
 
-        <SidebarFooter className="mt-auto p-4">
+        <SidebarFooter className="mt-auto p-4 border-t border-border/50">
           <div className="flex items-center justify-between rounded-xl bg-muted p-3">
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10 border-2 border-background">
@@ -225,7 +227,7 @@ export function DashboardSidebar() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="font-medium">
+                <span className="font-medium text-sm">
                   {profile?.full_name || "User"}
                 </span>
                 <span className="text-xs text-muted-foreground">
