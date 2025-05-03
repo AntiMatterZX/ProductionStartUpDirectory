@@ -2,46 +2,88 @@ import { createServerComponentClient } from "@/lib/supabase/server-component"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { ApprovalButtons } from "@/components/admin/ApprovalButtons"
+import { RefreshButton } from "@/components/admin/RefreshButton"
+
+// Define the startup type for better type checking
+interface Startup {
+  id: string
+  name: string
+  slug: string
+  description?: string
+  categories: { name: string } | Array<{ name: string }>
+  status: string
+  created_at: string
+  updated_at?: string
+  user_id?: string
+  profiles?: { full_name: string, email?: string } | Array<{ full_name: string, email?: string }>
+}
 
 export default async function ModerationPage() {
   // Get the Supabase client
   const supabase = await createServerComponentClient()
-
-  // Fetch pending startups
-  const { data: pendingStartups } = await supabase
-    .from("startups")
-    .select(`
-      id,
-      name,
-      slug,
-      description,
-      categories(name),
-      status,
-      created_at,
-      user_id,
-      profiles(full_name, email)
-    `)
-    .eq("status", "pending")
-    .order("created_at", { ascending: false })
+  
+  let pendingStartups: Startup[] = [];
+  let pendingError: Error | null = null;
+  
+  try {
+    // Fetch pending startups - using a more inclusive approach
+    const { data, error } = await supabase
+      .from("startups")
+      .select(`
+        id,
+        name,
+        slug,
+        description,
+        categories(name),
+        status,
+        created_at,
+        user_id,
+        profiles(full_name, email)
+      `)
+      .or('status.eq.pending,status.eq.PENDING')
+      .order("created_at", { ascending: false })
+    
+    if (error) throw new Error(error.message);
+    pendingStartups = data || [];
+    
+    // Log for debugging
+    console.log(`Found ${pendingStartups.length} pending startups`);
+  } catch (err) {
+    console.error("Error fetching pending startups:", err);
+    pendingError = err instanceof Error ? err : new Error('Unknown error occurred');
+  }
 
   // Fetch recently approved/rejected startups
-  const { data: recentActionStartups } = await supabase
-    .from("startups")
-    .select(`
-      id,
-      name,
-      slug,
-      categories(name),
-      status,
-      created_at,
-      updated_at,
-      profiles(full_name)
-    `)
-    .in("status", ["approved", "rejected"])
-    .order("updated_at", { ascending: false })
-    .limit(5)
+  let recentActionStartups: Startup[] = [];
+  let recentError: Error | null = null;
+  
+  try {
+    const { data, error } = await supabase
+      .from("startups")
+      .select(`
+        id,
+        name,
+        slug,
+        categories(name),
+        status,
+        created_at,
+        updated_at,
+        profiles(full_name)
+      `)
+      .or('status.eq.approved,status.eq.rejected,status.eq.APPROVED,status.eq.REJECTED')
+      .order("updated_at", { ascending: false })
+      .limit(5)
+      
+    if (error) throw new Error(error.message);
+    recentActionStartups = data || [];
+  } catch (err) {
+    console.error("Error fetching recent actions:", err);
+    recentError = err instanceof Error ? err : new Error('Unknown error occurred');
+  }
 
   return (
     <div className="p-8">
@@ -57,7 +99,17 @@ export default async function ModerationPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {pendingStartups && pendingStartups.length > 0 ? (
+              {pendingError && (
+                <Alert variant="destructive" className="mb-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>
+                    Failed to fetch pending startups: {pendingError.message}
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {!pendingError && pendingStartups && pendingStartups.length > 0 ? (
                 <div className="space-y-6">
                   {pendingStartups.map((startup) => (
                     <Card key={startup.id} className="overflow-hidden border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20">
@@ -107,9 +159,13 @@ export default async function ModerationPage() {
               ) : (
                 <div className="text-center py-12 bg-muted/20 rounded-lg">
                   <h3 className="text-xl font-semibold mb-2">No pending startups</h3>
-                  <p className="text-muted-foreground">
-                    All startups have been reviewed. Great job!
+                  <p className="text-muted-foreground mb-4">
+                    No startups are currently pending review.
                   </p>
+                  
+                  <div className="flex justify-center gap-4">
+                    <RefreshButton />
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -125,7 +181,17 @@ export default async function ModerationPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {recentActionStartups && recentActionStartups.length > 0 ? (
+              {recentError && (
+                <Alert variant="destructive" className="mb-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>
+                    Failed to fetch recent activity: {recentError.message}
+                  </AlertDescription>
+                </Alert>
+              )}
+            
+              {!recentError && recentActionStartups && recentActionStartups.length > 0 ? (
                 <div className="space-y-4">
                   {recentActionStartups.map((startup) => (
                     <div key={startup.id} className="flex items-center justify-between border-b pb-3 last:border-0">
@@ -148,7 +214,7 @@ export default async function ModerationPage() {
                             ? startup.categories.name 
                             : Array.isArray(startup.categories) && startup.categories[0] 
                               ? startup.categories[0].name 
-                              : ""} • {new Date(startup.updated_at).toLocaleDateString()}
+                              : ""} • {startup.updated_at ? new Date(startup.updated_at).toLocaleDateString() : "No date"}
                         </p>
                       </div>
                       
@@ -185,7 +251,7 @@ export default async function ModerationPage() {
                   <Badge variant="outline" className="bg-green-100 dark:bg-green-900/30">
                     {recentActionStartups?.filter(s => 
                       s.status === "approved" && 
-                      new Date(s.updated_at).toDateString() === new Date().toDateString()
+                      s.updated_at && new Date(s.updated_at).toDateString() === new Date().toDateString()
                     ).length || 0}
                   </Badge>
                 </div>
@@ -194,7 +260,7 @@ export default async function ModerationPage() {
                   <Badge variant="outline" className="bg-red-100 dark:bg-red-900/30">
                     {recentActionStartups?.filter(s => 
                       s.status === "rejected" && 
-                      new Date(s.updated_at).toDateString() === new Date().toDateString()
+                      s.updated_at && new Date(s.updated_at).toDateString() === new Date().toDateString()
                     ).length || 0}
                   </Badge>
                 </div>
