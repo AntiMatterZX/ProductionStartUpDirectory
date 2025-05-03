@@ -27,7 +27,11 @@ export default function DashboardLayout({
         if (!authUser) {
           window.location.href = "/login"
         } else {
-          setUser(authUser)
+          // Store only the serializable properties we need
+          setUser({
+            id: authUser.id,
+            email: authUser.email
+          })
         }
       } catch (error) {
         console.error("Auth error:", error)

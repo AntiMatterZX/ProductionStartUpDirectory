@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { User } from "@supabase/supabase-js"
 import { Bell, Menu, MessageSquare, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -18,6 +17,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
 import { ModeToggle } from "@/components/theme/mode-toggle"
+
+interface User {
+  id: string;
+  email?: string;
+}
 
 interface DashboardHeaderProps {
   user: User
