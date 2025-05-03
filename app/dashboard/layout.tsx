@@ -1,8 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { redirect } from "next/navigation"
-import { getAuthUser } from "@/lib/auth/auth"
+import { createClientComponentClient } from "@/lib/supabase/client-component"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { AdminSidebar } from "@/components/dashboard/AdminSidebar" 
 import { ModeToggle } from "@/components/theme/mode-toggle"
@@ -20,19 +19,22 @@ export default function DashboardLayout({
     // Mark as hydrated for client-side rendering
     setIsHydrated(true)
     
-    // Get authenticated user
+    // Get authenticated user using client component client
     async function fetchUser() {
       try {
-        const { user: authUser } = await getAuthUser()
-        if (!authUser) {
+        const supabase = createClientComponentClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
           window.location.href = "/login"
-        } else {
-          // Store only the serializable properties we need
-          setUser({
-            id: authUser.id,
-            email: authUser.email
-          })
+          return
         }
+        
+        // Store only the serializable properties we need
+        setUser({
+          id: user.id,
+          email: user.email
+        })
       } catch (error) {
         console.error("Auth error:", error)
         window.location.href = "/login"
