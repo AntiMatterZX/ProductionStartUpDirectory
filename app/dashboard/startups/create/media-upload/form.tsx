@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
@@ -25,10 +25,6 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [pitchDeckName, setPitchDeckName] = useState<string | null>(null)
-  
-  const logoInputRef = useRef<HTMLInputElement>(null)
-  const coverInputRef = useRef<HTMLInputElement>(null)
-  const pitchDeckInputRef = useRef<HTMLInputElement>(null)
 
   const form = useForm<MediaUploadFormValues>({
     resolver: zodResolver(mediaUploadSchema),
@@ -84,22 +80,18 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
     }
   }
 
-  const clearFile = (field: any, setPreview: (preview: string | null) => void, inputRef: React.RefObject<HTMLInputElement>) => {
+  const clearFile = (field: any, setPreview: (preview: string | null) => void) => {
     field.onChange(null)
     setPreview(null)
-    if (inputRef.current) {
-      inputRef.current.value = ""
-    }
   }
 
   const clearPitchDeck = (field: any) => {
     field.onChange(null)
     setPitchDeckName(null)
-    if (pitchDeckInputRef.current) {
-      pitchDeckInputRef.current.value = ""
-    }
   }
 
+  // In a real implementation, we would upload files to Supabase Storage
+  // This is a simplified version that just passes the files to the parent component
   const handleSubmit = (data: MediaUploadFormValues) => {
     onSubmit(data)
   }
@@ -107,115 +99,58 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Logo Upload */}
-            <FormField
-              control={form.control}
-              name="logo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Logo</FormLabel>
-                  <FormControl>
-                    <div className="flex flex-col items-center space-y-2">
-                      {logoPreview ? (
-                        <div className="relative w-32 h-32">
-                          <img
-                            src={logoPreview || "/placeholder.svg"}
-                            alt="Logo preview"
-                            className="w-full h-full object-contain rounded-md border"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => clearFile(field, setLogoPreview, logoInputRef)}
-                            className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
-                            aria-label="Remove logo"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="logo"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Logo</FormLabel>
+                <FormControl>
+                  <div className="flex flex-col items-center space-y-2">
+                    {logoPreview ? (
+                      <div className="relative w-32 h-32">
+                        <img
+                          src={logoPreview || "/placeholder.svg"}
+                          alt="Logo preview"
+                          className="w-full h-full object-contain rounded-md border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => clearFile(field, setLogoPreview)}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed rounded-md border-muted-foreground/25">
+                          <ImageIcon className="h-10 w-10 text-muted-foreground/50" />
                         </div>
-                      ) : (
-                        <div className="flex flex-col items-center">
-                          <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed rounded-md border-muted-foreground/25">
-                            <ImageIcon className="h-10 w-10 text-muted-foreground/50" />
+                        <label htmlFor="logo-upload" className="cursor-pointer mt-2">
+                          <div className="flex items-center gap-1 text-sm text-primary">
+                            <Upload className="h-4 w-4" />
+                            <span>Upload Logo</span>
                           </div>
-                          <label htmlFor="logo-upload" className="cursor-pointer mt-2">
-                            <div className="flex items-center gap-1 text-sm text-primary">
-                              <Upload className="h-4 w-4" />
-                              <span>Upload Logo</span>
-                            </div>
-                            <Input
-                              id="logo-upload"
-                              ref={logoInputRef}
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => handleFileChange(e, field, setLogoPreview)}
-                            />
-                          </label>
-                        </div>
-                      )}
-                    </div>
-                  </FormControl>
-                  <FormDescription>Upload your startup logo (PNG or JPG, max 5MB)</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Social Links */}
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="socialLinks.linkedin"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>LinkedIn</FormLabel>
-                    <FormControl>
-                      <div className="flex">
-                        <div className="flex items-center bg-muted px-3 py-2 rounded-l-md border-y border-l">
-                          <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <Input 
-                          placeholder="https://linkedin.com/company/yourstartup" 
-                          className="rounded-l-none"
-                          {...field} 
-                        />
+                          <Input
+                            id="logo-upload"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleFileChange(e, field, setLogoPreview)}
+                          />
+                        </label>
                       </div>
-                    </FormControl>
-                    <FormDescription>LinkedIn company page URL</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    )}
+                  </div>
+                </FormControl>
+                <FormDescription>Upload your startup logo (PNG or JPG, max 5MB)</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              <FormField
-                control={form.control}
-                name="socialLinks.twitter"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Twitter</FormLabel>
-                    <FormControl>
-                      <div className="flex">
-                        <div className="flex items-center bg-muted px-3 py-2 rounded-l-md border-y border-l">
-                          <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <Input 
-                          placeholder="https://twitter.com/yourstartup" 
-                          className="rounded-l-none"
-                          {...field} 
-                        />
-                      </div>
-                    </FormControl>
-                    <FormDescription>Twitter profile URL</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          {/* Cover Image */}
           <FormField
             control={form.control}
             name="coverImage"
@@ -233,9 +168,8 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
                         />
                         <button
                           type="button"
-                          onClick={() => clearFile(field, setCoverPreview, coverInputRef)}
+                          onClick={() => clearFile(field, setCoverPreview)}
                           className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
-                          aria-label="Remove cover image"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -252,7 +186,6 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
                           </div>
                           <Input
                             id="cover-upload"
-                            ref={coverInputRef}
                             type="file"
                             accept="image/*"
                             className="hidden"
@@ -269,7 +202,6 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
             )}
           />
 
-          {/* Pitch Deck */}
           <FormField
             control={form.control}
             name="pitchDeck"
@@ -286,7 +218,6 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
                           type="button"
                           onClick={() => clearPitchDeck(field)}
                           className="ml-auto bg-destructive text-destructive-foreground rounded-full p-1"
-                          aria-label="Remove pitch deck"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -303,7 +234,6 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
                           </div>
                           <Input
                             id="pitch-deck-upload"
-                            ref={pitchDeckInputRef}
                             type="file"
                             accept=".pdf,.pptx,.ppt"
                             className="hidden"
@@ -320,51 +250,80 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
             )}
           />
 
-          {/* Video URL */}
           <FormField
             control={form.control}
             name="videoUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Video URL</FormLabel>
+                <FormLabel>Demo Video URL</FormLabel>
                 <FormControl>
                   <div className="flex">
-                    <div className="flex items-center bg-muted px-3 py-2 rounded-l-md border-y border-l">
+                    <div className="flex items-center px-3 border border-r-0 rounded-l-md bg-muted">
                       <LinkIcon className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <Input 
-                      placeholder="https://youtube.com/watch?v=..." 
-                      className="rounded-l-none"
-                      {...field} 
-                    />
+                    <Input placeholder="https://youtube.com/watch?v=..." {...field} className="rounded-l-none" />
                   </div>
                 </FormControl>
-                <FormDescription>
-                  YouTube or Vimeo URL to your startup pitch or demo video (optional)
-                </FormDescription>
+                <FormDescription>Link to a YouTube or Vimeo video showcasing your product</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="socialLinks.linkedin"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>LinkedIn</FormLabel>
+                  <FormControl>
+                    <div className="flex">
+                      <div className="flex items-center px-3 border border-r-0 rounded-l-md bg-muted">
+                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <Input placeholder="https://linkedin.com/company/..." {...field} className="rounded-l-none" />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="socialLinks.twitter"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Twitter</FormLabel>
+                  <FormControl>
+                    <div className="flex">
+                      <div className="flex items-center px-3 border border-r-0 rounded-l-md bg-muted">
+                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <Input placeholder="https://twitter.com/..." {...field} className="rounded-l-none" />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onBack}
-            disabled={isSubmitting}
-            className="w-full sm:w-auto"
-          >
+        <div className="flex justify-between">
+          <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting}>
             Back
           </Button>
-          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
-              <div className="flex items-center gap-1">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Saving...</span>
-              </div>
-            ) : "Save & Continue"}
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit Startup"
+            )}
           </Button>
         </div>
       </form>

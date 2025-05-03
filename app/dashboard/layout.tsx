@@ -1,93 +1,28 @@
-"use client"
-
-import React, { useState, useEffect } from "react"
-import { createClientComponentClient } from "@/lib/supabase/client-component"
+import React from "react"
+import { redirect } from "next/navigation"
+import { getAuthUser } from "@/lib/auth/auth"
 import { DashboardHeader } from "@/components/dashboard/header"
-import { AdminSidebar } from "@/components/dashboard/AdminSidebar" 
+import { DashboardSidebar } from "@/components/dashboard/sidebar" 
 import { ModeToggle } from "@/components/theme/mode-toggle"
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isHydrated, setIsHydrated] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  // Get authenticated user or redirect to login
+  const { user } = await getAuthUser("/dashboard")
   
-  useEffect(() => {
-    // Mark as hydrated for client-side rendering
-    setIsHydrated(true)
-    
-    // Get authenticated user using client component client
-    async function fetchUser() {
-      try {
-        const supabase = createClientComponentClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        
-        if (!user) {
-          window.location.href = "/login"
-          return
-        }
-        
-        // Store only the serializable properties we need
-        setUser({
-          id: user.id,
-          email: user.email
-        })
-      } catch (error) {
-        console.error("Auth error:", error)
-        window.location.href = "/login"
-      }
-    }
-    
-    fetchUser()
-    
-    // Handle resize events
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setIsSidebarOpen(true)
-      } else {
-        setIsSidebarOpen(false)
-      }
-    }
-    
-    // Set initial state based on screen size
-    handleResize()
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
-  
-  // Handle sidebar toggle
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen)
-  }
-  
-  // Show loading state while client-side hydration is happening
-  if (!isHydrated || !user) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    )
-  }
-
   if (!user) {
-    return <div className="p-8">Unable to load user data. Please refresh.</div>
+    return redirect("/login")
   }
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Sidebar with open state passed from parent */}
-      <AdminSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      <DashboardSidebar />
       
-      {/* Main Content - ensure it takes full width when sidebar is closed */}
-      <div className={`flex flex-col flex-1 overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'lg:ml-0' : 'w-full'}`}>
-        <DashboardHeader 
-          user={user} 
-          isSidebarOpen={isSidebarOpen}
-          toggleSidebar={toggleSidebar}
-        />
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <DashboardHeader user={user} />
         
         <main className="flex-1 overflow-auto p-4 md:p-6">
           <div className="mx-auto max-w-7xl">
@@ -96,7 +31,7 @@ export default function DashboardLayout({
         </main>
         
         <footer className="border-t py-3 text-xs text-center text-muted-foreground">
-          <div className="flex items-center justify-between px-4 md:px-6">
+          <div className="flex items-center justify-between px-6">
             <div className="text-xs text-muted-foreground mt-auto">
               <div className="hidden md:block">
                 <p>© {new Date().getFullYear()} LaunchPad. All rights reserved.</p>

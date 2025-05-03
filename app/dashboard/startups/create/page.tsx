@@ -7,14 +7,14 @@ import FormStepper from "@/components/startup/creation/FormStepper"
 import BasicInfoForm from "./basic-info/form"
 import DetailedInfoForm from "./detailed-info/form"
 import MediaUploadForm from "./media-upload/form"
+import ReviewForm from "./review/form"
 import { toast } from "@/components/ui/use-toast"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
 import type { StartupFormData } from "@/types/startup"
 import type { Database } from "@/types/database"
 import { AnimatePresence, motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import ReviewForm from "./review/form"
+import { ArrowLeft, ArrowRight, CheckCircle2, Save } from "lucide-react"
 
 export default function CreateStartupPage() {
   const router = useRouter()
@@ -207,104 +207,167 @@ export default function CreateStartupPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      <div className="container max-w-4xl py-10 flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="ml-4 text-muted-foreground">Loading...</p>
       </div>
     )
   }
 
-  return (
-    <div className="w-full space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight mb-1">Create Your Startup Profile</h1>
-        <p className="text-muted-foreground">Complete each section to create your startup profile.</p>
-      </div>
+  // Animation variants for page transitions
+  const pageVariants = {
+    initial: { opacity: 0, x: 10 },
+    enter: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -10 }
+  }
 
-      <div className="w-full overflow-x-auto pb-2">
+  return (
+    <div className="container max-w-4xl py-10">
+      <h1 className="text-3xl font-bold mb-8">Create Your Startup Profile</h1>
+
+      <div className="mb-10">
         <FormStepper 
-          currentStep={currentStep}
-          totalSteps={totalSteps}
-          titles={stepTitles}
-          onStepClick={handleStepChange}
-          validSteps={{
-            1: true,
-            2: formValidity.step1,
-            3: formValidity.step1 && formValidity.step2,
-            4: formValidity.step1 && formValidity.step2 && formValidity.step3,
-          }}
+          currentStep={currentStep} 
+          totalSteps={totalSteps} 
+          stepTitles={stepTitles}
+          onStepChange={handleStepChange} 
         />
       </div>
 
-      <Card className="max-w-full">
-        <CardContent className="p-6">
+      <Card className="shadow-sm">
+        <CardContent className="p-6 md:p-8">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={`step-${currentStep}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {currentStep === 1 && (
-                <BasicInfoForm
-                  onSubmit={(data) => handleNext(data, 1, true)}
-                  initialData={formData.basicInfo}
+            {currentStep === 1 && (
+              <motion.div
+                key="step1"
+                initial="initial"
+                animate="enter"
+                exit="exit"
+                variants={pageVariants}
+                transition={{ duration: 0.3 }}
+              >
+                <BasicInfoForm 
+                  onSubmit={(data, isValid) => handleNext(data, 1, isValid)} 
+                  initialData={formData.basicInfo} 
                 />
-              )}
+              </motion.div>
+            )}
 
-              {currentStep === 2 && (
+            {currentStep === 2 && (
+              <motion.div
+                key="step2"
+                initial="initial"
+                animate="enter"
+                exit="exit"
+                variants={pageVariants}
+                transition={{ duration: 0.3 }}
+              >
                 <DetailedInfoForm
-                  onSubmit={(data) => handleNext(data, 2, true)}
-                  onBack={handleBack}
+                  onSubmit={(data, isValid) => handleNext(data, 2, isValid)}
                   initialData={formData.detailedInfo}
+                  onBack={handleBack}
                 />
-              )}
+              </motion.div>
+            )}
 
-              {currentStep === 3 && (
+            {currentStep === 3 && (
+              <motion.div
+                key="step3"
+                initial="initial"
+                animate="enter"
+                exit="exit"
+                variants={pageVariants}
+                transition={{ duration: 0.3 }}
+              >
                 <MediaUploadForm
-                  onSubmit={(data) => handleNext(data, 3, true)}
-                  onBack={handleBack}
+                  onSubmit={(data, isValid) => handleNext(data, 3, isValid)}
                   initialData={formData.mediaInfo}
-                  isSubmitting={isSubmitting}
-                />
-              )}
-
-              {currentStep === 4 && (
-                <ReviewForm
-                  formData={formData}
-                  onSubmit={handleSubmit}
                   onBack={handleBack}
                   isSubmitting={isSubmitting}
                 />
-              )}
-            </motion.div>
+              </motion.div>
+            )}
+
+            {currentStep === 4 && (
+              <motion.div
+                key="step4"
+                initial="initial"
+                animate="enter"
+                exit="exit"
+                variants={pageVariants}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="space-y-6">
+                  <div className="flex items-center justify-center py-6">
+                    <div className="bg-primary/10 p-4 rounded-full">
+                      <CheckCircle2 className="h-12 w-12 text-primary" />
+                    </div>
+                  </div>
+                  
+                  <div className="text-center space-y-2">
+                    <h2 className="text-2xl font-bold">Ready to Submit</h2>
+                    <p className="text-muted-foreground">
+                      Please review your information before final submission
+                    </p>
+                  </div>
+
+                  <div className="space-y-4 my-6">
+                    <h3 className="font-medium">Basic Information</h3>
+                    <div className="bg-muted/50 p-4 rounded-md">
+                      <p><span className="font-medium">Name:</span> {formData.basicInfo.name}</p>
+                      <p><span className="font-medium">Tagline:</span> {formData.basicInfo.tagline}</p>
+                    </div>
+                    
+                    <h3 className="font-medium">Detailed Information</h3>
+                    <div className="bg-muted/50 p-4 rounded-md">
+                      <p><span className="font-medium">Location:</span> {formData.detailedInfo.location}</p>
+                      <p><span className="font-medium">Funding Stage:</span> {formData.detailedInfo.fundingStage}</p>
+                    </div>
+
+                    <h3 className="font-medium">Media Information</h3>
+                    <div className="bg-muted/50 p-4 rounded-md">
+                      <p><span className="font-medium">Logo:</span> {formData.mediaInfo.logo ? "Uploaded" : "None"}</p>
+                      <p><span className="font-medium">Cover Image:</span> {formData.mediaInfo.coverImage ? "Uploaded" : "None"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="lg" 
+                      className="min-w-[100px]" 
+                      onClick={handleBack}
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back
+                    </Button>
+                    <Button 
+                      type="button" 
+                      size="lg" 
+                      className="min-w-[120px]"
+                      onClick={() => handleSubmit(formData)}
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Submit
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
         </CardContent>
       </Card>
-
-      <div className="flex items-center justify-between text-muted-foreground text-sm">
-        <div>
-          Step {currentStep} of {totalSteps}
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {currentStep < totalSteps ? (
-            <div>
-              <Button type="button" variant="ghost" size="sm" onClick={handleBack} disabled={currentStep === 1}>
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                Back
-              </Button>
-            </div>
-          ) : (
-            <div>
-              <Button type="button" variant="ghost" size="sm" onClick={handleBack}>
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                Back
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
