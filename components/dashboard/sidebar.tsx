@@ -19,224 +19,169 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export function DashboardSidebar() {
   const [open, setOpen] = useState(true)
   const [profile, setProfile] = useState<any>(null)
   const pathname = usePathname() ?? ""
+  const supabase = createClientComponentClient()
   
   useEffect(() => {
-    // Fetch user profile
     const fetchProfile = async () => {
-      const supabase = createClientComponentClient()
-      
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser()
-      
       if (user) {
         const { data } = await supabase
           .from("profiles")
           .select("*, roles(name)")
           .eq("id", user.id)
           .single()
-          
-        if (data) {
-          setProfile(data)
-        }
+        if (data) setProfile(data)
       }
     }
-    
-    fetchProfile()
-    
-    // Close sidebar on mobile
+
     const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        setOpen(false)
-      } else {
-        setOpen(true)
-      }
+      setOpen(window.innerWidth >= 1024)
     }
-    
+
+    fetchProfile()
     handleResize()
     window.addEventListener("resize", handleResize)
-    
-    return () => {
-      window.removeEventListener("resize", handleResize)
-    }
-  }, [])
-  
+    return () => window.removeEventListener("resize", handleResize)
+  }, [supabase])
+
   const userRole = profile?.roles?.name || "user"
+  const isActive = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(href))
 
   return (
-    <AnimatePresence initial={false}>
-      <motion.aside
-        initial={{ width: open ? 240 : 70 }}
-        animate={{ width: open ? 240 : 70 }}
-        exit={{ width: 70 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-        className={cn(
-          "fixed left-0 top-0 h-screen z-20 bg-card border-r shadow-sm transition-all duration-300",
-          "lg:relative"
-        )}
-      >
-        <div className="flex h-full flex-col">
-          <div className="flex h-16 items-center justify-between border-b px-3">
-            <AnimatePresence mode="wait">
-              {open ? (
+    <motion.aside
+      animate={{ width: open ? 240 : 80 }}
+      className={cn(
+        "fixed lg:relative left-0 top-0 h-screen z-50 bg-background border-r shadow-sm",
+        "flex flex-col overflow-hidden"
+      )}
+    >
+      {/* Header */}
+      <div className="flex h-16 items-center justify-between px-4 border-b relative">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <div className="p-2 bg-primary rounded-lg text-primary-foreground">
+            <Rocket className="h-5 w-5" />
+          </div>
+          <AnimatePresence initial={false}>
+            {open && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="font-semibold truncate"
+              >
+                LaunchPad
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </div>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpen(!open)}
+          className="h-8 w-8 absolute -right-3 top-4 bg-background border shadow-sm"
+        >
+          <ChevronLeft className={cn(
+            "h-4 w-4 transition-transform",
+            !open && "rotate-180"
+          )}/>
+        </Button>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex-1 overflow-y-auto py-4">
+        <nav className="space-y-1 px-2">
+          <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" open={open} active={isActive("/dashboard")} />
+          <NavItem href="/dashboard/startups" icon={Package} label="My Startups" open={open} active={isActive("/dashboard/startups")} />
+          <NavItem href="/dashboard/startups/create" icon={FilePlus} label="Create Startup" open={open} active={isActive("/dashboard/startups/create")} />
+          <NavItem href="/dashboard/discover" icon={Compass} label="Discover" open={open} active={isActive("/dashboard/discover")} />
+
+          {(userRole === "investor" || userRole === "admin") && (
+            <>
+              <SectionLabel label="Investor" open={open} />
+              <NavItem href="/dashboard/investor/wishlist" icon={Star} label="Wishlist" open={open} active={isActive("/dashboard/investor/wishlist")} />
+              <NavItem href="/dashboard/investor/opportunities" icon={Zap} label="Opportunities" open={open} active={isActive("/dashboard/investor/opportunities")} />
+            </>
+          )}
+
+          {userRole === "admin" && (
+            <>
+              <SectionLabel label="Admin" open={open} />
+              <NavItem href="/admin" icon={Home} label="Admin Panel" open={open} active={isActive("/admin")} />
+            </>
+          )}
+        </nav>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-auto border-t p-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <Avatar className="h-9 w-9 border">
+              <AvatarImage src={profile?.avatar_url} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {profile?.full_name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <AnimatePresence initial={false}>
+              {open && (
                 <motion.div
-                  key="full-logo"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="flex-1 min-w-0"
                 >
-                  <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Rocket className="h-4 w-4" />
-                  </div>
-                  <span className="font-semibold">LaunchPad</span>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="icon-logo"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center"
-                >
-                  <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Rocket className="h-4 w-4" />
-                  </div>
+                  <p className="truncate font-medium text-sm">{profile?.full_name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{userRole}</p>
                 </motion.div>
               )}
             </AnimatePresence>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setOpen(!open)}
-              className="h-8 w-8"
-            >
-              <ChevronLeft className={cn("h-4 w-4 transition-transform", !open && "rotate-180")} />
-            </Button>
           </div>
-          
-          <div className="flex-1 overflow-auto py-2">
-            <nav className="grid gap-1 px-2">
-              <NavItem 
-                href="/dashboard" 
-                icon={LayoutDashboard} 
-                label="Dashboard" 
-                isActive={pathname === "/dashboard"} 
-                isOpen={open} 
-              />
-              <NavItem 
-                href="/dashboard/startups" 
-                icon={Package} 
-                label="My Startups" 
-                isActive={pathname.startsWith("/dashboard/startups")} 
-                isOpen={open} 
-              />
-              <NavItem 
-                href="/dashboard/startups/create" 
-                icon={FilePlus} 
-                label="Create Startup" 
-                isActive={pathname === "/dashboard/startups/create"} 
-                isOpen={open} 
-              />
-              <NavItem 
-                href="/dashboard/discover" 
-                icon={Compass} 
-                label="Discover" 
-                isActive={pathname === "/dashboard/discover"} 
-                isOpen={open} 
-              />
-              
-              {/* Conditional items based on role */}
-              {(userRole === "investor" || userRole === "admin") && (
-                <>
-                  <div className={cn("my-2 px-3", !open && "px-0 py-2")}>
-                    {open && <p className="text-xs font-medium text-muted-foreground">Investor</p>}
-                    {!open && <hr className="border-t border-border" />}
-                  </div>
-                  <NavItem 
-                    href="/dashboard/investor/wishlist" 
-                    icon={Star} 
-                    label="Wishlist" 
-                    isActive={pathname === "/dashboard/investor/wishlist"} 
-                    isOpen={open} 
-                  />
-                  <NavItem 
-                    href="/dashboard/investor/opportunities" 
-                    icon={Zap} 
-                    label="Opportunities" 
-                    isActive={pathname === "/dashboard/investor/opportunities"} 
-                    isOpen={open} 
-                  />
-                </>
-              )}
-              
-              {/* Admin section */}
-              {userRole === "admin" && (
-                <>
-                  <div className={cn("my-2 px-3", !open && "px-0 py-2")}>
-                    {open && <p className="text-xs font-medium text-muted-foreground">Admin</p>}
-                    {!open && <hr className="border-t border-border" />}
-                  </div>
-                  <NavItem 
-                    href="/admin" 
-                    icon={Home} 
-                    label="Admin Panel" 
-                    isActive={pathname.startsWith("/admin")} 
-                    isOpen={open} 
-                  />
-                </>
-              )}
-            </nav>
-          </div>
-          
-          <div className="mt-auto border-t p-2">
-            <NavItem 
-              href="/dashboard/settings" 
-              icon={Settings} 
-              label="Settings" 
-              isActive={pathname === "/dashboard/settings"} 
-              isOpen={open} 
-            />
-          </div>
+          <Link 
+            href="/dashboard/settings" 
+            className={cn(
+              "shrink-0 text-muted-foreground hover:text-foreground transition-colors",
+              !open && "opacity-0 pointer-events-none"
+            )}
+          >
+            <Settings className="h-5 w-5" />
+          </Link>
         </div>
-      </motion.aside>
-    </AnimatePresence>
+      </div>
+    </motion.aside>
   )
 }
 
-interface NavItemProps {
+function NavItem({ href, icon: Icon, label, open, active }: { 
   href: string
-  icon: React.ElementType
+  icon: any
   label: string
-  isActive: boolean
-  isOpen: boolean
-  children?: React.ReactNode
-}
-
-function NavItem({ href, icon: Icon, label, isActive, isOpen }: NavItemProps) {
+  open: boolean
+  active: boolean
+}) {
   return (
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-        isActive 
-          ? "bg-accent text-accent-foreground hover:bg-accent/80" 
-          : "hover:bg-muted text-muted-foreground hover:text-foreground"
+        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+        active 
+          ? "bg-accent text-accent-foreground" 
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       )}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-5 w-5" />
       <AnimatePresence initial={false}>
-        {isOpen && (
+        {open && (
           <motion.span
-            key={label}
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: "auto" }}
-            exit={{ opacity: 0, width: 0 }}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
             className="truncate"
           >
             {label}
@@ -245,4 +190,23 @@ function NavItem({ href, icon: Icon, label, isActive, isOpen }: NavItemProps) {
       </AnimatePresence>
     </Link>
   )
-} 
+}
+
+function SectionLabel({ label, open }: { label: string; open: boolean }) {
+  return (
+    <AnimatePresence initial={false}>
+      {open ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="px-3 pt-4 text-xs font-medium text-muted-foreground"
+        >
+          {label}
+        </motion.div>
+      ) : (
+        <div className="h-4 border-t my-4" />
+      )}
+    </AnimatePresence>
+  )
+}
