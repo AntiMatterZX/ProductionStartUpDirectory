@@ -9,37 +9,65 @@ export async function GET(request: NextRequest) {
   const redirect = requestUrl.searchParams.get("redirect") || "/dashboard"
 
   if (code) {
-    // Create the Supabase client with cookies
-    const supabase = createRouteHandlerClient<Database>({ cookies })
-    
-    await supabase.auth.exchangeCodeForSession(code)
+    try {
+      // Create the Supabase client with cookies
+      const supabase = createRouteHandlerClient<Database>({ cookies })
+      
+      // Exchange code for session
+      const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
+      
+      if (sessionError) {
+        console.error("Error exchanging code for session:", sessionError);
+        // Redirect to login on error
+        return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent("Authentication failed")}`, request.url))
+      }
 
-    // Upsert profile for OAuth users
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      // Check if profile exists
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
-        .single()
+      // Get user data after successful auth
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-      if (!existingProfile) {
-        // Get default 'user' role id
-        const { data: userRoleData } = await supabase
-          .from("roles")
+      if (userError || !user) {
+        console.error("Error getting user after authentication:", userError);
+        return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent("Failed to get user data")}`, request.url))
+      }
+
+      try {
+        // Check if profile exists
+        const { data: existingProfile } = await supabase
+          .from("profiles")
           .select("id")
-          .eq("name", "user")
+          .eq("id", user.id)
           .single()
 
-        await supabase
-          .from("profiles")
-          .insert({
-            id: user.id,
-            full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-            role_id: userRoleData?.id,
-          })
+        if (!existingProfile) {
+          // Get default 'user' role id
+          const { data: userRoleData } = await supabase
+            .from("roles")
+            .select("id")
+            .eq("name", "user")
+            .single()
+
+          // Create profile
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .insert({
+              id: user.id,
+              full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+              role_id: userRoleData?.id,
+            })
+
+          if (profileError) {
+            console.error("Error creating user profile:", profileError);
+            // Continue anyway - we'll handle this separately, don't block login
+          }
+        }
+      } catch (profileError) {
+        console.error("Error handling user profile:", profileError);
+        // We don't want profile errors to block authentication
+        // Just log and continue
       }
+    } catch (error) {
+      console.error("General error in auth callback:", error);
+      return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent("Authentication error occurred")}`, request.url))
     }
   }
 
