@@ -1,248 +1,212 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
-import { 
-  ChevronLeft, 
-  Compass, 
-  FilePlus, 
-  Home, 
-  LayoutDashboard, 
-  Zap, 
-  Package, 
-  Settings, 
+import Link from "next/link"
+import {
+  LayoutDashboard,
+  Package,
+  FilePlus,
+  Compass,
   Star,
-  Rocket
+  Zap,
+  Rocket,
+  Settings,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  SidebarSeparator,
+} from "@/components/ui/sidebar"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
 
-export function DashboardSidebar() {
-  const [open, setOpen] = useState(true)
-  const [profile, setProfile] = useState<any>(null)
-  const pathname = usePathname()
-  
-  useEffect(() => {
-    // Fetch user profile
-    const fetchProfile = async () => {
-      const supabase = createClientComponentClient()
-      
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (user) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("*, roles(name)")
-          .eq("id", user.id)
-          .single()
-          
-        if (data) {
-          setProfile(data)
-        }
-      }
-    }
-    
-    fetchProfile()
-    
-    // Close sidebar on mobile
-    const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        setOpen(false)
-      } else {
-        setOpen(true)
-      }
-    }
-    
-    handleResize()
-    window.addEventListener("resize", handleResize)
-    
-    return () => {
-      window.removeEventListener("resize", handleResize)
-    }
-  }, [])
-  
-  const userRole = profile?.roles?.name || "user"
-
-  return (
-    <AnimatePresence initial={false}>
-      <motion.aside
-        initial={{ width: open ? 240 : 70 }}
-        animate={{ width: open ? 240 : 70 }}
-        exit={{ width: 70 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-        className={cn(
-          "fixed left-0 top-0 h-screen z-20 bg-card border-r shadow-sm transition-all duration-300",
-          "lg:relative"
-        )}
-      >
-        <div className="flex h-full flex-col">
-          <div className="flex h-16 items-center justify-between border-b px-3">
-            <AnimatePresence mode="wait">
-              {open ? (
-                <motion.div
-                  key="full-logo"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2"
-                >
-                  <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Rocket className="h-4 w-4" />
-                  </div>
-                  <span className="font-semibold">LaunchPad</span>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="icon-logo"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center"
-                >
-                  <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Rocket className="h-4 w-4" />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setOpen(!open)}
-              className="h-8 w-8"
-            >
-              <ChevronLeft className={cn("h-4 w-4 transition-transform", !open && "rotate-180")} />
-            </Button>
-          </div>
-          
-          <div className="flex-1 overflow-auto py-2">
-            <nav className="grid gap-1 px-2">
-              <NavItem 
-                href="/dashboard" 
-                icon={LayoutDashboard} 
-                label="Dashboard" 
-                isActive={pathname === "/dashboard"} 
-                isOpen={open} 
-              />
-              <NavItem 
-                href="/dashboard/startups" 
-                icon={Package} 
-                label="My Startups" 
-                isActive={(pathname ?? '').startsWith("/dashboard/startups")} 
-                isOpen={open} 
-              />
-              <NavItem 
-                href="/dashboard/startups/create" 
-                icon={FilePlus} 
-                label="Create Startup" 
-                isActive={pathname === "/dashboard/startups/create"} 
-                isOpen={open} 
-              />
-              <NavItem 
-                href="/dashboard/discover" 
-                icon={Compass} 
-                label="Discover" 
-                isActive={pathname === "/dashboard/discover"} 
-                isOpen={open} 
-              />
-              
-              {/* Conditional items based on role */}
-              {(userRole === "investor" || userRole === "admin") && (
-                <>
-                  <div className={cn("my-2 px-3", !open && "px-0 py-2")}>
-                    {open && <p className="text-xs font-medium text-muted-foreground">Investor</p>}
-                    {!open && <hr className="border-t border-border" />}
-                  </div>
-                  <NavItem 
-                    href="/dashboard/investor/wishlist" 
-                    icon={Star} 
-                    label="Wishlist" 
-                    isActive={pathname === "/dashboard/investor/wishlist"} 
-                    isOpen={open} 
-                  />
-                  <NavItem 
-                    href="/dashboard/investor/opportunities" 
-                    icon={Zap} 
-                    label="Opportunities" 
-                    isActive={pathname === "/dashboard/investor/opportunities"} 
-                    isOpen={open} 
-                  />
-                </>
-              )}
-              
-              {/* Admin section */}
-              {userRole === "admin" && (
-                <>
-                  <div className={cn("my-2 px-3", !open && "px-0 py-2")}>
-                    {open && <p className="text-xs font-medium text-muted-foreground">Admin</p>}
-                    {!open && <hr className="border-t border-border" />}
-                  </div>
-                  <NavItem 
-                    href="/admin" 
-                    icon={Home} 
-                    label="Admin Panel" 
-                    isActive={(pathname ?? '').startsWith("/admin")} 
-                    isOpen={open} 
-                  />
-                </>
-              )}
-            </nav>
-          </div>
-          
-          <div className="mt-auto border-t p-2">
-            <NavItem 
-              href="/dashboard/settings" 
-              icon={Settings} 
-              label="Settings" 
-              isActive={pathname === "/dashboard/settings"} 
-              isOpen={open} 
-            />
-          </div>
-        </div>
-      </motion.aside>
-    </AnimatePresence>
-  )
-}
-
-interface NavItemProps {
+interface NavItem {
+  title: string
   href: string
   icon: React.ElementType
-  label: string
-  isActive: boolean
-  isOpen: boolean
-  children?: React.ReactNode
+  section?: string
+  requiredRoles?: string[]
 }
 
-function NavItem({ href, icon: Icon, label, isActive, isOpen }: NavItemProps) {
+const navItems: NavItem[] = [
+  {
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    section: "Main",
+  },
+  {
+    title: "My Startups",
+    href: "/dashboard/startups",
+    icon: Package,
+    section: "Startups",
+  },
+  {
+    title: "Create Startup",
+    href: "/dashboard/startups/create",
+    icon: FilePlus,
+    section: "Startups",
+  },
+  {
+    title: "Discover",
+    href: "/dashboard/discover",
+    icon: Compass,
+    section: "Startups",
+  },
+  {
+    title: "Wishlist",
+    href: "/dashboard/investor/wishlist",
+    icon: Star,
+    section: "Investor",
+    requiredRoles: ["investor", "admin"],
+  },
+  {
+    title: "Opportunities",
+    href: "/dashboard/investor/opportunities",
+    icon: Zap,
+    section: "Investor",
+    requiredRoles: ["investor", "admin"],
+  },
+  {
+    title: "Admin Panel",
+    href: "/admin",
+    icon: Rocket,
+    section: "Admin",
+    requiredRoles: ["admin"],
+  },
+  {
+    title: "Settings",
+    href: "/dashboard/settings",
+    icon: Settings,
+    section: "System",
+  },
+]
+
+export function DashboardSidebar() {
+  const pathname = usePathname()
+  const [profile, setProfile] = useState<any>(null)
+  const [userRole, setUserRole] = useState<string>("user")
+  const supabase = createClientComponentClient()
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("*, roles(name)")
+        .eq("id", user.id)
+        .single()
+
+      if (data) {
+        setProfile(data)
+        setUserRole(data.roles?.name || "user")
+      }
+    }
+
+    fetchProfile()
+  }, [supabase])
+
+  const filteredNavItems = navItems.filter(item =>
+    !item.requiredRoles || item.requiredRoles.includes(userRole))
+
+  const groupedNavItems = filteredNavItems.reduce((acc, item) => {
+    const section = item.section || "Other"
+    if (!acc[section]) acc[section] = []
+    acc[section].push(item)
+    return acc
+  }, {} as Record<string, NavItem[]>)
+
+  const isActive = (href: string) => {
+    if (!pathname) return false
+    if (href === "/dashboard") return pathname === href
+    if (href === "/admin") return pathname.startsWith(href)
+    if (href === "/dashboard/startups") return pathname.startsWith(href)
+    return pathname === href
+  }
+
   return (
-    <Link
-      href={href}
-      className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-        isActive 
-          ? "bg-accent text-accent-foreground hover:bg-accent/80" 
-          : "hover:bg-muted text-muted-foreground hover:text-foreground"
-      )}
-    >
-      <Icon className="h-4 w-4" />
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.span
-            key={label}
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: "auto" }}
-            exit={{ opacity: 0, width: 0 }}
-            className="truncate"
-          >
-            {label}
-          </motion.span>
-        )}
-      </AnimatePresence>
-    </Link>
+    <Sidebar variant="floating" className="border-0">
+      <SidebarHeader className="p-4">
+        <div className="flex items-center gap-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Rocket className="h-5 w-5" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-lg font-semibold">LaunchPad</span>
+            <span className="text-xs text-muted-foreground">Startup Dashboard</span>
+          </div>
+        </div>
+      </SidebarHeader>
+
+      <SidebarSeparator />
+
+      <SidebarContent>
+        {Object.entries(groupedNavItems).map(([section, items]) => (
+          <SidebarGroup key={section}>
+            <SidebarGroupLabel>{section}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.href)}
+                      tooltip={item.title}
+                      className="gap-3"
+                    >
+                      <Link href={item.href}>
+                        <div className="flex h-5 w-5 items-center justify-center">
+                          <item.icon className="h-[18px] w-[18px]" />
+                        </div>
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+
+      <SidebarFooter className="mt-auto p-4">
+        <div className="flex items-center justify-between rounded-xl bg-muted p-3">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 border-2 border-background">
+              <AvatarImage src={profile?.avatar_url} alt="User" />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {profile?.full_name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span className="font-medium">
+                {profile?.full_name || "User"}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {profile?.roles?.name || "User"}
+              </span>
+            </div>
+          </div>
+          <Link href="/dashboard/settings">
+            <Settings className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+          </Link>
+        </div>
+      </SidebarFooter>
+
+      <SidebarRail />
+    </Sidebar>
   )
-} 
+}
