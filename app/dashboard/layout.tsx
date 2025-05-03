@@ -72,6 +72,10 @@ export default function DashboardLayout({
     )
   }
 
+  if (!user) {
+    return <div className="p-8">Unable to load user data. Please refresh.</div>
+  }
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar with open state passed from parent */}
