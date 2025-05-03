@@ -18,15 +18,16 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
 import { ModeToggle } from "@/components/theme/mode-toggle"
+import { useSidebar } from "./sidebar-context"
 
 interface DashboardHeaderProps {
   user: User
 }
 
 export function DashboardHeader({ user }: DashboardHeaderProps) {
+  const { sidebarOpen, toggleSidebar } = useSidebar()
   const [profile, setProfile] = useState<any>(null)
   const [isScrolled, setIsScrolled] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
   useEffect(() => {
     // Track scrolling for header appearance
@@ -74,15 +75,15 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
       isScrolled ? "bg-background/95 backdrop-blur-md border-b shadow-sm" : "bg-background"
     )}>
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
-        <div className="flex items-center gap-2 lg:hidden">
+        <div className="flex items-center gap-2">
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            onClick={toggleSidebar}
             className="lg:hidden"
           >
             <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle menu</span>
+            <span className="sr-only">Toggle sidebar</span>
           </Button>
         </div>
         
