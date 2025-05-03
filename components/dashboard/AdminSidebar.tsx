@@ -29,6 +29,7 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarProvider,
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar"
@@ -150,68 +151,70 @@ export function AdminSidebar({ isOpen, setIsOpen }: DashboardSidebarProps) {
         />
       )}
       
-      <Sidebar variant="floating" className="border-0 h-screen fixed left-0 top-0 z-40 lg:relative lg:z-0">
-        <SidebarHeader className="p-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Rocket className="h-5 w-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-lg font-semibold">LaunchPad</span>
-              <span className="text-xs text-muted-foreground">Startup Platform</span>
-            </div>
-          </div>
-        </SidebarHeader>
-
-        <SidebarSeparator />
-
-        <SidebarContent>
-          {Object.entries(groupedNavItems).map(([section, items]) => (
-            items.length > 0 && (
-              <SidebarGroup key={section}>
-                <SidebarGroupLabel>{section}</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {items.map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={item.isActive} tooltip={item.title} className="gap-3">
-                          <Link href={item.href} onClick={handleLinkClick}>
-                            <div className="flex h-5 w-5 items-center justify-center">
-                              <item.icon className="h-[18px] w-[18px]" />
-                            </div>
-                            <span>{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                        {item.badge && <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>}
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            )
-          ))}
-        </SidebarContent>
-
-        <SidebarFooter className="mt-auto p-4">
-          <div className="flex items-center justify-between rounded-xl bg-muted p-3">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 border-2 border-background">
-                <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || ""} />
-                <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
-              </Avatar>
+      <SidebarProvider defaultOpen={isOpen} open={isOpen} onOpenChange={setIsOpen}>
+        <Sidebar variant="floating" className="border-0 h-screen fixed left-0 top-0 z-40 lg:relative lg:z-0">
+          <SidebarHeader className="p-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <Rocket className="h-5 w-5" />
+              </div>
               <div className="flex flex-col">
-                <span className="font-medium">{profile?.full_name || "User"}</span>
-                <span className="text-xs text-muted-foreground">{userRole}</span>
+                <span className="text-lg font-semibold">LaunchPad</span>
+                <span className="text-xs text-muted-foreground">Startup Platform</span>
               </div>
             </div>
-            <Link href="/dashboard/settings" onClick={handleLinkClick}>
-              <Settings className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
-            </Link>
-          </div>
-        </SidebarFooter>
+          </SidebarHeader>
 
-        <SidebarRail />
-      </Sidebar>
+          <SidebarSeparator />
+
+          <SidebarContent>
+            {Object.entries(groupedNavItems).map(([section, items]) => (
+              items.length > 0 && (
+                <SidebarGroup key={section}>
+                  <SidebarGroupLabel>{section}</SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {items.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton asChild isActive={item.isActive} tooltip={item.title} className="gap-3">
+                            <Link href={item.href} onClick={handleLinkClick}>
+                              <div className="flex h-5 w-5 items-center justify-center">
+                                <item.icon className="h-[18px] w-[18px]" />
+                              </div>
+                              <span>{item.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                          {item.badge && <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>}
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              )
+            ))}
+          </SidebarContent>
+
+          <SidebarFooter className="mt-auto p-4">
+            <div className="flex items-center justify-between rounded-xl bg-muted p-3">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10 border-2 border-background">
+                  <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || ""} />
+                  <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="font-medium">{profile?.full_name || "User"}</span>
+                  <span className="text-xs text-muted-foreground">{userRole}</span>
+                </div>
+              </div>
+              <Link href="/dashboard/settings" onClick={handleLinkClick}>
+                <Settings className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+              </Link>
+            </div>
+          </SidebarFooter>
+
+          <SidebarRail />
+        </Sidebar>
+      </SidebarProvider>
     </>
   )
 } 
