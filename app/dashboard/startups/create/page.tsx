@@ -207,9 +207,11 @@ export default function CreateStartupPage() {
 
   if (isLoading) {
     return (
-      <div className="container max-w-4xl py-10 flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="ml-4 text-muted-foreground">Loading...</p>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
       </div>
     )
   }
@@ -222,10 +224,10 @@ export default function CreateStartupPage() {
   }
 
   return (
-    <div className="w-full py-6">
-      <h1 className="text-3xl font-bold mb-8">Create Your Startup Profile</h1>
+    <div className="w-full space-y-6">
+      <h1 className="text-2xl md:text-3xl font-bold">Create Your Startup</h1>
 
-      <div className="mb-10">
+      <div className="mb-8">
         <FormStepper 
           currentStep={currentStep} 
           totalSteps={totalSteps} 
@@ -235,7 +237,7 @@ export default function CreateStartupPage() {
       </div>
 
       <Card className="shadow-sm">
-        <CardContent className="p-6 md:p-8">
+        <CardContent className="p-4 md:p-6">
           <AnimatePresence mode="wait">
             {currentStep === 1 && (
               <motion.div

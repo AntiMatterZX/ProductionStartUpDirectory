@@ -104,7 +104,7 @@ export function DashboardSidebar() {
   const [profile, setProfile] = useState<any>(null)
   const [userRole, setUserRole] = useState<string>("user")
   const supabase = createClientComponentClient()
-  const { state, toggleSidebar, isMobile } = useSidebar();
+  const { state, toggleSidebar, isMobile, openMobile, setOpenMobile } = useSidebar();
   
   useEffect(() => {
     const fetchProfile = async () => {
@@ -146,22 +146,20 @@ export function DashboardSidebar() {
 
   return (
     <>
-      {/* Mobile Menu Trigger Button */}
-      {isMobile && (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={toggleSidebar}
-          className="fixed top-4 left-4 z-50 md:hidden"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-      )}
+      {/* Mobile Menu Button */}
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        onClick={() => setOpenMobile(true)}
+        className="fixed top-3 left-3 z-50 md:hidden"
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
       
       <Sidebar 
-        variant="floating" 
+        variant="sidebar" 
         className="border-0"
-        collapsible="icon"
+        collapsible="offcanvas"
         side="left"
       >
         <SidebarHeader className="p-4 flex items-center justify-between">
@@ -175,7 +173,7 @@ export function DashboardSidebar() {
             </div>
           </div>
           
-          {/* Custom toggle button to enhance visibility */}
+          {/* Desktop toggle button */}
           <Button 
             variant="ghost" 
             size="icon" 
@@ -240,9 +238,6 @@ export function DashboardSidebar() {
             </Link>
           </div>
         </SidebarFooter>
-
-        {/* Make sure rail is visible */}
-        <SidebarRail className="after:bg-border hover:after:bg-foreground/30" />
       </Sidebar>
     </>
   )

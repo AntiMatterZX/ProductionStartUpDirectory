@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { User } from "@supabase/supabase-js"
-import { Bell, Menu, MessageSquare, Search } from "lucide-react"
+import { Bell, MessageSquare, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
 import { ModeToggle } from "@/components/theme/mode-toggle"
+import { useSidebar } from "@/components/ui/sidebar"
 
 interface DashboardHeaderProps {
   user: User
@@ -26,7 +27,7 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ user }: DashboardHeaderProps) {
   const [profile, setProfile] = useState<any>(null)
   const [isScrolled, setIsScrolled] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { isMobile } = useSidebar()
   
   useEffect(() => {
     // Track scrolling for header appearance
@@ -70,24 +71,16 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 
   return (
     <header className={cn(
-      "sticky top-0 z-40 w-full transition-all duration-200",
+      "sticky top-0 z-30 w-full transition-all duration-200",
       isScrolled ? "bg-background/95 backdrop-blur-md border-b shadow-sm" : "bg-background"
     )}>
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
-        <div className="flex items-center gap-2 lg:hidden">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden"
-          >
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle menu</span>
-          </Button>
-        </div>
+        {/* Left side - Empty space for mobile sidebar button */}
+        <div className="w-8 md:w-auto"></div>
         
-        <div className="flex items-center gap-2 md:gap-4">
-          <form className="hidden md:flex relative w-full max-w-md">
+        {/* Center - Search when available */}
+        <div className="hidden md:flex relative items-center">
+          <form className="relative w-full max-w-md">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
@@ -97,25 +90,29 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           </form>
         </div>
         
+        {/* Right side - Action buttons */}
         <div className="flex items-center gap-2">
-          <ModeToggle />
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute right-1 top-1 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-            </span>
-            <span className="sr-only">Notifications</span>
-          </Button>
-          
-          <Button variant="ghost" size="icon">
-            <MessageSquare className="h-5 w-5" />
-            <span className="sr-only">Messages</span>
-          </Button>
+          <div className="hidden sm:flex items-center">
+            <ModeToggle />
+            
+            <Button variant="ghost" size="icon" className="relative ml-2">
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-1 top-1 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              <span className="sr-only">Notifications</span>
+            </Button>
+            
+            <Button variant="ghost" size="icon" className="ml-2">
+              <MessageSquare className="h-5 w-5" />
+              <span className="sr-only">Messages</span>
+            </Button>
+          </div>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full ml-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || user.email || ""} />
                   <AvatarFallback>{initials}</AvatarFallback>

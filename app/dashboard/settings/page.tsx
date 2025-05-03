@@ -38,9 +38,9 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="container py-10 flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-[50vh]">
         <div className="flex flex-col items-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-muted-foreground">Loading settings...</p>
         </div>
       </div>
@@ -48,11 +48,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="w-full py-6">
-      <h1 className="text-3xl font-bold mb-8">Settings</h1>
+    <div className="w-full space-y-6">
+      <h1 className="text-2xl md:text-3xl font-bold">Settings</h1>
 
       <Tabs defaultValue="account" className="w-full">
-        <TabsList className="mb-6">
+        <TabsList className="mb-6 w-full overflow-x-auto flex flex-nowrap">
           <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="privacy">Privacy & Security</TabsTrigger>

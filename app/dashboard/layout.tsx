@@ -20,24 +20,27 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex h-screen bg-background overflow-hidden">
+      <div className="flex min-h-screen bg-background">
         <DashboardSidebar />
         
-        <div className="relative flex flex-col flex-1 w-full h-full overflow-hidden">
+        {/* Main content container */}
+        <div className="flex flex-col flex-1 w-full md:pl-0">
+          {/* Header with padding for mobile menu button */}
           <DashboardHeader user={user} />
           
-          <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          {/* Main content with proper padding */}
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 pt-16 md:pt-6">
             <div className="mx-auto max-w-7xl">
               {children}
             </div>
           </main>
           
+          {/* Footer */}
           <footer className="border-t py-3 text-xs text-center text-muted-foreground">
-            <div className="flex items-center justify-between px-6">
-              <div className="text-xs text-muted-foreground mt-auto">
-                <div className="hidden md:block">
-                  <p>© {new Date().getFullYear()} LaunchPad. All rights reserved.</p>
-                </div>
+            <div className="flex items-center justify-between px-4 md:px-6">
+              <div className="text-xs text-muted-foreground">
+                <p className="hidden md:block">© {new Date().getFullYear()} LaunchPad. All rights reserved.</p>
+                <p className="md:hidden">© {new Date().getFullYear()} LaunchPad</p>
               </div>
               <ModeToggle />
             </div>
