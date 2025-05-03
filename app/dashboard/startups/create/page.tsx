@@ -222,7 +222,7 @@ export default function CreateStartupPage() {
   }
 
   return (
-    <div className="container max-w-4xl py-10">
+    <div className="w-full py-6">
       <h1 className="text-3xl font-bold mb-8">Create Your Startup Profile</h1>
 
       <div className="mb-10">

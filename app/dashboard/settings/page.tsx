@@ -48,7 +48,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="container py-10">
+    <div className="w-full py-6">
       <h1 className="text-3xl font-bold mb-8">Settings</h1>
 
       <Tabs defaultValue="account" className="w-full">

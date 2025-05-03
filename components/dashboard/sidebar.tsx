@@ -12,6 +12,8 @@ import {
   Zap,
   Rocket,
   Settings,
+  ChevronLeft,
+  Menu
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -28,8 +30,12 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
+  SidebarTrigger,
+  useSidebar
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
+import { cn } from "@/lib/utils"
 
 interface NavItem {
   title: string
@@ -98,7 +104,8 @@ export function DashboardSidebar() {
   const [profile, setProfile] = useState<any>(null)
   const [userRole, setUserRole] = useState<string>("user")
   const supabase = createClientComponentClient()
-
+  const { state, toggleSidebar, isMobile } = useSidebar();
+  
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -138,75 +145,105 @@ export function DashboardSidebar() {
   }
 
   return (
-    <Sidebar variant="floating" className="border-0">
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Rocket className="h-5 w-5" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-semibold">LaunchPad</span>
-            <span className="text-xs text-muted-foreground">Startup Dashboard</span>
-          </div>
-        </div>
-      </SidebarHeader>
-
-      <SidebarSeparator />
-
-      <SidebarContent>
-        {Object.entries(groupedNavItems).map(([section, items]) => (
-          <SidebarGroup key={section}>
-            <SidebarGroupLabel>{section}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive(item.href)}
-                      tooltip={item.title}
-                      className="gap-3"
-                    >
-                      <Link href={item.href}>
-                        <div className="flex h-5 w-5 items-center justify-center">
-                          <item.icon className="h-[18px] w-[18px]" />
-                        </div>
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
-
-      <SidebarFooter className="mt-auto p-4">
-        <div className="flex items-center justify-between rounded-xl bg-muted p-3">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border-2 border-background">
-              <AvatarImage src={profile?.avatar_url} alt="User" />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {profile?.full_name?.charAt(0) || "U"}
-              </AvatarFallback>
-            </Avatar>
+    <>
+      {/* Mobile Menu Trigger Button */}
+      {isMobile && (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={toggleSidebar}
+          className="fixed top-4 left-4 z-50 md:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      )}
+      
+      <Sidebar 
+        variant="floating" 
+        className="border-0"
+        collapsible="icon"
+        side="left"
+      >
+        <SidebarHeader className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <Rocket className="h-5 w-5" />
+            </div>
             <div className="flex flex-col">
-              <span className="font-medium">
-                {profile?.full_name || "User"}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {profile?.roles?.name || "User"}
-              </span>
+              <span className="text-lg font-semibold">LaunchPad</span>
+              <span className="text-xs text-muted-foreground">Startup Dashboard</span>
             </div>
           </div>
-          <Link href="/dashboard/settings">
-            <Settings className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
-          </Link>
-        </div>
-      </SidebarFooter>
+          
+          {/* Custom toggle button to enhance visibility */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleSidebar} 
+            className="hidden md:flex h-8 w-8 rounded-full bg-muted"
+          >
+            <ChevronLeft className={cn("h-4 w-4 transition-transform", state === "collapsed" && "rotate-180")} />
+          </Button>
+        </SidebarHeader>
 
-      <SidebarRail />
-    </Sidebar>
+        <SidebarSeparator />
+
+        <SidebarContent>
+          {Object.entries(groupedNavItems).map(([section, items]) => (
+            <SidebarGroup key={section}>
+              <SidebarGroupLabel>{section}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {items.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.href)}
+                        tooltip={item.title}
+                        className="gap-3"
+                      >
+                        <Link href={item.href}>
+                          <div className="flex h-5 w-5 items-center justify-center">
+                            <item.icon className="h-[18px] w-[18px]" />
+                          </div>
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
+
+        <SidebarFooter className="mt-auto p-4">
+          <div className="flex items-center justify-between rounded-xl bg-muted p-3">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 border-2 border-background">
+                <AvatarImage src={profile?.avatar_url} alt="User" />
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {profile?.full_name?.charAt(0) || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="font-medium">
+                  {profile?.full_name || "User"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {profile?.roles?.name || "User"}
+                </span>
+              </div>
+            </div>
+            <Link href="/dashboard/settings">
+              <Settings className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+            </Link>
+          </div>
+        </SidebarFooter>
+
+        {/* Make sure rail is visible */}
+        <SidebarRail className="after:bg-border hover:after:bg-foreground/30" />
+      </Sidebar>
+    </>
   )
 }
