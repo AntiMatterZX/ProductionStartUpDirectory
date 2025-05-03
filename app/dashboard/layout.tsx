@@ -2,7 +2,7 @@ import React from "react"
 import { redirect } from "next/navigation"
 import { getAuthUser } from "@/lib/auth/auth"
 import { DashboardHeader } from "@/components/dashboard/header"
-import { DashboardSidebar } from "@/components/dashboard/sidebar" 
+import { AdminSidebar } from "@/components/dashboard/admin-sidebar"
 import { ModeToggle } from "@/components/theme/mode-toggle"
 
 export default async function DashboardLayout({
@@ -19,7 +19,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <DashboardSidebar />
+      <AdminSidebar />
       
       <div className="flex flex-col flex-1 overflow-hidden">
         <DashboardHeader user={user} />
