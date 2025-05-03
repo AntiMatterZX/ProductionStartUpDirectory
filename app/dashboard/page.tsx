@@ -136,34 +136,50 @@ export default function DashboardPage() {
         const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
         
-        // Fetch current month views
-        const { data: currentMonthViews, error: currentError } = await supabase
-          .from('startup_views')
-          .select('count')
-          .gte('viewed_at', startOfCurrentMonth.toISOString())
-          .eq('startup_user_id', session.user.id);
+        try {
+          // Fetch current month views
+          const { data: currentMonthViews, error: currentError } = await supabase
+            .from('startup_views')
+            .select('count')
+            .gte('viewed_at', startOfCurrentMonth.toISOString())
+            .eq('startup_user_id', session.user.id);
+            
+          // Fetch previous month views  
+          const { data: previousMonthViews, error: prevError } = await supabase
+            .from('startup_views')
+            .select('count')
+            .gte('viewed_at', startOfPreviousMonth.toISOString())
+            .lt('viewed_at', endOfPreviousMonth.toISOString())
+            .eq('startup_user_id', session.user.id);
           
-        // Fetch previous month views  
-        const { data: previousMonthViews, error: prevError } = await supabase
-          .from('startup_views')
-          .select('count')
-          .gte('viewed_at', startOfPreviousMonth.toISOString())
-          .lt('viewed_at', endOfPreviousMonth.toISOString())
-          .eq('startup_user_id', session.user.id);
-        
-        // Calculate totals and percent change
-        const currentTotal = currentMonthViews?.reduce((sum, item) => sum + (item.count || 0), 0) || 0;
-        const previousTotal = previousMonthViews?.reduce((sum, item) => sum + (item.count || 0), 0) || 0;
-        
-        let percentChange = 0;
-        if (previousTotal > 0) {
-          percentChange = Math.round(((currentTotal - previousTotal) / previousTotal) * 100);
+          if (currentError || prevError) {
+            console.error("Error fetching startup views:", currentError || prevError);
+            setInvestorViews({
+              total: 0,
+              percentChange: 0
+            });
+          } else {
+            // Calculate totals and percent change
+            const currentTotal = currentMonthViews?.reduce((sum, item) => sum + (item.count || 0), 0) || 0;
+            const previousTotal = previousMonthViews?.reduce((sum, item) => sum + (item.count || 0), 0) || 0;
+            
+            let percentChange = 0;
+            if (previousTotal > 0) {
+              percentChange = Math.round(((currentTotal - previousTotal) / previousTotal) * 100);
+            }
+            
+            setInvestorViews({
+              total: currentTotal,
+              percentChange: percentChange
+            });
+          }
+        } catch (viewsError) {
+          console.error("Exception in startup views fetch:", viewsError);
+          setInvestorViews({
+            total: 0,
+            percentChange: 0
+          });
         }
-        
-        setInvestorViews({
-          total: currentTotal,
-          percentChange: percentChange
-        });
         
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
