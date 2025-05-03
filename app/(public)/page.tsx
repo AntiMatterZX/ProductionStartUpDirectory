@@ -181,27 +181,7 @@ export default function HomePage() {
       <section ref={statsRef} className="py-20 border-y bg-background/50 backdrop-blur-sm">
         <div className="container px-4 sm:px-6">
           <div className="flex flex-col items-center justify-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-10 text-center">The LaunchPad Journey</h2>
             <SpinningBoxText />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
-              {[
-                { number: "500+", label: "Startups" },
-                { number: "200+", label: "Investors" },
-                { number: "$50M+", label: "Funding Secured" },
-                { number: "15+", label: "Countries" }
-              ].map((stat, index) => (
-                <MotionDiv
-                  key={index}
-                  className="text-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={statsInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                >
-                  <div className="text-3xl md:text-4xl font-bold text-primary mb-2">{stat.number}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
-                </MotionDiv>
-              ))}
-            </div>
           </div>
         </div>
       </section>

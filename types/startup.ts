@@ -58,6 +58,7 @@ export interface Startup {
     full_name: string | null
     avatar_url: string | null
   }
+  tagline?: string | null
 }
 
 export interface StartupFormData {

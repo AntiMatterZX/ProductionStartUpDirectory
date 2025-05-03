@@ -9,41 +9,12 @@ import { RoundedDrawerNav } from "@/components/ui/rounded-drawer-nav"
 // Define startup categories and related navigation links
 const startupCategories = [
   {
-    title: "Explore",
+    title: "Startups",
     sublinks: [
-      { title: "Featured Startups", href: "/startups" },
-      { title: "Latest Additions", href: "/startups/latest" },
-      { title: "Top Funded", href: "/startups/top-funded" },
-      { title: "Trending", href: "/startups/trending" },
-    ],
-  },
-  {
-    title: "Categories",
-    sublinks: [
-      { title: "SaaS", href: "/startups/category/saas" },
-      { title: "Fintech", href: "/startups/category/fintech" },
-      { title: "Healthcare", href: "/startups/category/healthcare" },
-      { title: "AI & ML", href: "/startups/category/ai-ml" },
-      { title: "Blockchain", href: "/startups/category/blockchain" },
-      { title: "E-commerce", href: "/startups/category/ecommerce" },
-    ],
-  },
-  {
-    title: "Investors",
-    sublinks: [
-      { title: "Angel Investors", href: "/investors/angel" },
-      { title: "VC Firms", href: "/investors/vc" },
-      { title: "Corporate Investors", href: "/investors/corporate" },
-      { title: "Investment Portfolio", href: "/investors/portfolio" },
-    ],
-  },
-  {
-    title: "Resources",
-    sublinks: [
-      { title: "Startup Guide", href: "/resources/guide" },
-      { title: "Pitch Deck Templates", href: "/resources/pitch-decks" },
-      { title: "Funding Advice", href: "/resources/funding" },
-      { title: "Success Stories", href: "/resources/success-stories" },
+      { title: "All Startups", href: "/startups" },
+      { title: "Top 5", href: "/startups/top" },
+      { title: "Categories", href: "/startups/categories" },
+      { title: "Create Startup", href: "/dashboard/startups/create" },
     ],
   },
   {
@@ -51,8 +22,8 @@ const startupCategories = [
     sublinks: [
       { title: "Our Mission", href: "/about/mission" },
       { title: "How It Works", href: "/about/how-it-works" },
+      { title: "Team", href: "/about/team" },
       { title: "Contact Us", href: "/contact" },
-      { title: "FAQ", href: "/faq" },
     ],
   },
 ];

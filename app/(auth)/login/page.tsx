@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import LoginForm from "@/components/auth/login-form"
-import { use } from "react"
 
 export const metadata: Metadata = {
   title: "Login | VentureX",
@@ -11,11 +10,9 @@ export const metadata: Metadata = {
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirect?: string }>
+  searchParams: { redirect?: string }
 }) {
-  // Unwrap searchParams with React.use() for Next.js 15
-  const unwrappedParams = use(searchParams);
-  const redirectUrl = unwrappedParams.redirect;
+  const redirectUrl = searchParams.redirect;
   
   return (
     <div className="space-y-6">

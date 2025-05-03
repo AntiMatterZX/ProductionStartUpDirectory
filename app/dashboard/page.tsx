@@ -19,6 +19,7 @@ type ProfileType = {
   roles?: {
     name?: string;
   };
+  profile_completion?: number;
   [key: string]: any;
 }
 
@@ -48,6 +49,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [startups, setStartups] = useState<StartupType[]>([])
   const [recentActivity, setRecentActivity] = useState<ActivityType[]>([])
+  const [investorViews, setInvestorViews] = useState({ total: 0, percentChange: 0 })
 
   useEffect(() => {
     async function fetchData() {
@@ -72,6 +74,23 @@ export default function DashboardPage() {
           .single()
 
         setProfile(profileData)
+
+        // Calculate profile completion score
+        const profileCompletionScore = calculateProfileCompletionScore(profileData);
+        
+        // Update profile data with completion score
+        if (profileData) {
+          profileData.profile_completion = profileCompletionScore;
+          setProfile(profileData);
+          
+          // Optionally update the score in the database if it's not already there
+          if (profileData.profile_completion !== profileCompletionScore) {
+            await supabase
+              .from('profiles')
+              .update({ profile_completion: profileCompletionScore })
+              .eq('id', session.user.id);
+          }
+        }
 
         // Fetch startups
         const { data: startupsData } = await supabase
@@ -110,6 +129,42 @@ export default function DashboardPage() {
 
           setWishlistCount(wishlist || 0)
         }
+        
+        // Fetch investor views data
+        const now = new Date();
+        const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        
+        // Fetch current month views
+        const { data: currentMonthViews, error: currentError } = await supabase
+          .from('startup_views')
+          .select('count')
+          .gte('viewed_at', startOfCurrentMonth.toISOString())
+          .eq('startup_user_id', session.user.id);
+          
+        // Fetch previous month views  
+        const { data: previousMonthViews, error: prevError } = await supabase
+          .from('startup_views')
+          .select('count')
+          .gte('viewed_at', startOfPreviousMonth.toISOString())
+          .lt('viewed_at', endOfPreviousMonth.toISOString())
+          .eq('startup_user_id', session.user.id);
+        
+        // Calculate totals and percent change
+        const currentTotal = currentMonthViews?.reduce((sum, item) => sum + (item.count || 0), 0) || 0;
+        const previousTotal = previousMonthViews?.reduce((sum, item) => sum + (item.count || 0), 0) || 0;
+        
+        let percentChange = 0;
+        if (previousTotal > 0) {
+          percentChange = Math.round(((currentTotal - previousTotal) / previousTotal) * 100);
+        }
+        
+        setInvestorViews({
+          total: currentTotal,
+          percentChange: percentChange
+        });
+        
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
       } finally {
@@ -119,6 +174,29 @@ export default function DashboardPage() {
 
     fetchData()
   }, [supabase, router])
+  
+  // Function to calculate profile completion score
+  function calculateProfileCompletionScore(profileData: ProfileType | null): number {
+    if (!profileData) return 0;
+    
+    const fields = [
+      'full_name',
+      'avatar_url',
+      'bio',
+      'location',
+      'website',
+      'company',
+      'job_title'
+    ];
+    
+    const completedFields = fields.filter(field => 
+      profileData[field] !== null && 
+      profileData[field] !== undefined && 
+      profileData[field] !== ''
+    );
+    
+    return Math.round((completedFields.length / fields.length) * 100);
+  }
 
   if (loading) {
     return (
@@ -193,9 +271,9 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">18</div>
+            <div className="text-2xl font-bold">{investorViews.total}</div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              {investorViews.percentChange > 0 ? '+' : ''}{investorViews.percentChange}% from last month
             </p>
           </CardContent>
           <CardFooter>
@@ -213,7 +291,7 @@ export default function DashboardPage() {
             <BarChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">76%</div>
+            <div className="text-2xl font-bold">{profile?.profile_completion || 0}%</div>
             <p className="text-xs text-muted-foreground">
               Profile completion score
             </p>
@@ -235,7 +313,7 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatDate(new Date(profile?.created_at || Date.now()))}</div>
+            <div className="text-2xl font-bold">{profile?.created_at ? formatDate(new Date(profile.created_at)) : 'N/A'}</div>
             <p className="text-xs text-muted-foreground">
               Account creation date
             </p>

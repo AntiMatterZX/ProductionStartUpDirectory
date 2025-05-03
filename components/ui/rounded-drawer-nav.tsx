@@ -93,26 +93,6 @@ export const RoundedDrawerNav: React.FC<RoundedDrawerNavProps> = ({
               {user ? (
                 <>
                   <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="hidden md:flex items-center gap-1 rounded-full text-primary border-primary/30 hover:bg-primary/10"
-                    onClick={() => router.push("/dashboard/startups/create")}
-                  >
-                    <FiPlus className="h-4 w-4" />
-                    <span>Create Startup</span>
-                  </Button>
-                  {userRole === 'admin' && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="hidden md:flex items-center gap-1 rounded-full text-primary border-primary/30 hover:bg-primary/10"
-                      onClick={() => router.push("/admin")}
-                    >
-                      <FiPlus className="h-4 w-4" />
-                      <span>Create Category</span>
-                    </Button>
-                  )}
-                  <Button 
                     className="hidden rounded-md bg-primary px-3 py-1.5 text-sm text-white transition-colors hover:bg-primary/90 md:block"
                     onClick={() => router.push("/dashboard")}
                   >
@@ -124,15 +104,6 @@ export const RoundedDrawerNav: React.FC<RoundedDrawerNavProps> = ({
                 </>
               ) : (
                 <>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="hidden md:flex items-center gap-1 rounded-full text-primary border-primary/30 hover:bg-primary/10"
-                    onClick={() => router.push("/signup?action=create-startup")}
-                  >
-                    <FiPlus className="h-4 w-4" />
-                    <span>Create Startup</span>
-                  </Button>
                   <Link href="/login" className="hidden md:block">
                     <Button variant="outline" size="sm" className="rounded-md">
                       Log in
@@ -279,102 +250,75 @@ interface MobileLinksProps {
 
 const MobileLinks: React.FC<MobileLinksProps> = ({ links, open, user, onSignOut, userRole }) => {
   const router = useRouter();
-  
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
   return (
-    <AnimatePresence mode="popLayout">
+    <AnimatePresence>
       {open && (
         <motion.div
-          initial={{
-            opacity: 0,
-          }}
-          animate={{
-            opacity: 1,
-          }}
-          exit={{
-            opacity: 0,
-          }}
-          className="grid grid-cols-2 gap-6 py-6 md:hidden"
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          className="mt-4 overflow-hidden md:hidden"
         >
-          {links.map((l) => {
-            return (
-              <div key={l.title} className="space-y-1.5">
-                <span className="text-md block font-semibold text-foreground dark:text-neutral-50">
-                  {l.title}
-                </span>
-                {l.sublinks.map((sl) => (
-                  <Link
-                    className="text-md block text-muted-foreground dark:text-neutral-300"
-                    href={sl.href}
-                    key={sl.title}
+          <div className="flex flex-col gap-4">
+            {links.map((l) => (
+              <div key={l.title}>
+                <button
+                  onClick={() => setActiveCategory(active => active === l.title ? null : l.title)}
+                  className="flex w-full items-center justify-between text-lg font-semibold text-foreground dark:text-neutral-50"
+                >
+                  <span>{l.title}</span>
+                  <motion.span
+                    animate={{
+                      rotate: activeCategory === l.title ? -180 : 0,
+                    }}
                   >
-                    {sl.title}
-                  </Link>
-                ))}
+                    <FiChevronDown />
+                  </motion.span>
+                </button>
+                <AnimatePresence>
+                  {activeCategory === l.title && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-2 space-y-2 pl-4"
+                    >
+                      {l.sublinks.map((sl) => (
+                        <Link
+                          href={sl.href}
+                          key={sl.title}
+                          className="block text-muted-foreground dark:text-neutral-400 transition-colors hover:text-foreground dark:hover:text-neutral-50"
+                        >
+                          {sl.title}
+                        </Link>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-            );
-          })}
-          
-          <div className="col-span-2 flex flex-col gap-2 pt-4">
+            ))}
+            
             {user ? (
-              <>
-                <div className="flex items-center gap-3 p-2 border rounded-md">
-                  <Avatar className="h-8 w-8 border border-border">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || "User avatar"} />
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      {user?.email?.substring(0, 2).toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium truncate">{user?.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {userRole === 'admin' ? 'Administrator' : 'User Account'}
-                    </p>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  className="w-full rounded-md flex items-center justify-center gap-1 text-primary"
-                  onClick={() => router.push("/dashboard/startups/create")}
-                >
-                  <FiPlus className="h-4 w-4" />
-                  <span>Create Startup</span>
+              <div className="mt-4 space-y-2">
+                <Link href="/dashboard" className="inline-block">
+                  <Button>Dashboard</Button>
+                </Link>
+                <Button variant="outline" className="w-full justify-start" onClick={onSignOut}>
+                  <FiLogOut className="mr-2 h-4 w-4" />
+                  Log out
                 </Button>
-                <Button 
-                  className="w-full rounded-md bg-primary text-white"
-                  onClick={() => router.push("/dashboard")}
-                >
-                  Dashboard
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full rounded-md flex items-center justify-center gap-1 text-destructive"
-                  onClick={onSignOut}
-                >
-                  <FiLogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
-                </Button>
-              </>
+              </div>
             ) : (
-              <>
-                <Button 
-                  variant="outline" 
-                  className="w-full rounded-md flex items-center justify-center gap-1 text-primary"
-                  onClick={() => router.push("/signup?action=create-startup")}
-                >
-                  <FiPlus className="h-4 w-4" />
-                  <span>Create Startup</span>
-                </Button>
-                <Link href="/login">
-                  <Button variant="outline" className="w-full rounded-md">
-                    Log in
-                  </Button>
+              <div className="mt-4 flex gap-2">
+                <Link href="/login" className="inline-block">
+                  <Button variant="outline">Log in</Button>
                 </Link>
-                <Link href="/signup">
-                  <Button className="w-full rounded-md bg-primary text-white">
-                    <span className="font-bold">Get started</span> - free
-                  </Button>
+                <Link href="/signup" className="inline-block">
+                  <Button>Sign up</Button>
                 </Link>
-              </>
+              </div>
             )}
           </div>
         </motion.div>

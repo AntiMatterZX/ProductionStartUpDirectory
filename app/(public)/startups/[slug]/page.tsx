@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect } from "react"
 import { notFound } from "next/navigation"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
 import StartupHeader from "@/components/startup/detail/StartupHeader"
@@ -12,10 +12,8 @@ import { MotionDiv } from "@/components/ui/motion"
 import { generateSlug } from "@/lib/utils/helpers/slug-generator"
 import type { Startup } from "@/types/startup"
 
-export default function StartupDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  // Unwrap params with React.use() to fix Next.js 15 warning
-  const unwrappedParams = use(params);
-  const slugValue = unwrappedParams.slug;
+export default function StartupDetailPage({ params }: { params: { slug: string } }) {
+  const slugValue = params.slug;
   
   const [startup, setStartup] = useState<Startup | null>(null)
   const [loading, setLoading] = useState(true)
