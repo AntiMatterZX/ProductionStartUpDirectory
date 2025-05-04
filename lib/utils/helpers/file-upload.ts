@@ -20,6 +20,7 @@ export async function uploadFile(
   }
 
   const supabase = createClientComponentClient()
+  let progressInterval: any = null;
 
   try {
     // Validate file type based on media type
@@ -40,7 +41,6 @@ export async function uploadFile(
     // This prevents "violates row-level security policy" errors
     
     // Track upload progress
-    let progressInterval: any = null;
     if (onProgress) {
       // Start at 0% progress
       onProgress(0);
@@ -74,7 +74,8 @@ export async function uploadFile(
 
     // Clear the interval regardless of outcome
     if (progressInterval) {
-      clearInterval(progressInterval)
+      clearInterval(progressInterval);
+      progressInterval = null;
     }
 
     if (error) {
@@ -94,24 +95,35 @@ export async function uploadFile(
       throw new Error("Failed to get public URL")
     }
 
+    // Clean up URL if needed - some CDN configurations might add query params
+    // which can cause issues with some backends
+    const cleanUrl = urlData.publicUrl.split('?')[0];
+
     // Record metadata in startup_media_items table if it's a startup-related upload
     if (mediaType !== 'avatar' && mediaType !== 'profile') {
       try {
         // Get startup ID from path or parameter
         // This function doesn't have startup ID, so it will be handled by the API endpoint
-        console.log("File uploaded successfully:", urlData.publicUrl);
+        console.log("File uploaded successfully:", cleanUrl);
       } catch (metadataError) {
         console.error("Error recording media metadata:", metadataError);
         // Don't fail the upload if metadata recording fails
       }
     }
 
-    return urlData.publicUrl
+    return cleanUrl;
   } catch (error: any) {
     // Ensure progress is reset on error
     if (onProgress) {
       onProgress(0)
     }
+    
+    // Clean up interval if it exists
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+    
     console.error("File upload error:", error)
     throw new Error(`Error uploading file: ${error.message}`)
   }

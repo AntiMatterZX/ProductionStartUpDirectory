@@ -103,26 +103,23 @@ export async function POST(
       )
     }
 
-    if (!currentMedia) {
-      console.error("No media data found for startup:", startupId);
-      return NextResponse.json(
-        { message: "No startup media data found" },
-        { status: 404 }
-      )
-    }
-
-    // Initialize arrays if they don't exist or are null
-    const mediaImages = currentMedia.media_images && Array.isArray(currentMedia.media_images) 
+    // Initialize arrays with default empty arrays even if currentMedia is null
+    const mediaImages = currentMedia?.media_images && Array.isArray(currentMedia.media_images) 
       ? [...currentMedia.media_images] 
       : [];
       
-    const mediaDocuments = currentMedia.media_documents && Array.isArray(currentMedia.media_documents) 
+    const mediaDocuments = currentMedia?.media_documents && Array.isArray(currentMedia.media_documents) 
       ? [...currentMedia.media_documents] 
       : [];
       
-    const mediaVideos = currentMedia.media_videos && Array.isArray(currentMedia.media_videos) 
+    const mediaVideos = currentMedia?.media_videos && Array.isArray(currentMedia.media_videos) 
       ? [...currentMedia.media_videos] 
       : [];
+
+    // If we don't have current media data, we'll create it now rather than failing
+    if (!currentMedia) {
+      console.warn("No media data found for startup, creating new media arrays:", startupId);
+    }
 
     // Determine which array to update based on media type
     let updateData: Record<string, any> = {};

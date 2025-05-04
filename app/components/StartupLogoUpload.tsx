@@ -109,9 +109,21 @@ export default function StartupLogoUpload({
         }),
       });
       
+      let errorMessage = "Failed to update logo";
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update logo");
+        // Try to get a detailed error message from the response
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+          if (errorData.error) {
+            errorMessage += `: ${errorData.error}`;
+          }
+        } catch (jsonError) {
+          // If we can't parse the JSON, use the status text
+          errorMessage = `Error (${response.status}): ${response.statusText || errorMessage}`;
+        }
+        throw new Error(errorMessage);
       }
       
       toast({
@@ -128,10 +140,11 @@ export default function StartupLogoUpload({
       
     } catch (error: any) {
       console.error("Logo upload error:", error);
-      setError(error.message || "There was a problem uploading your logo");
+      const errorMessage = error.message || "There was a problem uploading your logo";
+      setError(errorMessage);
       toast({
         title: "Upload failed",
-        description: error.message || "There was a problem uploading your logo",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -213,7 +226,11 @@ export default function StartupLogoUpload({
             
             {error && (
               <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-                {error}
+                <p className="font-medium">Upload Error</p>
+                <p>{error}</p>
+                <p className="mt-2 text-xs">
+                  Please try again or contact support if the problem persists.
+                </p>
               </div>
             )}
             
