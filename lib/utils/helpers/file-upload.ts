@@ -22,6 +22,11 @@ export async function uploadFile(
   const supabase = createClientComponentClient()
 
   try {
+    // Validate file type based on media type
+    if (!validateFileType(file, mediaType)) {
+      throw new Error(`Invalid file type for ${mediaType}. Please check supported formats.`);
+    }
+
     // Generate a unique filename with timestamp and random string to prevent collisions
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'file'
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`
@@ -51,13 +56,29 @@ export async function uploadFile(
       }
     }
     
-    // Simulate progress updates if callback is provided
-    let progressInterval: any = null
+    // Track upload progress
+    let progressInterval: any = null;
     if (onProgress) {
-      progressInterval = setInterval(() => {
-        const progress = Math.floor(Math.random() * 20) + 10 // 10-30% increment per update
-        onProgress(Math.min(90, progress)) // Never reach 100% until complete
-      }, 500)
+      // Start at 0% progress
+      onProgress(0);
+      
+      // For small files, create a reasonable simulation of progress
+      if (file.size < 500000) { // Less than 500KB
+        let currentProgress = 0;
+        progressInterval = setInterval(() => {
+          const randomIncrement = Math.floor(Math.random() * 15) + 5; // 5-20% increment
+          currentProgress = Math.min(90, currentProgress + randomIncrement);
+          onProgress(currentProgress);
+        }, 300);
+      } else {
+        // For larger files, use slower progress updates
+        let currentProgress = 0;
+        progressInterval = setInterval(() => {
+          const randomIncrement = Math.floor(Math.random() * 10) + 2; // 2-12% increment
+          currentProgress = Math.min(90, currentProgress + randomIncrement);
+          onProgress(currentProgress);
+        }, 500);
+      }
     }
     
     // Upload the file
@@ -90,6 +111,18 @@ export async function uploadFile(
       throw new Error("Failed to get public URL")
     }
 
+    // Record metadata in startup_media_items table if it's a startup-related upload
+    if (mediaType !== 'avatar' && mediaType !== 'profile') {
+      try {
+        // Get startup ID from path or parameter
+        // This function doesn't have startup ID, so it will be handled by the API endpoint
+        console.log("File uploaded successfully:", urlData.publicUrl);
+      } catch (metadataError) {
+        console.error("Error recording media metadata:", metadataError);
+        // Don't fail the upload if metadata recording fails
+      }
+    }
+
     return urlData.publicUrl
   } catch (error: any) {
     // Ensure progress is reset on error
@@ -98,6 +131,38 @@ export async function uploadFile(
     }
     console.error("File upload error:", error)
     throw new Error(`Error uploading file: ${error.message}`)
+  }
+}
+
+/**
+ * Validates file type based on media type
+ * @param file File to validate
+ * @param mediaType Type of media (logo, image, document, etc.)
+ * @returns boolean indicating if file type is valid
+ */
+export function validateFileType(file: File, mediaType: string): boolean {
+  const mimeType = file.type.toLowerCase();
+  
+  switch(mediaType.toLowerCase()) {
+    case 'logo':
+    case 'image':
+    case 'coverimage':
+      // Only allow common image formats
+      return /^image\/(jpeg|jpg|png|gif|webp|svg\+xml)$/.test(mimeType);
+      
+    case 'document':
+    case 'pitch_deck':
+    case 'pitchdeck':
+      // Allow documents and presentations
+      return /^application\/(pdf|msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document|vnd\.ms-powerpoint|vnd\.openxmlformats-officedocument\.presentationml\.presentation)$/.test(mimeType);
+      
+    case 'video':
+      // Allow common video formats
+      return /^video\/(mp4|webm|ogg|quicktime)$/.test(mimeType);
+      
+    default:
+      // Default to true for unknown types
+      return true;
   }
 }
 

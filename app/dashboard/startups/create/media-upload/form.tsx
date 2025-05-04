@@ -13,6 +13,7 @@ import { mediaUploadSchema, type MediaUploadFormValues } from "@/lib/validations
 import type { StartupMediaInfo } from "@/types/startup"
 import { Progress } from "@/components/ui/progress"
 import { toast } from "@/components/ui/use-toast"
+import LoadingIndicator from "@/components/ui/loading-indicator"
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
@@ -21,9 +22,10 @@ interface MediaUploadFormProps {
   onBack: () => void
   initialData?: Partial<StartupMediaInfo>
   isSubmitting?: boolean
+  hideButtons?: boolean
 }
 
-export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, isSubmitting }: MediaUploadFormProps) {
+export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, isSubmitting = false, hideButtons = false }: MediaUploadFormProps) {
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [pitchDeckName, setPitchDeckName] = useState<string | null>(null)
@@ -448,36 +450,18 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
           </div>
         </div>
 
-        <div className="flex justify-between pt-4">
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="lg" 
-            className="min-w-[100px]" 
-            onClick={onBack}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <Button 
-            type="submit" 
-            size="lg" 
-            className="min-w-[100px]"
-            disabled={isSubmitting || isUploading}
-          >
-            {isSubmitting || isUploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isUploading ? "Processing..." : "Next"}
-              </>
-            ) : (
-              <>
-                Next
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </>
-            )}
-          </Button>
-        </div>
+        {!hideButtons && (
+          <div className="flex justify-between mt-6">
+            <Button type="button" variant="outline" onClick={onBack}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Detailed Info
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size="sm" /> : "Continue"}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </form>
     </Form>
   )

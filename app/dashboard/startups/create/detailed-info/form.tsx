@@ -12,14 +12,24 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
 import { detailedInfoSchema, type DetailedInfoFormValues } from "@/lib/validations/startup"
 import type { StartupDetailedInfo } from "@/types/startup"
+import { ArrowLeft, ArrowRight } from "lucide-react"
+import LoadingIndicator from "@/components/ui/loading-indicator"
 
 interface DetailedInfoFormProps {
-  onSubmit: (data: DetailedInfoFormValues) => void
+  onSubmit: (data: DetailedInfoFormValues, isValid: boolean) => void
   onBack: () => void
   initialData?: Partial<StartupDetailedInfo>
+  isSubmitting?: boolean
+  hideButtons?: boolean
 }
 
-export default function DetailedInfoForm({ onSubmit, onBack, initialData = {} }: DetailedInfoFormProps) {
+export default function DetailedInfoForm({ 
+  onSubmit, 
+  onBack, 
+  initialData = {},
+  isSubmitting = false,
+  hideButtons = false
+}: DetailedInfoFormProps) {
   const [lookingForOptions, setLookingForOptions] = useState<{ id: number; name: string }[]>([])
   const supabase = createClientComponentClient()
 
@@ -64,9 +74,13 @@ export default function DetailedInfoForm({ onSubmit, onBack, initialData = {} }:
 
   const teamSizes = ["Solo Founder", "2-5", "6-10", "11-25", "26-50", "51-100", "100+"]
 
+  const handleSubmit = (data: DetailedInfoFormValues) => {
+    onSubmit(data, true);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <div className="space-y-6">
           <FormField
             control={form.control}
@@ -214,12 +228,18 @@ export default function DetailedInfoForm({ onSubmit, onBack, initialData = {} }:
           />
         </div>
 
-        <div className="flex justify-between pt-4">
-          <Button type="button" variant="outline" size="lg" className="min-w-[100px]" onClick={onBack}>
-            Back
-          </Button>
-          <Button type="submit" size="lg" className="min-w-[120px]">Continue to Media Upload</Button>
-        </div>
+        {!hideButtons && (
+          <div className="flex justify-between pt-4">
+            <Button type="button" variant="outline" onClick={onBack}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Basic Info
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size="sm" /> : "Continue"}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </form>
     </Form>
   )

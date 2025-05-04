@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
 import { Button } from "@/components/ui/button"
-import { ThumbsUp, ThumbsDown, Bookmark, Share2 } from "lucide-react"
+import { ThumbsDown, Bookmark, Share2 } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import type { Startup } from "@/types/startup"
 import { MotionDiv } from "@/components/ui/motion"
+import { UpvoteButton } from "@/components/ui/upvote-button"
 
 interface StartupActionsProps {
   startup: Startup
@@ -23,12 +24,37 @@ export default function StartupActions({ startup, userId }: StartupActionsProps)
     upvotes: startup.votes?.upvotes || 0,
     downvotes: startup.votes?.downvotes || 0,
   })
+  const [hasVoted, setHasVoted] = useState<boolean | null>(null) // null = uninitialized, true = upvoted, false = downvoted
 
   // Ensure startup ID is available
   if (!startup || !startup.id) {
     console.error("Missing startup data:", startup);
     return null;
   }
+
+  // Check if user has already voted when component mounts
+  useEffect(() => {
+    async function checkVote() {
+      if (!userId) return;
+      
+      try {
+        const { data } = await supabase
+          .from("votes")
+          .select("vote")
+          .eq("startup_id", startup.id)
+          .eq("user_id", userId)
+          .maybeSingle();
+        
+        if (data) {
+          setHasVoted(data.vote);
+        }
+      } catch (error) {
+        console.error("Error checking vote status:", error);
+      }
+    }
+    
+    checkVote();
+  }, [userId, startup.id, supabase]);
 
   const handleVote = async (isUpvote: boolean) => {
     try {
@@ -66,6 +92,8 @@ export default function StartupActions({ startup, userId }: StartupActionsProps)
             upvotes: prev.upvotes + (isUpvote ? 1 : -1),
             downvotes: prev.downvotes + (isUpvote ? -1 : 1),
           }))
+          
+          setHasVoted(isUpvote)
 
           toast({
             title: "Vote updated",
@@ -90,6 +118,8 @@ export default function StartupActions({ startup, userId }: StartupActionsProps)
           upvotes: prev.upvotes + (isUpvote ? 1 : 0),
           downvotes: prev.downvotes + (isUpvote ? 0 : 1),
         }))
+        
+        setHasVoted(isUpvote)
 
         toast({
           title: "Vote recorded",
@@ -231,26 +261,26 @@ export default function StartupActions({ startup, userId }: StartupActionsProps)
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
+        <UpvoteButton 
+          count={voteCount.upvotes}
+          onUpvote={() => handleVote(true)}
+          isActive={hasVoted === true}
+          isLoading={isVoting}
+          size="md"
+        />
+        
         <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleVote(true)}
-          disabled={isVoting}
-          className="flex items-center gap-1 rounded-full"
-        >
-          <ThumbsUp className="h-4 w-4" />
-          <span>{voteCount.upvotes}</span>
-        </Button>
-        <Button
-          variant="outline"
+          variant={hasVoted === false ? "default" : "outline"}
           size="sm"
           onClick={() => handleVote(false)}
           disabled={isVoting}
-          className="flex items-center gap-1"
+          className={`flex items-center gap-2 rounded-full transition-all duration-300 ${
+            hasVoted === false ? "bg-destructive text-destructive-foreground" : ""
+          }`}
         >
           <ThumbsDown className="h-4 w-4" />
-          <span>{voteCount.downvotes}</span>
+          <span className="font-medium">{voteCount.downvotes}</span>
         </Button>
       </div>
 
@@ -259,13 +289,13 @@ export default function StartupActions({ startup, userId }: StartupActionsProps)
         size="sm"
         onClick={handleAddToWishlist}
         disabled={isAddingToWishlist}
-        className="flex items-center gap-1"
+        className="flex items-center gap-1 rounded-full"
       >
         <Bookmark className="h-4 w-4" />
         <span>Save</span>
       </Button>
 
-      <Button variant="outline" size="sm" onClick={handleShare} className="flex items-center gap-1">
+      <Button variant="outline" size="sm" onClick={handleShare} className="flex items-center gap-1 rounded-full">
         <Share2 className="h-4 w-4" />
         <span>Share</span>
       </Button>

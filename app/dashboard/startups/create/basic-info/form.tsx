@@ -13,13 +13,22 @@ import { createClientComponentClient } from "@/lib/supabase/client-component"
 import { basicInfoSchema, type BasicInfoFormValues } from "@/lib/validations/startup"
 import { generateSlug, checkSlugAvailability } from "@/lib/utils/helpers/slug-generator"
 import type { StartupBasicInfo } from "@/types/startup"
+import { ArrowRight } from "lucide-react"
+import LoadingIndicator from "@/components/ui/loading-indicator"
 
 interface BasicInfoFormProps {
   onSubmit: (data: BasicInfoFormValues, isValid: boolean) => void
   initialData?: Partial<StartupBasicInfo>
+  isSubmitting?: boolean
+  hideButtons?: boolean
 }
 
-export default function BasicInfoForm({ onSubmit, initialData = {} }: BasicInfoFormProps) {
+export default function BasicInfoForm({ 
+  onSubmit, 
+  initialData = {}, 
+  isSubmitting = false,
+  hideButtons = false 
+}: BasicInfoFormProps) {
   const [isSlugAvailable, setIsSlugAvailable] = useState(true)
   const [isCheckingSlug, setIsCheckingSlug] = useState(false)
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([])
@@ -247,9 +256,14 @@ export default function BasicInfoForm({ onSubmit, initialData = {} }: BasicInfoF
           />
         </div>
 
-        <div className="flex justify-end pt-4">
-          <Button type="submit" size="lg" className="min-w-[120px]">Continue to Detailed Info</Button>
-        </div>
+        {!hideButtons && (
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? <LoadingIndicator size="sm" /> : "Continue"}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </form>
     </Form>
   )

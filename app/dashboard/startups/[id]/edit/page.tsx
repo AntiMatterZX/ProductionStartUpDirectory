@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Card, CardContent } from "@/components/ui/card"
-import FormStepper from "@/components/startup/creation/FormStepper"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import BasicInfoForm from "../../create/basic-info/form"
 import DetailedInfoForm from "../../create/detailed-info/form"
 import MediaUploadForm from "../../create/media-upload/form"
@@ -14,33 +14,22 @@ import type { StartupFormData } from "@/types/startup"
 import type { Database } from "@/types/database"
 import { AnimatePresence, motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, CheckCircle2, Save } from "lucide-react"
+import { ArrowLeft, Edit, Save, Eye, CheckCircle2, Pencil } from "lucide-react"
 import type { BasicInfoFormValues, DetailedInfoFormValues, MediaUploadFormValues } from "@/lib/validations/startup"
-
-// Custom interface to extend FormStepper component with completedSteps
-interface ExtendedFormStepperProps {
-  currentStep: number;
-  totalSteps: number;
-  stepTitles?: string[];
-  onStepChange?: (step: number) => void;
-  completedSteps?: {
-    [key: number]: boolean;
-  };
-}
-
-// Create a modified FormStepper component that accepts completedSteps
-const EnhancedFormStepper = (props: ExtendedFormStepperProps) => {
-  const { completedSteps, ...restProps } = props;
-  return <FormStepper {...restProps} />;
-};
+import LoadingIndicator from "@/components/ui/loading-indicator"
+import StartupLogoUpload from "@/app/components/StartupLogoUpload"
+import StartupMediaUpload from "@/app/components/StartupMediaUpload"
+import { Badge } from "@/components/ui/badge"
 
 export default function EditStartupPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const startupId = params.id
   const supabase = createClientComponentClient<Database>()
-  const [currentStep, setCurrentStep] = useState(1)
+  const [activeTab, setActiveTab] = useState("details")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [startupData, setStartupData] = useState<any>(null)
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [formData, setFormData] = useState<StartupFormData>({
     basicInfo: {
       name: "",
@@ -76,9 +65,6 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
     step2: false,
     step3: false
   })
-
-  const totalSteps = 4
-  const stepTitles = ["Basic Info", "Detailed Info", "Media Upload", "Review"]
 
   // Fetch startup data and populate form
   useEffect(() => {
@@ -129,6 +115,10 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
         if (startup.user_id !== session.user.id) {
           throw new Error("You don't have permission to edit this startup");
         }
+
+        // Store startup data for display
+        setStartupData(startup);
+        setLogoUrl(startup.logo_url || null);
 
         // Fetch social links separately
         const { data: socialLinksData, error: socialLinksError } = await supabase
@@ -229,354 +219,367 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
     fetchStartupData();
   }, [supabase, startupId, router]);
 
-  const handleStepChange = (step: number) => {
-    // Only allow navigation to previously completed steps or the next available step
-    if (step < currentStep || (step === currentStep + 1 && canProceedToNextStep())) {
-      setCurrentStep(step)
-    }
-  }
-
-  const canProceedToNextStep = () => {
-    switch (currentStep) {
-      case 1:
-        return formValidity.step1
-      case 2:
-        return formValidity.step2
-      case 3:
-        return formValidity.step3
-      default:
-        return false
-    }
-  }
-
-  const handleNext = () => {
-    if (currentStep < totalSteps && canProceedToNextStep()) {
-      setCurrentStep(currentStep + 1)
-    }
-  }
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
-  }
-
   const handleSubmit = async (completeData: StartupFormData) => {
     try {
-      setIsSubmitting(true)
-
-      // Check authentication status again before submitting
-      const { data: { session } } = await supabase.auth.getSession()
+      setIsSubmitting(true);
       
-      if (!session) {
+      // Basic input validation
+      if (!completeData.basicInfo.name || completeData.basicInfo.name.trim().length < 3) {
         toast({
-          title: "Authentication required",
-          description: "Your session has expired. Please log in again to edit a startup",
+          title: "Validation Error",
+          description: "Startup name is too short",
           variant: "destructive",
-        })
-        router.push(`/login?redirect=/dashboard/startups/${startupId}/edit`)
-        return
+        });
+        setIsSubmitting(false);
+        return;
       }
-
-      // Create a FormData object to handle file uploads
-      const formData = new FormData()
       
-      // Add startup ID for update
-      formData.append("id", startupId)
-
-      // Add basic info and detailed info as JSON strings
-      formData.append("basicInfo", JSON.stringify(completeData.basicInfo))
-      formData.append("detailedInfo", JSON.stringify(completeData.detailedInfo))
-
-      // Handle media info separately to properly handle files
-      const mediaInfoCopy = { ...completeData.mediaInfo }
-
-      // Add files directly to FormData
-      if (completeData.mediaInfo.logo) {
-        formData.append("logo", completeData.mediaInfo.logo)
-      }
-
-      if (completeData.mediaInfo.coverImage) {
-        formData.append("coverImage", completeData.mediaInfo.coverImage)
-      }
-
-      if (completeData.mediaInfo.pitchDeck) {
-        formData.append("pitchDeck", completeData.mediaInfo.pitchDeck)
-      }
-
-      // Remove file objects from the JSON representation
-      delete mediaInfoCopy.logo
-      delete mediaInfoCopy.coverImage
-      delete mediaInfoCopy.pitchDeck
-
-      // Add the remaining media info as a JSON string
-      formData.append("mediaInfo", JSON.stringify(mediaInfoCopy))
-
-      console.log("Submitting form data to API...");
+      // Get current date in ISO format
+      const currentDate = new Date().toISOString();
       
+      // Prepare data for database
+      const dataToUpdate = {
+        name: completeData.basicInfo.name.trim(),
+        slug: completeData.basicInfo.slug.trim(),
+        tagline: completeData.basicInfo.tagline.trim(),
+        category_id: completeData.basicInfo.industry,
+        founding_date: completeData.basicInfo.foundingDate,
+        website_url: completeData.basicInfo.website.trim(),
+        
+        // Detailed info
+        description: completeData.detailedInfo.description.trim(),
+        funding_stage: completeData.detailedInfo.fundingStage,
+        funding_amount: completeData.detailedInfo.fundingAmount 
+          ? parseFloat(completeData.detailedInfo.fundingAmount) 
+          : null,
+        employee_count: completeData.detailedInfo.teamSize 
+          ? parseInt(completeData.detailedInfo.teamSize) 
+          : null,
+        location: completeData.detailedInfo.location.trim(),
+        looking_for: completeData.detailedInfo.lookingFor,
+        
+        // Media info - handled separately through API
+        video_url: completeData.mediaInfo.videoUrl.trim(),
+        
+        // Update timestamp
+        updated_at: currentDate
+      };
+      
+      // Update the startup record
+      const { error: updateError } = await supabase
+        .from("startups")
+        .update(dataToUpdate)
+        .eq("id", startupId);
+      
+      if (updateError) {
+        throw new Error(`Failed to update startup: ${updateError.message}`);
+      }
+      
+      // Handle social links
       try {
-        const response = await fetch(`/api/startups/${startupId}`, {
-          method: "PUT",
-          body: formData,
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error("API error response:", errorData);
-          throw new Error(errorData.message || `Failed to update startup: ${response.status} ${response.statusText}`)
+        // First, delete existing links (simple approach)
+        await supabase
+          .from("social_links")
+          .delete()
+          .eq("startup_id", startupId);
+        
+        // Insert new links if present
+        const socialLinks = [];
+        
+        if (completeData.mediaInfo.socialLinks.linkedin) {
+          socialLinks.push({
+            startup_id: startupId,
+            platform: "linkedin",
+            url: completeData.mediaInfo.socialLinks.linkedin.trim(),
+          });
         }
-
-        const data = await response.json()
-        console.log("Update successful:", data);
-
-        toast({
-          title: "Success!",
-          description: "Your startup has been updated successfully.",
-        })
-
-        router.push(`/dashboard/startups/${data.id}`)
-      } catch (fetchError: any) {
-        console.error("Fetch error:", fetchError);
-        throw new Error(fetchError.message || "Network error when submitting the form");
+        
+        if (completeData.mediaInfo.socialLinks.twitter) {
+          socialLinks.push({
+            startup_id: startupId,
+            platform: "twitter",
+            url: completeData.mediaInfo.socialLinks.twitter.trim(),
+          });
+        }
+        
+        if (socialLinks.length > 0) {
+          const { error: socialLinkError } = await supabase
+            .from("social_links")
+            .insert(socialLinks);
+            
+          if (socialLinkError) {
+            console.error("Error updating social links:", socialLinkError);
+          }
+        }
+      } catch (socialError) {
+        console.error("Error managing social links:", socialError);
+        // Don't fail the entire operation for social link errors
       }
+
+      toast({
+        title: "Startup updated",
+        description: "Your startup has been updated successfully",
+      });
+      
+      // Navigate back to view page
+      router.push(`/dashboard/startups/${startupId}`);
+      
     } catch (error: any) {
       console.error("Error updating startup:", error);
       toast({
-        title: "Error",
-        description: error.message || "There was a problem updating your startup.",
+        title: "Update failed",
+        description: error.message || "There was a problem updating your startup. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
+    }
+  };
+
+  function handleLogoUploaded(url: string) {
+    setLogoUrl(url);
+    toast({
+      title: "Logo uploaded",
+      description: "Your startup logo has been updated"
+    });
+  }
+
+  function handleMediaUploaded(url: string) {
+    toast({
+      title: "Media uploaded",
+      description: "Your media has been added to the startup"
+    });
+  }
+
+  const updateFormData = (step: number, data: any) => {
+    if (step === 1) {
+      setFormData(prev => ({
+        ...prev,
+        basicInfo: data
+      }))
+    } else if (step === 2) {
+      setFormData(prev => ({
+        ...prev,
+        detailedInfo: data
+      }))
+    } else if (step === 3) {
+      setFormData(prev => ({
+        ...prev,
+        mediaInfo: data
+      }))
+    }
+  }
+
+  const updateFormValidity = (step: number, isValid: boolean) => {
+    if (step === 1) {
+      setFormValidity(prev => ({ ...prev, step1: isValid }))
+    } else if (step === 2) {
+      setFormValidity(prev => ({ ...prev, step2: isValid }))
+    } else if (step === 3) {
+      setFormValidity(prev => ({ ...prev, step3: isValid }))
     }
   }
 
   if (isLoading) {
     return (
-      <div className="container max-w-4xl py-10 flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="ml-4 text-muted-foreground">Loading...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen py-12 px-4">
+        <LoadingIndicator size="lg" />
+        <p className="text-muted-foreground mt-4">Loading startup data...</p>
       </div>
-    )
-  }
-
-  // Animation variants for page transitions
-  const pageVariants = {
-    initial: { opacity: 0, x: 10 },
-    enter: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -10 }
-  }
-
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <motion.div
-            key="step1"
-            initial="initial"
-            animate="enter"
-            exit="exit"
-            variants={pageVariants}
-          >
-            <BasicInfoForm
-              initialData={formData.basicInfo}
-              onSubmit={(data: BasicInfoFormValues, isValid: boolean) => {
-                updateFormData(1, data);
-                updateFormValidity(1, isValid);
-              }}
-            />
-          </motion.div>
-        )
-      case 2:
-        return (
-          <motion.div
-            key="step2"
-            initial="initial"
-            animate="enter"
-            exit="exit"
-            variants={pageVariants}
-          >
-            <DetailedInfoForm
-              initialData={formData.detailedInfo}
-              onSubmit={(data: DetailedInfoFormValues) => {
-                updateFormData(2, data);
-                updateFormValidity(2, true);
-              }}
-              onBack={handleBack}
-            />
-          </motion.div>
-        )
-      case 3:
-        return (
-          <motion.div
-            key="step3"
-            initial="initial"
-            animate="enter"
-            exit="exit"
-            variants={pageVariants}
-          >
-            <MediaUploadForm
-              initialData={formData.mediaInfo}
-              onSubmit={(data: MediaUploadFormValues) => {
-                updateFormData(3, data);
-                updateFormValidity(3, true);
-              }}
-              onBack={handleBack}
-            />
-          </motion.div>
-        )
-      case 4:
-        return (
-          <motion.div
-            key="step4"
-            initial="initial"
-            animate="enter"
-            exit="exit"
-            variants={pageVariants}
-          >
-            <div className="space-y-6">
-              <div className="flex items-center justify-center py-6">
-                <div className="bg-primary/10 p-4 rounded-full">
-                  <CheckCircle2 className="h-12 w-12 text-primary" />
-                </div>
-              </div>
-              
-              <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold">Ready to Submit</h2>
-                <p className="text-muted-foreground">
-                  Please review your information before updating
-                </p>
-              </div>
-
-              <div className="space-y-4 my-6">
-                <h3 className="font-medium">Basic Information</h3>
-                <div className="bg-muted/50 p-4 rounded-md">
-                  <p><span className="font-medium">Name:</span> {formData.basicInfo.name}</p>
-                  <p><span className="font-medium">Tagline:</span> {formData.basicInfo.tagline}</p>
-                </div>
-                
-                <h3 className="font-medium">Detailed Information</h3>
-                <div className="bg-muted/50 p-4 rounded-md">
-                  <p><span className="font-medium">Location:</span> {formData.detailedInfo.location}</p>
-                  <p><span className="font-medium">Funding Stage:</span> {formData.detailedInfo.fundingStage}</p>
-                </div>
-
-                <h3 className="font-medium">Media Information</h3>
-                <div className="bg-muted/50 p-4 rounded-md">
-                  <p><span className="font-medium">Logo:</span> {formData.mediaInfo.logo ? "New file uploaded" : "No change"}</p>
-                  <p><span className="font-medium">Cover Image:</span> {formData.mediaInfo.coverImage ? "New file uploaded" : "No change"}</p>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <Button 
-                  className="w-full sm:w-auto"
-                  onClick={() => handleSubmit(formData)}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin mr-2"></div>
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Update Startup
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )
-      default:
-        return null
-    }
-  }
-
-  const updateFormData = (step: number, data: any) => {
-    switch (step) {
-      case 1:
-        setFormData(prev => ({ ...prev, basicInfo: data }))
-        break
-      case 2:
-        setFormData(prev => ({ ...prev, detailedInfo: data }))
-        break
-      case 3:
-        setFormData(prev => ({ ...prev, mediaInfo: data }))
-        break
-    }
-  }
-
-  const updateFormValidity = (step: number, isValid: boolean) => {
-    switch (step) {
-      case 1:
-        setFormValidity(prev => ({ ...prev, step1: isValid }))
-        break
-      case 2:
-        setFormValidity(prev => ({ ...prev, step2: isValid }))
-        break
-      case 3:
-        setFormValidity(prev => ({ ...prev, step3: isValid }))
-        break
-    }
+    );
   }
 
   return (
-    <div className="container max-w-4xl py-10">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Edit Startup</h1>
-        <p className="text-muted-foreground">Update your startup information</p>
+    <div className="container py-6 space-y-8">
+      {/* Header with actions */}
+      <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
+        <div>
+          <h1 className="text-3xl font-bold">{startupData?.name || "Edit Startup"}</h1>
+          {startupData?.tagline && (
+            <p className="text-muted-foreground">{startupData.tagline}</p>
+          )}
+        </div>
+        
+        <div className="flex gap-3">
+          <Button asChild variant="outline">
+            <Link href={`/dashboard/startups/${startupId}`}>
+              <Eye className="h-4 w-4 mr-2" />
+              View Startup
+            </Link>
+          </Button>
+          
+          <Button 
+            onClick={() => handleSubmit(formData)}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? <LoadingIndicator size="sm" className="mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+            Save Changes
+          </Button>
+        </div>
       </div>
-
-      <Card className="mb-8">
-        <CardContent className="pt-6">
-          <EnhancedFormStepper 
-            currentStep={currentStep} 
-            totalSteps={totalSteps} 
-            stepTitles={stepTitles}
-            onStepChange={handleStepChange}
-            completedSteps={{
-              1: formValidity.step1,
-              2: formValidity.step2,
-              3: formValidity.step3,
-              4: false,
-            }}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <AnimatePresence mode="wait">
-            {renderStepContent()}
-          </AnimatePresence>
-
-          <div className="flex justify-between mt-8">
-            {currentStep === 1 ? (
-              <Link href={`/dashboard/startups/${startupId}`}>
-                <Button variant="outline">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Cancel
-                </Button>
-              </Link>
-            ) : (
-              <Button variant="outline" onClick={handleBack}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-            )}
-
-            {currentStep < totalSteps && (
-              <Button onClick={handleNext} disabled={!canProceedToNextStep()}>
-                Next
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            )}
+      
+      {/* Main Content */}
+      <div className="grid md:grid-cols-5 gap-6">
+        {/* Left Column */}
+        <div className="md:col-span-2 space-y-6">
+          <Card>
+            <CardContent className="p-5 md:p-6">
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold flex items-center">
+                  Media
+                  <span className="ml-2">
+                    <Badge variant="outline">Edit Mode</Badge>
+                  </span>
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Upload and manage your startup's media assets
+                </p>
+                
+                <div className="space-y-6">
+                  {/* Logo Upload Section */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-medium">Company Logo</h3>
+                      <StartupLogoUpload 
+                        startupId={startupId}
+                        userId={startupData?.user_id || ""}
+                        currentLogoUrl={logoUrl}
+                        onUploaded={handleLogoUploaded}
+                        buttonText="Upload Logo"
+                        className="flex items-center gap-1"
+                      />
+                    </div>
+                    
+                    <div className="border rounded-md p-6 flex items-center justify-center bg-muted/20">
+                      {logoUrl ? (
+                        <img
+                          src={logoUrl}
+                          alt="Company Logo"
+                          className="max-w-[180px] max-h-[180px] object-contain"
+                        />
+                      ) : (
+                        <div className="text-center text-muted-foreground">
+                          <p>No logo uploaded yet</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Other Media Upload Sections */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-medium">Images & Media</h3>
+                      <div className="flex gap-2">
+                        <StartupMediaUpload
+                          startupId={startupId}
+                          userId={startupData?.user_id || ""}
+                          mediaType="image"
+                          onUploaded={handleMediaUploaded}
+                          buttonLabel="Add Image"
+                        />
+                        <StartupMediaUpload
+                          startupId={startupId}
+                          userId={startupData?.user_id || ""}
+                          mediaType="document"
+                          onUploaded={handleMediaUploaded}
+                          buttonLabel="Add Document"
+                          acceptedFileTypes=".pdf,.doc,.docx,.ppt,.pptx"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="border rounded-md p-4 bg-muted/10 h-[150px] flex items-center justify-center">
+                      <p className="text-sm text-muted-foreground text-center">
+                        Images and documents will appear in the startup details page.<br />
+                        You can upload multiple files.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      Supported formats: PNG, JPG, PDF, DOC(X), PPT(X)
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Max file size: 5MB per file
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Right Column - Forms */}
+        <div className="md:col-span-3 space-y-6">
+          <Card>
+            <CardContent className="p-5 md:p-6">
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="w-full grid grid-cols-3">
+                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                  <TabsTrigger value="detailed">Detailed Info</TabsTrigger>
+                  <TabsTrigger value="social">Media & Links</TabsTrigger>
+                </TabsList>
+                
+                <div className="mt-6">
+                  <TabsContent value="basic">
+                    <BasicInfoForm
+                      onSubmit={(data, isValid) => {
+                        updateFormData(1, data)
+                        updateFormValidity(1, isValid)
+                      }}
+                      initialData={formData.basicInfo}
+                      hideButtons={true}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="detailed">
+                    <DetailedInfoForm
+                      onSubmit={(data, isValid) => {
+                        updateFormData(2, data)
+                        updateFormValidity(2, isValid)
+                      }}
+                      onBack={() => {}}
+                      initialData={formData.detailedInfo}
+                      hideButtons={true}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="social">
+                    <MediaUploadForm
+                      onSubmit={(data, isValid) => {
+                        updateFormData(3, data)
+                        updateFormValidity(3, isValid)
+                      }}
+                      onBack={() => {}}
+                      initialData={formData.mediaInfo}
+                      hideButtons={true}
+                    />
+                  </TabsContent>
+                </div>
+              </Tabs>
+            </CardContent>
+          </Card>
+          
+          <div className="flex justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => router.push(`/dashboard/startups/${startupId}`)}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            
+            <Button 
+              onClick={() => handleSubmit(formData)}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? <LoadingIndicator size="sm" className="mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              Save Changes
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
-  )
+  );
 } 
