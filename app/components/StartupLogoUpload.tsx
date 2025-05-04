@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { Upload, Image, X } from "lucide-react";
 import { createClientComponentClient } from "@/lib/supabase/client-component";
+import { uploadFile } from "@/lib/utils/helpers/file-upload";
+import { STORAGE_BUCKETS } from "@/lib/utils/config/storage-buckets";
 
 interface LogoUploadProps {
   startupId: string;
+  userId: string;
   currentLogoUrl?: string | null;
   onUploaded?: (url: string) => void;
   buttonText?: string;
@@ -17,6 +20,7 @@ interface LogoUploadProps {
 
 export default function StartupLogoUpload({
   startupId,
+  userId,
   currentLogoUrl,
   onUploaded,
   buttonText = "Upload Logo",
@@ -27,16 +31,21 @@ export default function StartupLogoUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   const supabase = createClientComponentClient();
   
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Reset error state
+    setError(null);
+    
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       
       // Check file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
+        setError("Logo image must be less than 2MB");
         toast({
           title: "File too large",
           description: "Logo image must be less than 2MB",
@@ -47,6 +56,7 @@ export default function StartupLogoUpload({
       
       // Check file type
       if (!file.type.startsWith('image/')) {
+        setError("Please select an image file");
         toast({
           title: "Invalid file type",
           description: "Please select an image file",
@@ -68,33 +78,23 @@ export default function StartupLogoUpload({
   
   // Upload logo
   const uploadLogo = async () => {
-    if (!selectedFile || !startupId) return;
+    if (!selectedFile || !startupId || !userId) {
+      setError("Missing required information");
+      return;
+    }
     
     setIsUploading(true);
     setUploadProgress(0);
+    setError(null);
     
     try {
-      // Generate unique filename
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `logo-${Date.now()}.${fileExt}`;
-      const filePath = `${startupId}/logo/${fileName}`;
-      
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('startup-images')
-        .upload(filePath, selectedFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (error) throw error;
-      
-      // Get public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('startup-images')
-        .getPublicUrl(filePath);
-      
-      const logoUrl = publicUrlData.publicUrl;
+      // Use the centralized file upload utility
+      const logoUrl = await uploadFile(
+        selectedFile,
+        userId,
+        "logo",
+        (progress) => setUploadProgress(progress)
+      );
       
       // Update the startup record with new logo URL
       const response = await fetch(`/api/startups/${startupId}/media`, {
@@ -128,6 +128,7 @@ export default function StartupLogoUpload({
       
     } catch (error: any) {
       console.error("Logo upload error:", error);
+      setError(error.message || "There was a problem uploading your logo");
       toast({
         title: "Upload failed",
         description: error.message || "There was a problem uploading your logo",
@@ -135,14 +136,22 @@ export default function StartupLogoUpload({
       });
     } finally {
       setIsUploading(false);
-      setPreviewUrl(null);
-      setSelectedFile(null);
     }
+  };
+  
+  const resetForm = () => {
+    setPreviewUrl(null);
+    setSelectedFile(null);
+    setError(null);
+    setUploadProgress(0);
   };
   
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) resetForm();
+      }}>
         <DialogTrigger asChild>
           <Button variant="outline" className={className}>
             <Upload className="h-4 w-4 mr-2" />
@@ -157,7 +166,7 @@ export default function StartupLogoUpload({
           
           <div className="space-y-4 py-4">
             <div className="flex flex-col items-center justify-center">
-              <div className="w-48 h-48 bg-muted rounded-md overflow-hidden mb-4 flex items-center justify-center">
+              <div className="w-48 h-48 bg-muted rounded-md overflow-hidden mb-4 flex items-center justify-center border-2 border-dashed border-muted-foreground/25">
                 {previewUrl ? (
                   <img 
                     src={previewUrl} 
@@ -184,10 +193,7 @@ export default function StartupLogoUpload({
                   <Button
                     variant="ghost"
                     type="button"
-                    onClick={() => {
-                      setPreviewUrl(null);
-                      setSelectedFile(null);
-                    }}
+                    onClick={resetForm}
                   >
                     <X className="h-4 w-4 mr-2" />
                     Remove
@@ -205,6 +211,12 @@ export default function StartupLogoUpload({
               </div>
             </div>
             
+            {error && (
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                {error}
+              </div>
+            )}
+            
             <div className="text-sm text-muted-foreground">
               <p>Recommended logo format:</p>
               <ul className="list-disc list-inside ml-2">
@@ -215,12 +227,17 @@ export default function StartupLogoUpload({
               </ul>
             </div>
             
-            {isUploading && uploadProgress > 0 && (
-              <div className="w-full bg-muted rounded-full h-2">
-                <div 
-                  className="bg-primary h-2 rounded-full" 
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
+            {isUploading && (
+              <div className="space-y-2">
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full" 
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-right text-muted-foreground">
+                  {uploadProgress}% uploaded
+                </p>
               </div>
             )}
           </div>
@@ -230,8 +247,7 @@ export default function StartupLogoUpload({
               variant="outline"
               onClick={() => {
                 setIsOpen(false);
-                setPreviewUrl(null);
-                setSelectedFile(null);
+                resetForm();
               }}
               disabled={isUploading}
             >
