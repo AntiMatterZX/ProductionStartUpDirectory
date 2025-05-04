@@ -7,7 +7,8 @@ export default function Loading() {
         variant="psychedelic" 
         size="lg" 
         center={true}
+        text="Loading your profile..."
       />
     </div>
   )
-}
+} 

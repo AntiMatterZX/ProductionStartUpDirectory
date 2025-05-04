@@ -13,6 +13,7 @@ import type { StartupFormData } from "@/types/startup"
 import type { Database } from "@/types/database"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, CheckCircle2, Save } from "lucide-react"
+import Loader from "@/components/ui/loader"
 
 export default function CreateStartupPage() {
   const router = useRouter()
@@ -264,8 +265,8 @@ export default function CreateStartupPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="h-full">
+        <Loader variant="psychedelic" size="md" center={true} />
       </div>
     )
   }
@@ -350,7 +351,9 @@ export default function CreateStartupPage() {
               >
                 {isSubmitting ? (
                   <>
-                    <div className="h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="mr-2">
+                      <Loader variant="spinner" size="sm" center={false} />
+                    </div>
                     Submitting...
                   </>
                 ) : (

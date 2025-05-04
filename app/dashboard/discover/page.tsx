@@ -11,6 +11,7 @@ import type { Database } from "@/types/database";
 import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import Loader from "@/components/ui/loader";
 
 // Simplified StartupCard component directly in this file
 interface StartupCardProps {
@@ -129,15 +130,8 @@ export default function DiscoverPage() {
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-0">
-                    <div className="h-48 bg-muted rounded-t-lg" />
-                    <div className="p-6 space-y-3">
-                      <div className="h-6 bg-muted rounded" />
-                      <div className="h-4 bg-muted rounded w-3/4" />
-                      <div className="h-4 bg-muted rounded w-1/2" />
-                    </div>
-                  </CardContent>
+                <Card key={i} className="h-full overflow-hidden">
+                  <Loader variant="skeleton" />
                 </Card>
               ))}
             </div>
