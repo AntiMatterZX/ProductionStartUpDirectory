@@ -13,6 +13,7 @@ import type { StartupFormData } from "@/types/startup"
 import type { Database } from "@/types/database"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, CheckCircle2, Save } from "lucide-react"
+import { PsychedelicLoader } from "@/components/ui/psychedelic-loader"
 
 export default function CreateStartupPage() {
   const router = useRouter()
@@ -265,7 +266,7 @@ export default function CreateStartupPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <PsychedelicLoader />
       </div>
     )
   }
@@ -350,7 +351,10 @@ export default function CreateStartupPage() {
               >
                 {isSubmitting ? (
                   <>
-                    <div className="h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="h-4 w-4 mr-2 relative">
+                      <div className="absolute inset-0 rounded-full bg-white opacity-70 animate-ping"></div>
+                      <div className="absolute inset-0.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 animate-pulse"></div>
+                    </div>
                     Submitting...
                   </>
                 ) : (
@@ -369,8 +373,8 @@ export default function CreateStartupPage() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 w-full flex-1 flex flex-col">
+    <div className="w-full h-full flex flex-col overflow-hidden">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 w-full flex-1 flex flex-col overflow-hidden">
         <h1 className="text-2xl font-bold mb-4">Create Your Startup Profile</h1>
 
         <div className="mb-4">
@@ -383,7 +387,7 @@ export default function CreateStartupPage() {
         </div>
 
         <Card className="shadow-sm flex-1 flex flex-col overflow-hidden">
-          <CardContent className="p-4 sm:p-6 md:p-8 flex-1 overflow-auto no-scrollbar">
+          <CardContent className="p-4 sm:p-6 md:p-8 flex-1 overflow-hidden">
             {renderStep()}
           </CardContent>
         </Card>

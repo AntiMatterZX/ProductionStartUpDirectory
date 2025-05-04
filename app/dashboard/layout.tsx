@@ -4,6 +4,8 @@ import { getAuthUser } from "@/lib/auth/auth"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { SidebarProvider } from "@/components/dashboard/sidebar-context"
+import { DashboardLoading } from "@/components/dashboard/loading"
+import { Suspense } from "react"
 
 // Force dynamic rendering to ensure fresh data
 export const dynamic = 'force-dynamic';
@@ -30,7 +32,9 @@ export default async function DashboardLayout({
           
           <main className="flex-1 p-4 md:p-6 w-full overflow-hidden">
             <div className="mx-auto max-w-7xl w-full h-full">
-              {children}
+              <Suspense fallback={<DashboardLoading />}>
+                {children}
+              </Suspense>
             </div>
           </main>
         </div>
