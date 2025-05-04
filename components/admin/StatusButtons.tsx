@@ -26,26 +26,28 @@ export default function StatusButtons({
     else setIsPending(true);
     
     try {
-      // Try the admin endpoint first (which will work for admins)
-      let response = await fetch('/api/admin/startups/status', {
-        method: 'POST',
+      // Use the new admin startups API endpoint which bypasses RLS
+      const response = await fetch('/api/admin/startups', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          startupId, 
+          startup_id: startupId, 
           status: newStatus 
         }),
       });
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update status');
+        throw new Error(errorData.error || 'Failed to update status');
       }
+      
+      const result = await response.json();
       
       toast({
         title: "Status Updated",
-        description: `Startup is now ${newStatus}`,
+        description: result.message || `Startup is now ${newStatus}`,
       });
       
       // Call the callback to update parent component state

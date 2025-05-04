@@ -58,28 +58,20 @@ export default function ModerationPage() {
       setLoading(true)
       console.log("Fetching all startups...")
       
-      const { data, error } = await supabase
-        .from("startups")
-        .select(`
-          id,
-          name,
-          slug,
-          description,
-          status,
-          created_at,
-          updated_at,
-          user_id,
-          logo_url,
-          banner_url,
-          media_images,
-          media_documents,
-          media_videos
-        `)
-        .order("created_at", { ascending: false })
+      // Use our new admin API endpoint which uses service role credentials to bypass RLS
+      const response = await fetch('/api/admin/startups?status=all', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
       
-      if (error) {
-        throw error
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch startups');
       }
+      
+      const { startups: data } = await response.json();
       
       console.log("All startups:", data)
       
@@ -127,21 +119,21 @@ export default function ModerationPage() {
     try {
       setApproving({id, action: approve ? 'approve' : 'reject'})
       
-      // Call the admin API endpoint instead of direct Supabase update
-      const response = await fetch('/api/admin/startups/status', {
-        method: 'POST',
+      // Call our new admin API endpoint with service role
+      const response = await fetch('/api/admin/startups', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          startupId: id, 
+          startup_id: id, 
           status: approve ? "approved" : "rejected" 
         }),
       });
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update status');
+        throw new Error(errorData.error || 'Failed to update status');
       }
       
       // Find the startup being updated

@@ -64,116 +64,94 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="overflow-hidden bg-background">
-        <div className="relative flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] px-6 md:px-12 pb-48 pt-12 md:pt-24">
+      <section className="w-full py-12 md:py-24 lg:py-32">
+        <div className="container px-4 md:px-6">
           {/* Announcement Banner */}
-          <div className="mb-1.5 rounded-full bg-zinc-600">
-            <a
-              href="#"
-              target="_blank"
-              rel="nofollow"
-              className="flex origin-top-left items-center rounded-full border border-zinc-900 bg-white dark:bg-zinc-800 dark:border-zinc-700 p-0.5 text-sm transition-transform hover:-rotate-2"
-            >
-              <span className="rounded-full bg-primary px-2 py-0.5 font-medium text-white">
-                NEW
+          <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center space-y-4 text-center">
+            <div className="flex items-center rounded-lg bg-muted px-3 py-1 text-sm">
+              <span className="flex h-2 w-2 rounded-full bg-primary"></span>
+              <span className="ml-2 text-xs">
+                We're live on Product Hunt!
               </span>
-              <span className="ml-1.5 mr-1 inline-block dark:text-zinc-200">
-                Just launched on Product Hunt!
-              </span>
-              <FiArrowUpRight className="mr-2 inline-block dark:text-zinc-200" />
-            </a>
-          </div>
-
-          {/* Heading and Description */}
-          <h1 className="max-w-4xl text-center text-4xl font-black leading-[1.15] md:text-6xl md:leading-[1.15] gradient-heading mt-8">
-            Where Startups Connect With Ideal Investors
-          </h1>
-          <p className="mx-auto my-4 max-w-3xl text-center text-base text-muted-foreground leading-relaxed md:my-6 md:text-xl md:leading-relaxed">
-            LaunchPad is the premier platform for startups to showcase innovations 
-            and connect with investors looking for the next breakthrough opportunity.
-          </p>
-          
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-16">
-            <Link href="/signup">
-              <Button size="lg" className="rounded-lg px-6 py-3 shadow-lg hover:shadow-primary/20 bg-primary text-white">
-                <span className="font-bold">Get started</span> - no CC required
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/startups">
-              <Button variant="outline" size="lg" className="rounded-lg px-6 py-3">
-                Browse Startups
-              </Button>
-            </Link>
-          </div>
-
-          {/* Mockup Screen */}
-          <div className="absolute bottom-0 left-1/2 h-48 md:h-56 lg:h-64 w-[calc(100vw_-_56px)] max-w-[1100px] -translate-x-1/2 translate-y-1/4 overflow-hidden rounded-t-xl bg-zinc-900 p-0.5 shadow-xl border border-zinc-700">
-            <div className="flex items-center justify-between px-2 py-1">
-              <div className="flex items-center gap-0.5">
-                <span className="size-2 rounded-full bg-red-400" />
-                <span className="size-2 rounded-full bg-yellow-400" />
-                <span className="size-2 rounded-full bg-green-400" />
-              </div>
-              <span className="rounded bg-zinc-600 px-2 py-0.5 text-xs text-zinc-100">
-                launchpad.com/dashboard
-              </span>
-              <FiChevronDown className="text-white" />
             </div>
-            <div className="relative z-0 grid h-full w-full grid-cols-[100px,_1fr] overflow-hidden rounded-t-lg bg-white dark:bg-zinc-900 md:grid-cols-[150px,_1fr]">
-              <div className="h-full border-r border-zinc-300 dark:border-zinc-700 p-2">
-                <div className="flex items-center gap-2">
-                  <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
-                    <Rocket className="h-4 w-4" />
-                  </div>
-                  <span className="font-semibold text-sm">LaunchPad</span>
-                </div>
-                <div className="mt-3 space-y-1.5">
-                  <span className="flex items-center gap-1.5 text-xs text-primary">
-                    <FiMessageCircle />
-                    <span>Messages</span>
-                  </span>
-                  <span className="flex items-center gap-1.5 text-xs dark:text-zinc-400">
-                    <FiCheck />
-                    <span>Tasks</span>
-                  </span>
-                  <span className="flex items-center gap-1.5 text-xs dark:text-zinc-400">
-                    <FiList />
-                    <span>Board</span>
-                  </span>
-                </div>
-              </div>
 
-              <div className="relative z-0 p-2">
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="rounded bg-zinc-200 dark:bg-zinc-800 px-1.5 py-1 pr-8 text-xs text-zinc-600 dark:text-zinc-400">
-                    Search startups...
-                  </span>
-                  <div className="flex items-center gap-1.5 text-xl">
-                    <FiBell className="text-primary" />
-                    <FiUser className="dark:text-zinc-400" />
+            {/* Heading */}
+            <h1 className="font-bold text-3xl sm:text-5xl md:text-6xl lg:text-7xl">
+              Where Startups Connect With Ideal Investors
+            </h1>
+
+            {/* Description */}
+            <p className="mx-auto max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
+              LaunchPad is the premier platform for startups to showcase innovations and connect with investors looking for the next breakthrough opportunity.
+            </p>
+
+            {/* CTA Button */}
+            <div className="flex flex-col gap-2 min-[400px]:flex-row">
+              <Link href="/signup">
+                <Button className="rounded-md px-8">
+                  Get started - no CC required
+                </Button>
+              </Link>
+              <Link href="/startups">
+                <Button variant="outline" className="rounded-md px-8">
+                  Browse Startups
+                </Button>
+              </Link>
+            </div>
+
+            {/* Optional domain name */}
+            <p className="text-xs text-muted-foreground">
+              launchpad.com
+            </p>
+          </div>
+
+          {/* App Preview */}
+          <div className="mx-auto mt-16 flex max-w-[58rem] flex-col items-center justify-center space-y-4 text-center">
+            <div className="relative w-full max-w-full overflow-hidden rounded-lg border bg-background shadow-xl">
+              <div className="flex items-center justify-between border-b px-4 py-2">
+                <div className="flex items-center space-x-2">
+                  <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                  <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
+                  <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                </div>
+                <div className="text-xs text-muted-foreground">Search startups...</div>
+                <div></div>
+              </div>
+              <div className="flex items-start justify-between p-6">
+                <div className="flex flex-col items-start space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <FiMessageCircle className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="text-sm font-medium">Messages</div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <FiCheck className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="text-sm text-muted-foreground">Tasks</div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <FiList className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="text-sm text-muted-foreground">Board</div>
                   </div>
                 </div>
-                <div className="h-full rounded-xl border border-dashed border-zinc-500 bg-zinc-100 dark:bg-zinc-800" />
+                <div className="h-[200px] w-full max-w-[400px] rounded-md bg-muted"></div>
               </div>
-
-              <div className="absolute bottom-0 left-0 right-0 top-0 z-10 bg-gradient-to-b from-white/0 to-white dark:from-zinc-900/0 dark:to-zinc-900" />
             </div>
           </div>
         </div>
 
         {/* Logo Carousel */}
-        <div className="relative mt-44 md:mt-52 lg:mt-56 -rotate-1 scale-[1.01] border-y-2 border-zinc-900 dark:border-zinc-600 bg-white dark:bg-zinc-900">
-          <div className="relative z-0 flex overflow-hidden border-b-2 border-zinc-900 dark:border-zinc-600">
-            <LogosTop />
+        <div className="flex flex-col items-center justify-center gap-4 py-16">
+          <div className="flex flex-wrap justify-center gap-8">
+            <LogoRow icons={[SiNike, Si3M, SiAbstract, SiAdobe, SiAirtable, SiAmazon, SiBox, SiBytedance, SiChase, SiCloudbees]} />
           </div>
-          <div className="relative z-0 flex overflow-hidden">
-            <LogosBottom />
+          <div className="flex flex-wrap justify-center gap-8">
+            <LogoRow icons={[SiBmw, SiBurton, SiBuildkite, SiCouchbase, SiDailymotion, SiDeliveroo, SiEpicgames, SiGenius, SiGodaddy, SiHeroku]} />
           </div>
-
-          <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-32 bg-gradient-to-r from-white dark:from-zinc-900 to-white/0 dark:to-zinc-900/0" />
-          <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-32 bg-gradient-to-l from-white dark:from-zinc-900 to-white/0 dark:to-zinc-900/0" />
         </div>
       </section>
 
@@ -658,3 +636,16 @@ const Box = ({ front, bottom, back, top }: { front: string; bottom: string; back
     </motion.span>
   );
 };
+
+// Add the LogoRow component definition at the end of the file
+const LogoRow = ({ icons }: { icons: React.ComponentType<{ className?: string }>[] }) => {
+  return (
+    <>
+      {icons.map((Icon, index) => (
+        <div key={index} className="flex items-center justify-center">
+          <Icon className="h-6 w-6 text-muted-foreground/70" />
+        </div>
+      ))}
+    </>
+  );
+}

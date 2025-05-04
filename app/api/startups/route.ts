@@ -307,7 +307,7 @@ export async function POST(request: NextRequest) {
           location: detailedInfo.location?.trim() || null,
           category_id: basicInfo.industry || null,
           user_id: session.user.id,
-          status: "active",
+          status: "pending",
           media_images: mediaImages,
           media_documents: mediaDocuments,
           media_videos: mediaVideos,
