@@ -111,8 +111,37 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
           .eq("id", startupId)
           .single();
         
-        if (error || !data) {
-          throw new Error("Startup not found");
+        if (error) {
+          console.error("Database error fetching startup:", error);
+          
+          // Handle specific error codes
+          if (error.code === 'PGRST116') {
+            // This is the "not found" error code
+            toast({
+              title: "Startup not found",
+              description: "The startup you're looking for doesn't exist or has been deleted",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Database error",
+              description: "There was a problem fetching the startup data",
+              variant: "destructive",
+            });
+          }
+          
+          router.push("/dashboard/startups");
+          return;
+        }
+        
+        if (!data) {
+          toast({
+            title: "Startup not found",
+            description: "The startup you're looking for doesn't exist or has been deleted",
+            variant: "destructive",
+          });
+          router.push("/dashboard/startups");
+          return;
         }
         
         // Check if the user owns this startup
@@ -126,6 +155,13 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
           return;
         }
         
+        // Transform any null fields to empty strings/arrays for form handling
+        data.tagline = data.tagline || '';
+        data.description = data.description || '';
+        data.location = data.location || '';
+        data.website_url = data.website_url || '';
+        
+        // Copy the data to state
         setStartup(data);
         
         // Extract media items

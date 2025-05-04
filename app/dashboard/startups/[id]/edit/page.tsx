@@ -84,6 +84,8 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
   useEffect(() => {
     async function fetchStartupData() {
       try {
+        setIsLoading(true);
+        
         // Check authentication first
         const { data: { session } } = await supabase.auth.getSession()
         
@@ -109,42 +111,59 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
           .eq("id", startupId)
           .single()
 
-        if (error || !startup) {
-          throw new Error("Startup not found")
+        if (error) {
+          console.error("Database error fetching startup:", error);
+          
+          // Handle specific error codes
+          if (error.code === 'PGRST116') {
+            // This is the "not found" error code
+            throw new Error("Startup not found. It may have been deleted or never existed.");
+          } else {
+            throw new Error(`Database error: ${error.message}`);
+          }
+        }
+
+        if (!startup) {
+          throw new Error("Startup not found. It may have been deleted.");
         }
 
         // Check if the user owns this startup
         if (startup.user_id !== session.user.id) {
-          throw new Error("You don't have permission to edit this startup")
+          throw new Error("You don't have permission to edit this startup");
         }
 
         // Map database data to form structure
         const lookingForOptions = startup.startup_looking_for?.map(
           (item: any) => item.option_id
-        ) || []
+        ) || [];
 
         const socialLinks = {
           linkedin: "",
           twitter: "",
-        }
+        };
 
         // Extract social links
-        if (startup.social_links) {
+        if (startup.social_links && Array.isArray(startup.social_links)) {
           startup.social_links.forEach((link: any) => {
             if (link.platform === "linkedin") {
-              socialLinks.linkedin = link.url
+              socialLinks.linkedin = link.url || "";
             }
             if (link.platform === "twitter") {
-              socialLinks.twitter = link.url
+              socialLinks.twitter = link.url || "";
             }
-          })
+          });
         }
 
         // Convert founding date to YYYY-MM-DD format for input field
-        let formattedFoundingDate = ""
+        let formattedFoundingDate = "";
         if (startup.founding_date) {
-          const date = new Date(startup.founding_date)
-          formattedFoundingDate = date.toISOString().split('T')[0]
+          try {
+            const date = new Date(startup.founding_date);
+            formattedFoundingDate = date.toISOString().split('T')[0];
+          } catch (e) {
+            console.error("Invalid date format:", startup.founding_date);
+            formattedFoundingDate = new Date().toISOString().split('T')[0]; // Fallback to today
+          }
         }
 
         // Populate form data
@@ -169,32 +188,37 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
             logo: undefined, // Can't prefill file inputs
             coverImage: undefined,
             pitchDeck: undefined,
-            videoUrl: "", // Need to fetch this from startup_media
+            videoUrl: startup.video_url || "", 
             socialLinks: socialLinks,
           },
-        })
+        });
 
         // Mark form as pre-filled for validation
         setFormValidity({
           step1: true,
           step2: true,
           step3: true
-        })
+        });
+        
+        console.log("Startup data loaded successfully:", startup.name);
+        
       } catch (error: any) {
-        console.error("Error fetching startup:", error)
+        console.error("Error fetching startup for editing:", error);
         toast({
-          title: "Error",
-          description: error.message || "Failed to load startup data",
+          title: "Error loading startup",
+          description: error.message || "Failed to load startup data. Please try again.",
           variant: "destructive",
-        })
-        router.push("/dashboard/startups")
+        });
+        setTimeout(() => {
+          router.push("/dashboard/startups");
+        }, 2000);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
     
-    fetchStartupData()
-  }, [supabase, startupId, router])
+    fetchStartupData();
+  }, [supabase, startupId, router]);
 
   const handleStepChange = (step: number) => {
     // Only allow navigation to previously completed steps or the next available step
