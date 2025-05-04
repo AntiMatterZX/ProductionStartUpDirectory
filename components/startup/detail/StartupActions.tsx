@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
 import { Button } from "@/components/ui/button"
-import { ThumbsDown, Bookmark, Share2 } from "lucide-react"
+import { Bookmark, Share2, AlertCircle } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import type { Startup } from "@/types/startup"
 import { MotionDiv } from "@/components/ui/motion"
 import { UpvoteButton } from "@/components/ui/upvote-button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface StartupActionsProps {
   startup: Startup
@@ -20,11 +21,9 @@ export default function StartupActions({ startup, userId }: StartupActionsProps)
   const supabase = createClientComponentClient()
   const [isVoting, setIsVoting] = useState(false)
   const [isAddingToWishlist, setIsAddingToWishlist] = useState(false)
-  const [voteCount, setVoteCount] = useState({
-    upvotes: startup.votes?.upvotes || 0,
-    downvotes: startup.votes?.downvotes || 0,
-  })
-  const [hasVoted, setHasVoted] = useState<boolean | null>(null) // null = uninitialized, true = upvoted, false = downvoted
+  const [upvoteCount, setUpvoteCount] = useState(startup.votes?.upvotes || 0)
+  const [hasVoted, setHasVoted] = useState<boolean>(false)
+  const [isCreator, setIsCreator] = useState(false)
 
   // Ensure startup ID is available
   if (!startup || !startup.id) {
@@ -32,12 +31,13 @@ export default function StartupActions({ startup, userId }: StartupActionsProps)
     return null;
   }
 
-  // Check if user has already voted when component mounts
+  // Check if user has already voted and if user is the creator
   useEffect(() => {
-    async function checkVote() {
+    async function checkVoteAndCreator() {
       if (!userId) return;
       
       try {
+        // Check if user has voted
         const { data } = await supabase
           .from("votes")
           .select("vote")
@@ -45,26 +45,39 @@ export default function StartupActions({ startup, userId }: StartupActionsProps)
           .eq("user_id", userId)
           .maybeSingle();
         
-        if (data) {
-          setHasVoted(data.vote);
+        if (data && data.vote) {
+          setHasVoted(true);
         }
+        
+        // Check if user is the creator
+        setIsCreator(userId === startup.user_id);
       } catch (error) {
         console.error("Error checking vote status:", error);
       }
     }
     
-    checkVote();
-  }, [userId, startup.id, supabase]);
+    checkVoteAndCreator();
+  }, [userId, startup.id, startup.user_id, supabase]);
 
-  const handleVote = async (isUpvote: boolean) => {
+  const handleUpvote = async () => {
     try {
+      // Prevent upvoting if this is the creator
+      if (isCreator) {
+        toast({
+          title: "Cannot upvote own startup",
+          description: "You cannot upvote your own startup",
+          variant: "destructive",
+        })
+        return;
+      }
+      
       setIsVoting(true)
 
       // Use the userId prop instead of fetching session
       if (!userId) {
         toast({
           title: "Authentication required",
-          description: "Please sign in to vote for startups.",
+          description: "Please sign in to upvote startups.",
           variant: "destructive",
         })
         router.push(`/login?redirect=/startups/${startup.slug}`)
@@ -77,32 +90,29 @@ export default function StartupActions({ startup, userId }: StartupActionsProps)
         .select("id, vote")
         .eq("startup_id", startup.id)
         .eq("user_id", userId)
-        .maybeSingle() // Use maybeSingle to handle potential missing data
+        .maybeSingle()
 
       if (existingVote) {
-        // Update existing vote
-        if (existingVote.vote !== isUpvote) {
+        // User has already voted
+        if (existingVote.vote) {
+          toast({
+            title: "Already upvoted",
+            description: `You've already upvoted this startup.`,
+          })
+        } else {
+          // Update from downvote to upvote
           await supabase
             .from("votes")
-            .update({ vote: isUpvote, updated_at: new Date().toISOString() })
+            .update({ vote: true, updated_at: new Date().toISOString() })
             .eq("id", existingVote.id)
 
           // Update local state
-          setVoteCount((prev) => ({
-            upvotes: prev.upvotes + (isUpvote ? 1 : -1),
-            downvotes: prev.downvotes + (isUpvote ? -1 : 1),
-          }))
-          
-          setHasVoted(isUpvote)
+          setUpvoteCount(prev => prev + 1)
+          setHasVoted(true)
 
           toast({
             title: "Vote updated",
-            description: `You've changed your vote for ${startup.name}.`,
-          })
-        } else {
-          toast({
-            title: "Already voted",
-            description: `You've already ${isUpvote ? "upvoted" : "downvoted"} this startup.`,
+            description: `You've upvoted ${startup.name}.`,
           })
         }
       } else {
@@ -110,30 +120,26 @@ export default function StartupActions({ startup, userId }: StartupActionsProps)
         await supabase.from("votes").insert({
           startup_id: startup.id,
           user_id: userId,
-          vote: isUpvote,
+          vote: true,
         })
 
         // Update local state
-        setVoteCount((prev) => ({
-          upvotes: prev.upvotes + (isUpvote ? 1 : 0),
-          downvotes: prev.downvotes + (isUpvote ? 0 : 1),
-        }))
-        
-        setHasVoted(isUpvote)
+        setUpvoteCount(prev => prev + 1)
+        setHasVoted(true)
 
         toast({
-          title: "Vote recorded",
-          description: `You've ${isUpvote ? "upvoted" : "downvoted"} ${startup.name}.`,
+          title: "Upvote recorded",
+          description: `You've upvoted ${startup.name}.`,
         })
       }
 
       // Refresh the page to update the vote count
       router.refresh()
     } catch (error) {
-      console.error("Error voting:", error)
+      console.error("Error upvoting:", error)
       toast({
         title: "Error",
-        description: "There was a problem recording your vote. Please try again.",
+        description: "There was a problem recording your upvote. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -262,26 +268,29 @@ export default function StartupActions({ startup, userId }: StartupActionsProps)
       transition={{ duration: 0.5 }}
     >
       <div className="flex items-center gap-3">
-        <UpvoteButton 
-          count={voteCount.upvotes}
-          onUpvote={() => handleVote(true)}
-          isActive={hasVoted === true}
-          isLoading={isVoting}
-          size="md"
-        />
-        
-        <Button
-          variant={hasVoted === false ? "default" : "outline"}
-          size="sm"
-          onClick={() => handleVote(false)}
-          disabled={isVoting}
-          className={`flex items-center gap-2 rounded-full transition-all duration-300 ${
-            hasVoted === false ? "bg-destructive text-destructive-foreground" : ""
-          }`}
-        >
-          <ThumbsDown className="h-4 w-4" />
-          <span className="font-medium">{voteCount.downvotes}</span>
-        </Button>
+        {isCreator ? (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-muted-foreground">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="font-medium">{upvoteCount}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>You cannot upvote your own startup</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <UpvoteButton 
+            count={upvoteCount}
+            onUpvote={handleUpvote}
+            isActive={hasVoted}
+            isLoading={isVoting}
+            size="md"
+          />
+        )}
       </div>
 
       <Button

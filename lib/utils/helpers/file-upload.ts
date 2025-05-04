@@ -35,26 +35,9 @@ export async function uploadFile(
     const bucket = getBucketForMediaType(mediaType)
     const path = getStoragePath(userId, mediaType, fileName)
     
-    // Check if the bucket exists and create it if it doesn't
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets()
-    
-    if (bucketsError) {
-      console.error("Error checking buckets:", bucketsError)
-      throw new Error(`Error checking storage buckets: ${bucketsError.message}`)
-    }
-    
-    const bucketExists = buckets.some(b => b.name === bucket)
-    
-    if (!bucketExists) {
-      const { error: createBucketError } = await supabase.storage.createBucket(bucket, {
-        public: true
-      })
-      
-      if (createBucketError) {
-        console.error("Error creating bucket:", createBucketError)
-        throw new Error(`Error creating storage bucket: ${createBucketError.message}`)
-      }
-    }
+    // NOTE: We no longer try to create buckets dynamically
+    // Buckets should be created by admins in the Supabase dashboard
+    // This prevents "violates row-level security policy" errors
     
     // Track upload progress
     let progressInterval: any = null;

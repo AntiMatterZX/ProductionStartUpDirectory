@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion" 
 import { ThumbsUp, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -50,8 +50,8 @@ export function UpvoteButton({
   const currentSize = sizes[size]
   
   const handleClick = () => {
-    onUpvote()
-    if (!isActive) {
+    if (!isActive && !isLoading) {
+      onUpvote()
       setShowAnimation(true)
       setTimeout(() => setShowAnimation(false), 1500)
     }
