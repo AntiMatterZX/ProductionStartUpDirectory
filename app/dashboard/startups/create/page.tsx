@@ -369,8 +369,8 @@ export default function CreateStartupPage() {
   };
 
   return (
-    <div className="h-full overflow-y-auto py-6">
-      <div className="max-w-4xl mx-auto px-4">
+    <div className="w-full">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <h1 className="text-2xl font-bold mb-6">Create Your Startup Profile</h1>
 
         <div className="mb-8">
@@ -383,7 +383,7 @@ export default function CreateStartupPage() {
         </div>
 
         <Card className="shadow-sm mb-6">
-          <CardContent className="p-6 md:p-8">
+          <CardContent className="p-4 sm:p-6 md:p-8">
             {renderStep()}
           </CardContent>
         </Card>

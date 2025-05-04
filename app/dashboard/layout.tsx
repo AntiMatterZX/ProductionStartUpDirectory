@@ -22,14 +22,14 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen bg-background overflow-hidden">
+      <div className="flex h-screen bg-background">
         <DashboardSidebar />
         
-        <div className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex flex-col flex-1 w-full overflow-hidden">
           <DashboardHeader user={user} />
           
-          <main className="flex-1 overflow-auto p-4 md:p-6">
-            <div className="mx-auto max-w-7xl">
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 w-full">
+            <div className="mx-auto max-w-7xl w-full">
               {children}
             </div>
           </main>

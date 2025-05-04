@@ -51,4 +51,4 @@ CREATE TABLE IF NOT EXISTS public.startup_media_items (
 -- Create indexes if they don't exist
 CREATE INDEX IF NOT EXISTS idx_startup_media_items_startup_id ON public.startup_media_items(startup_id);
 CREATE INDEX IF NOT EXISTS idx_startup_media_items_user_id ON public.startup_media_items(user_id);
-CREATE INDEX IF NOT EXISTS idx_startup_media_items_media_type ON public.startup_media_items(media_type); 
+CREATE INDEX IF NOT EXISTS idx_startup_media_items_media_type ON public.startup_media_items(media_type); x`
