@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
-import { CheckCircle2, XCircle, Plus, Trash2, AlertCircle, Calendar, User, ListFilter } from "lucide-react"
+import { CheckCircle2, XCircle, Plus, Trash2, AlertCircle, Calendar, User, ListFilter, ShieldAlert } from "lucide-react"
 import LoadingIndicator from "@/components/ui/loading-indicator"
 import { motion } from "framer-motion"
 import { v4 as uuidv4 } from "uuid"
@@ -357,26 +357,26 @@ export default function ModerationPage() {
         <div>
           <h1 className="text-2xl font-bold">Startup Moderation</h1>
           <p className="text-muted-foreground">
-            Manage all startups in one place
+            Review and manage startups in the directory
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={toggleView}
-            className="gap-2"
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowAllStartups(!showAllStartups)}
           >
-            <ListFilter className="h-4 w-4" />
-            {showAllStartups ? "Show Kanban Board" : "Show All Startups"}
+            {showAllStartups ? "Hide Approved & Rejected" : "Show All Startups"}
           </Button>
-          <Button 
-            variant="default" 
-            onClick={fetchAllStartups}
-            disabled={loading}
-            className="gap-2"
-          >
-            {loading ? <LoadingIndicator size="sm" /> : <AlertCircle className="h-4 w-4" />}
-            Refresh Data
+          <Button asChild variant="outline">
+            <Link href="/admin/moderation/client-view">
+              Client View
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/admin/moderation/spam">
+              <ShieldAlert className="h-4 w-4 mr-2" />
+              Spam Management
+            </Link>
           </Button>
         </div>
       </div>

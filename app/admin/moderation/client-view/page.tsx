@@ -144,6 +144,11 @@ export default function ClientModerationPage() {
               All Startups
             </Link>
           </Button>
+          <Button asChild variant="outline">
+            <Link href="/admin/moderation/spam">
+              Spam Management
+            </Link>
+          </Button>
         </div>
       </div>
 
