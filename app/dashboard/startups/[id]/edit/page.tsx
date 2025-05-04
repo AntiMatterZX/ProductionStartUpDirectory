@@ -38,14 +38,14 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
     detailedInfo: {},
     mediaInfo: {}
   })
-
+  
   // Form validation state
   const [formValidity, setFormValidity] = useState({
     step1: false,
     step2: false,
     step3: false
   })
-
+  
   // Social links state
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({})
   const [loadingSocial, setLoadingSocial] = useState(false)
@@ -67,7 +67,7 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
           router.push("/login?redirect=/dashboard/startups")
           return
         }
-
+        
         // Fetch startup data
         const { data: startup, error } = await supabase
           .from("startups")
@@ -77,12 +77,12 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
           `)
           .eq("id", params.id)
           .single()
-
+        
         if (error) {
           console.error("Error fetching startup:", error)
           throw new Error(error.message)
         }
-
+        
         if (!startup) {
           toast({
             title: "Startup not found",
@@ -92,7 +92,7 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
           router.push("/dashboard/startups")
           return
         }
-
+        
         // Check if user owns this startup
         if (startup.user_id !== session.user.id) {
           toast({
@@ -109,11 +109,11 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
           .from("categories")
           .select("*")
           .order("name")
-
+        
         if (categoriesData) {
           setCategories(categoriesData)
         }
-
+        
         // Fetch looking for options
         const { data: lookingForOptionsData } = await supabase
           .from("looking_for_options")
@@ -123,7 +123,7 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
         if (lookingForOptionsData) {
           setLookingForOptions(lookingForOptionsData)
         }
-
+        
         // Set startup data
         setStartupData(startup)
         
@@ -244,7 +244,7 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
       description: `Your ${type.replace('_', ' ')} has been uploaded successfully`
     })
   }
-
+  
   const updateFormData = (step: number, data: any) => {
     if (step === 1) {
       setFormData(prev => ({
@@ -263,7 +263,7 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
       }))
     }
   }
-
+  
   const updateFormValidity = (step: number, isValid: boolean) => {
     if (step === 1) {
       setFormValidity(prev => ({ ...prev, step1: isValid }))
@@ -354,7 +354,7 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
       setLoadingSocial(false)
     }
   }
-
+  
   if (isLoading) {
     return (
       <div className="container mx-auto py-8 flex justify-center items-center">
@@ -362,7 +362,7 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
       </div>
     )
   }
-
+  
   return (
     <div className="container mx-auto py-4 px-4 h-[calc(100vh-2rem)] flex flex-col">
       {/* Header with back button and save */}
@@ -393,8 +393,8 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
           <TabsTrigger value="details">Basic Details</TabsTrigger>
           <TabsTrigger value="media">Media</TabsTrigger>
           <TabsTrigger value="additional">Additional Info</TabsTrigger>
-                  </TabsList>
-                  
+        </TabsList>
+        
         <div className="flex-1 overflow-hidden">
           <TabsContent value="details" className="h-full mt-0">
             <Card className="h-full flex flex-col">
@@ -410,9 +410,9 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
                       id="name"
                       value={startupData?.name || ""}
                       onChange={(e) => setStartupData({ ...startupData, name: e.target.value })}
-                        />
-                      </div>
-                      
+                    />
+                  </div>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="tagline">Tagline</Label>
                     <Input
@@ -421,8 +421,8 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
                       onChange={(e) => setStartupData({ ...startupData, tagline: e.target.value })}
                       placeholder="A short, catchy description of your startup"
                     />
-                    </div>
-                    
+                  </div>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="description">Description</Label>
                     <Textarea
@@ -430,9 +430,9 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
                       value={startupData?.description || ""}
                       onChange={(e) => setStartupData({ ...startupData, description: e.target.value })}
                       rows={5}
-                        />
-                      </div>
-                      
+                    />
+                  </div>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="category">Category</Label>
                     <Select
@@ -447,11 +447,11 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
                           <SelectItem key={category.id} value={category.id.toString()}>
                             {category.name}
                           </SelectItem>
-                            ))}
+                        ))}
                       </SelectContent>
                     </Select>
-                      </div>
-                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -478,8 +478,8 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
                 />
               </CardContent>
             </Card>
-                  </TabsContent>
-                  
+          </TabsContent>
+          
           <TabsContent value="additional" className="h-full mt-0">
             <Card className="h-full flex flex-col">
               <CardHeader className="pb-2">
@@ -495,9 +495,9 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
                       value={startupData?.website_url || ""}
                       onChange={(e) => setStartupData({ ...startupData, website_url: e.target.value })}
                       placeholder="https://example.com"
-                      />
-                    </div>
-                    
+                    />
+                  </div>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="location">Location</Label>
                     <Input
@@ -506,7 +506,7 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
                       onChange={(e) => setStartupData({ ...startupData, location: e.target.value })}
                       placeholder="City, Country"
                     />
-                    </div>
+                  </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="linkedin">LinkedIn URL</Label>
@@ -515,9 +515,9 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
                       value={startupData?.linkedin_url || ""}
                       onChange={(e) => setStartupData({ ...startupData, linkedin_url: e.target.value })}
                       placeholder="https://linkedin.com/company/..."
-                      />
-                    </div>
-                    
+                    />
+                  </div>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="twitter">Twitter URL</Label>
                     <Input
@@ -526,8 +526,8 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
                       onChange={(e) => setStartupData({ ...startupData, twitter_url: e.target.value })}
                       placeholder="https://twitter.com/..."
                     />
-        </div>
-        
+                  </div>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="founding-date">Founding Date</Label>
                     <Input
@@ -580,9 +580,9 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
                       </div>
                     ))}
                   </div>
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </div>
       </Tabs>

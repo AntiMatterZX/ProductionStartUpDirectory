@@ -13,7 +13,7 @@ interface StartupMediaProps {
 
 export default function StartupMedia({ media, videoUrl, logoUrl, bannerUrl }: StartupMediaProps) {
   const pitchDeck = media?.find((m) => m.media_type === "document")
-
+  
   // Filter gallery images (excluding logo and banner)
   const galleryImages = media
     ?.filter(m => m.media_type === "image" && 
@@ -83,14 +83,14 @@ export default function StartupMedia({ media, videoUrl, logoUrl, bannerUrl }: St
             <h3 className="text-sm font-medium">Gallery</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {galleryImages.map((image) => (
-                  <div key={image.id} className="aspect-square rounded-md overflow-hidden">
-                    <img
-                      src={image.url || "/placeholder.svg"}
-                      alt={image.title || "Startup image"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
+                <div key={image.id} className="aspect-square rounded-md overflow-hidden">
+                  <img
+                    src={image.url || "/placeholder.svg"}
+                    alt={image.title || "Startup image"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
             </div>
           </div>
         )}

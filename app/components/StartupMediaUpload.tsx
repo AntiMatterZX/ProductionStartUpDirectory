@@ -287,7 +287,7 @@ export default function StartupMediaUpload({
                 <span className="text-sm truncate max-w-[200px]">{selectedFile.name}</span>
                 <Button 
                   variant="ghost" 
-                  size="sm" 
+                  size="sm"
                   onClick={() => {
                     setSelectedFile(null);
                     if (previewUrl) {
@@ -322,14 +322,14 @@ export default function StartupMediaUpload({
           </div>
           
           <DialogFooter className="sm:justify-between">
-            <Button
-              variant="secondary"
+            <Button 
+              variant="secondary" 
               onClick={handleClose}
               disabled={isUploading}
             >
               Cancel
             </Button>
-            <Button
+            <Button 
               variant="default" 
               onClick={uploadMedia}
               disabled={!selectedFile || isUploading}
