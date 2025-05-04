@@ -104,8 +104,7 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
           .from("startups")
           .select(`
             *,
-            categories(id, name),
-            social_links(id, platform, url)
+            categories(id, name)
           `)
           .eq("id", startupId)
           .single();
@@ -159,6 +158,19 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
         data.description = data.description || '';
         data.location = data.location || '';
         data.website_url = data.website_url || '';
+        
+        // Fetch social links separately 
+        const { data: socialLinksData, error: socialLinksError } = await supabase
+          .from("social_links")
+          .select("id, platform, url")
+          .eq("startup_id", startupId);
+        
+        if (socialLinksError) {
+          console.error("Error fetching social links:", socialLinksError);
+        }
+        
+        // Add social links to the startup data
+        data.social_links = socialLinksData || [];
         
         // Copy the data to state
         setStartup(data);

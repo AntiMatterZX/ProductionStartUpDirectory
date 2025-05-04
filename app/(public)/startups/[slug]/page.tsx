@@ -15,7 +15,7 @@ import type { Startup } from "@/types/startup"
 export default function StartupDetailPage({ params }: { params: { slug: string } }) {
   const slugValue = params.slug;
   
-  const [startup, setStartup] = useState<Startup | null>(null)
+  const [startup, setStartup] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [notFoundError, setNotFoundError] = useState(false)
   const [userInfo, setUserInfo] = useState<{ id: string | null }>({ id: null })
@@ -90,11 +90,75 @@ export default function StartupDetailPage({ params }: { params: { slug: string }
           .select("*")
           .eq("startup_id", startup.id);
 
-        // 3. Fetch media
-        const { data: mediaData } = await supabase
-          .from("startup_media")
-          .select("*")
-          .eq("startup_id", startup.id);
+        // 3. Instead of fetching from startup_media table, create media objects from arrays
+        const startup_media = [];
+
+        // Add logo to media if exists
+        if (startup.logo_url) {
+          startup_media.push({
+            id: `logo-${Math.random().toString(36).substr(2, 9)}`,
+            startup_id: startup.id,
+            url: startup.logo_url,
+            media_type: "image",
+            title: "Logo",
+            is_featured: true,
+            created_at: new Date().toISOString()
+          });
+        }
+
+        // Add images
+        if (startup.media_images && Array.isArray(startup.media_images)) {
+          startup.media_images.forEach((url: string) => {
+            startup_media.push({
+              id: `img-${Math.random().toString(36).substr(2, 9)}`,
+              startup_id: startup.id,
+              url: url,
+              media_type: "image",
+              title: "Image",
+              is_featured: false,
+              created_at: new Date().toISOString()
+            });
+          });
+        }
+
+        // Add documents
+        if (startup.media_documents && Array.isArray(startup.media_documents)) {
+          startup.media_documents.forEach((url: string) => {
+            startup_media.push({
+              id: `doc-${Math.random().toString(36).substr(2, 9)}`,
+              startup_id: startup.id,
+              url: url,
+              media_type: "document",
+              title: "Document",
+              is_featured: false,
+              created_at: new Date().toISOString()
+            });
+          });
+        }
+
+        // Add videos
+        if (startup.media_videos && Array.isArray(startup.media_videos)) {
+          startup.media_videos.forEach((url: string) => {
+            startup_media.push({
+              id: `vid-${Math.random().toString(36).substr(2, 9)}`,
+              startup_id: startup.id,
+              url: url,
+              media_type: "video",
+              title: "Video",
+              is_featured: false,
+              created_at: new Date().toISOString()
+            });
+          });
+        }
+
+        // Log media for debugging
+        console.log("Created media objects:", {
+          count: startup_media.length,
+          logo: startup.logo_url,
+          images: startup.media_images?.length || 0,
+          docs: startup.media_documents?.length || 0,
+          videos: startup.media_videos?.length || 0
+        });
 
         // 4. Fetch looking_for options - Updated for new schema
         const { data: lookingForOptions } = await supabase
@@ -113,11 +177,18 @@ export default function StartupDetailPage({ params }: { params: { slug: string }
         const downvotes = votesData?.filter((vote) => !vote.vote).length || 0;
 
         // Combine all data
+        console.log("Processed startup data:", {
+          id: startup.id,
+          name: startup.name,
+          socialLinks: socialLinksData || [],
+          lookingFor: lookingForOptions || []
+        });
+
         setStartup({
           ...startup,
           categories: categoryData || null,
           social_links: socialLinksData || [],
-          startup_media: mediaData || [],
+          startup_media: startup_media,
           looking_for: lookingForOptions || [],
           votes: {
             upvotes,
@@ -159,8 +230,10 @@ export default function StartupDetailPage({ params }: { params: { slug: string }
     );
   }
 
-  // Get cover image from media
-  const coverImage = startup.startup_media?.find((media) => media.is_featured && media.media_type === "image")?.url;
+  // Get cover image - use the first media image or the logo
+  const coverImage = startup.media_images && startup.media_images.length > 0 
+    ? startup.media_images[0] 
+    : startup.logo_url;
 
   return (
     <div className="min-h-screen bg-background">
@@ -184,8 +257,8 @@ export default function StartupDetailPage({ params }: { params: { slug: string }
             <StartupActions startup={startup} userId={userInfo.id} />
             <StartupDescription description={startup.description} />
             <StartupMedia
-              media={startup.startup_media}
-              videoUrl={startup.startup_media?.find((m) => m.media_type === "video")?.url}
+              media={startup.startup_media as any[]}
+              videoUrl={startup.startup_media?.find((m: any) => m.media_type === "video")?.url}
             />
           </MotionDiv>
 

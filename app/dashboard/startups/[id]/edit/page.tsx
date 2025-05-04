@@ -104,8 +104,7 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
           .from("startups")
           .select(`
             *,
-            categories(id, name),
-            social_links(id, platform, url)
+            categories(id, name)
           `)
           .eq("id", startupId)
           .single()
@@ -130,6 +129,19 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
         if (startup.user_id !== session.user.id) {
           throw new Error("You don't have permission to edit this startup");
         }
+
+        // Fetch social links separately
+        const { data: socialLinksData, error: socialLinksError } = await supabase
+          .from("social_links")
+          .select("id, platform, url")
+          .eq("startup_id", startupId);
+
+        if (socialLinksError) {
+          console.error("Error fetching social links:", socialLinksError);
+        }
+
+        // Add social links to the startup data
+        startup.social_links = socialLinksData || [];
 
         // Map database data to form structure
         const lookingForOptions = startup.looking_for || [];
