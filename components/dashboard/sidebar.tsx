@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSidebar } from "./sidebar-context"
+import { ModeToggle } from "@/components/theme/mode-toggle"
 
 export function DashboardSidebar() {
   const { sidebarOpen, toggleSidebar } = useSidebar()
@@ -138,26 +139,37 @@ export function DashboardSidebar() {
         </div>
 
         {/* Footer */}
-        <div className="mt-auto border-t p-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 overflow-hidden">
-              <Avatar className="h-9 w-9 border">
-                <AvatarImage src={profile?.avatar_url} />
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {profile?.full_name?.charAt(0) || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="truncate font-medium text-sm">{profile?.full_name}</p>
-                <p className="truncate text-xs text-muted-foreground">{userRole}</p>
+        <div className="mt-auto border-t">
+          {/* User profile */}
+          <div className="p-4 border-b">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <Avatar className="h-9 w-9 border">
+                  <AvatarImage src={profile?.avatar_url} />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {profile?.full_name?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate font-medium text-sm">{profile?.full_name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{userRole}</p>
+                </div>
               </div>
+              <Link 
+                href="/dashboard/settings" 
+                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Settings className="h-5 w-5" />
+              </Link>
             </div>
-            <Link 
-              href="/dashboard/settings" 
-              className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Settings className="h-5 w-5" />
-            </Link>
+          </div>
+          
+          {/* Copyright and mode toggle */}
+          <div className="px-4 py-3 flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} LaunchPad
+            </p>
+            <ModeToggle />
           </div>
         </div>
       </motion.aside>
