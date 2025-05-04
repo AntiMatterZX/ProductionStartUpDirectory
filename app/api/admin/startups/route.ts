@@ -28,14 +28,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    // Check if user is an admin (you'll need to implement this check)
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('is_admin')
+    // Check if user is an admin using the profiles table with role_id
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role_id')
       .eq('id', session.user.id)
       .single()
     
-    if (userError || !user || !user.is_admin) {
+    if (profileError) {
+      console.error("Admin access check failed - profile error:", profileError);
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 })
+    }
+    
+    // Check if the user has the admin role (role_id 4)
+    const isAdmin = profile?.role_id === 4;
+    
+    if (!isAdmin) {
+      console.error("Admin access check failed - not admin role:", profile?.role_id);
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 })
     }
     
@@ -85,14 +94,23 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    // Check if user is an admin
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('is_admin')
+    // Check if user is an admin using the profiles table with role_id
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role_id')
       .eq('id', session.user.id)
       .single()
     
-    if (userError || !user || !user.is_admin) {
+    if (profileError) {
+      console.error("Admin access check failed - profile error:", profileError);
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 })
+    }
+    
+    // Check if the user has the admin role (role_id 4)
+    const isAdmin = profile?.role_id === 4;
+    
+    if (!isAdmin) {
+      console.error("Admin access check failed - not admin role:", profile?.role_id);
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 })
     }
     
