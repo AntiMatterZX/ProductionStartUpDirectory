@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { 
   CheckCircle2, XCircle, Plus, Trash2, AlertCircle, Calendar, 
-  User, ListFilter, ShieldAlert, Eye, ExternalLink, Clock
+  User, ListFilter, ShieldAlert, Eye, ExternalLink, Clock, FileText
 } from "lucide-react"
 import LoadingIndicator from "@/components/ui/loading-indicator"
 import { motion } from "framer-motion"
@@ -26,6 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import MediaDeleteButton from "@/app/components/MediaDeleteButton"
 
 // Force client-side rendering to ensure fresh data
 export default function ModerationPage() {
@@ -68,7 +69,11 @@ export default function ModerationPage() {
           created_at,
           updated_at,
           user_id,
-          logo_url
+          logo_url,
+          banner_url,
+          media_images,
+          media_documents,
+          media_videos
         `)
         .order("created_at", { ascending: false })
       
@@ -360,11 +365,62 @@ export default function ModerationPage() {
     setShowAllStartups(!showAllStartups);
   };
 
-  // Preview startup details
+  // Function to handle startup preview
   function handlePreview(startup: any) {
     setSelectedStartup(startup)
     setPreviewOpen(true)
   }
+
+  // Function to handle media deletion in admin view
+  const handleMediaRemoved = (startupId: string, mediaType: string, url: string) => {
+    // If the startup is being previewed, update its data
+    if (selectedStartup && selectedStartup.id === startupId) {
+      const updatedStartup = { ...selectedStartup };
+      
+      // Update the appropriate field
+      switch (mediaType) {
+        case "logo":
+          updatedStartup.logo_url = null;
+          break;
+        case "banner":
+          updatedStartup.banner_url = null;
+          break;
+        case "gallery":
+        case "image":
+          updatedStartup.media_images = (updatedStartup.media_images || [])
+            .filter((imgUrl: string) => imgUrl !== url);
+          break;
+        case "document":
+        case "pitch_deck":
+          if (mediaType === "pitch_deck") {
+            updatedStartup.pitch_deck_url = null;
+          }
+          updatedStartup.media_documents = (updatedStartup.media_documents || [])
+            .filter((docUrl: string) => docUrl !== url);
+          break;
+        case "video":
+          updatedStartup.media_videos = (updatedStartup.media_videos || [])
+            .filter((videoUrl: string) => videoUrl !== url);
+          break;
+      }
+      
+      setSelectedStartup(updatedStartup);
+      
+      // Update the startup in the lists
+      const updateStartupInList = (list: any[]) => 
+        list.map(s => s.id === startupId ? updatedStartup : s);
+      
+      setStartups(updateStartupInList(startups));
+      setPendingStartups(updateStartupInList(pendingStartups));
+      setApprovedStartups(updateStartupInList(approvedStartups));
+      setRejectedStartups(updateStartupInList(rejectedStartups));
+      
+      toast({
+        title: "Media deleted",
+        description: `The ${mediaType} has been removed from this startup.`,
+      });
+    }
+  };
 
   return (
     <div className="p-6 bg-neutral-50 dark:bg-neutral-900 min-h-screen">
@@ -741,133 +797,254 @@ export default function ModerationPage() {
 
       {/* Startup Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{selectedStartup?.name || "Startup Preview"}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Startup Preview
+            </DialogTitle>
             <DialogDescription>
-              Review startup details before making a decision
+              Reviewing startup details before making a moderation decision
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedStartup && (
-            <div className="mt-4 space-y-6">
-              {/* Status Badge */}
-              <div className="flex flex-wrap gap-2">
-                <Badge className={`${
-                  selectedStartup.status === 'pending' ? 'bg-amber-100 text-amber-800' :
-                  selectedStartup.status === 'approved' ? 'bg-green-100 text-green-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
-                  {selectedStartup.status?.charAt(0).toUpperCase() + selectedStartup.status?.slice(1) || "Unknown"}
-                </Badge>
-                
-                {selectedStartup.slug && (
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <span>Slug:</span> {selectedStartup.slug}
-                  </Badge>
-                )}
-              </div>
-              
-              {/* Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-muted-foreground">Created At</h3>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm">{new Date(selectedStartup.created_at).toLocaleString()}</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-muted-foreground">Last Updated</h3>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm">{new Date(selectedStartup.updated_at).toLocaleString()}</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-muted-foreground">User ID</h3>
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm">{selectedStartup.user_id || "Unknown"}</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-muted-foreground">Startup ID</h3>
-                  <p className="text-sm font-mono">{selectedStartup.id}</p>
-                </div>
-              </div>
-              
-              {/* Logo Preview */}
-              {selectedStartup.logo_url && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-muted-foreground">Logo</h3>
-                  <div className="w-20 h-20 rounded-lg overflow-hidden border">
+            <div className="space-y-4">
+              {/* Startup header with name and logo */}
+              <div className="flex items-center gap-4">
+                {selectedStartup.logo_url ? (
+                  <div className="relative w-20 h-20 rounded-md overflow-hidden bg-muted">
                     <img 
                       src={selectedStartup.logo_url} 
-                      alt={`${selectedStartup.name} logo`} 
-                      className="w-full h-full object-cover"
+                      alt={`${selectedStartup.name} logo`}
+                      className="w-full h-full object-contain"
+                    />
+                    <div className="absolute top-1 right-1">
+                      <MediaDeleteButton
+                        startupId={selectedStartup.id}
+                        mediaType="logo"
+                        mediaUrl={selectedStartup.logo_url}
+                        isAdmin={true}
+                        size="icon"
+                        variant="outline"
+                        onDelete={() => handleMediaRemoved(selectedStartup.id, "logo", selectedStartup.logo_url)}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-md bg-muted flex items-center justify-center">
+                    <User className="h-10 w-10 text-muted-foreground/40" />
+                  </div>
+                )}
+                <div>
+                  <h2 className="text-2xl font-bold">{selectedStartup.name}</h2>
+                  <p className="text-muted-foreground text-sm">ID: {selectedStartup.id}</p>
+                </div>
+              </div>
+
+              {/* Banner image if available */}
+              {selectedStartup.banner_url && (
+                <div className="relative w-full h-40 rounded-md overflow-hidden">
+                  <img 
+                    src={selectedStartup.banner_url} 
+                    alt="Banner" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 right-2">
+                    <MediaDeleteButton
+                      startupId={selectedStartup.id}
+                      mediaType="banner"
+                      mediaUrl={selectedStartup.banner_url}
+                      isAdmin={true}
+                      size="sm"
+                      variant="outline"
+                      onDelete={() => handleMediaRemoved(selectedStartup.id, "banner", selectedStartup.banner_url)}
                     />
                   </div>
                 </div>
               )}
-              
-              {/* Description */}
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
-                <div className="p-4 bg-muted/20 rounded-md max-h-60 overflow-y-auto">
-                  <p className="text-sm whitespace-pre-wrap">{selectedStartup.description || "No description provided"}</p>
+
+              {/* Basic info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Basic Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Description</Label>
+                    <p className="mt-1 text-sm">{selectedStartup.description || "No description provided"}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Status</Label>
+                      <Badge className="mt-1" variant={
+                        selectedStartup.status === "approved" ? "default" :
+                        selectedStartup.status === "rejected" ? "destructive" : "outline"
+                      }>
+                        {selectedStartup.status || "Unknown"}
+                      </Badge>
+                    </div>
+                    <div>
+                      <Label>Created</Label>
+                      <p className="mt-1 text-sm">{new Date(selectedStartup.created_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Gallery Images */}
+              {selectedStartup.media_images && selectedStartup.media_images.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Gallery Images</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-4 gap-2">
+                      {selectedStartup.media_images.map((imageUrl: string, index: number) => (
+                        <div key={`gallery-${index}`} className="relative aspect-square rounded-md overflow-hidden bg-muted">
+                          <img 
+                            src={imageUrl} 
+                            alt={`Gallery image ${index + 1}`} 
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute top-1 right-1">
+                            <MediaDeleteButton
+                              startupId={selectedStartup.id}
+                              mediaType="gallery"
+                              mediaUrl={imageUrl}
+                              isAdmin={true}
+                              size="icon"
+                              variant="outline"
+                              onDelete={() => handleMediaRemoved(selectedStartup.id, "gallery", imageUrl)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Documents */}
+              {selectedStartup.media_documents && selectedStartup.media_documents.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Documents</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {selectedStartup.media_documents.map((docUrl: string, index: number) => (
+                        <div key={`doc-${index}`} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-5 w-5" />
+                            <a 
+                              href={docUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-primary hover:underline"
+                            >
+                              Document {index + 1}
+                            </a>
+                          </div>
+                          <MediaDeleteButton
+                            startupId={selectedStartup.id}
+                            mediaType="document"
+                            mediaUrl={docUrl}
+                            isAdmin={true}
+                            size="sm"
+                            onDelete={() => handleMediaRemoved(selectedStartup.id, "document", docUrl)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Videos */}
+              {selectedStartup.media_videos && selectedStartup.media_videos.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Videos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {selectedStartup.media_videos.map((videoUrl: string, index: number) => (
+                        <div key={`video-${index}`} className="relative">
+                          <div className="aspect-video bg-muted rounded-md overflow-hidden">
+                            {videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be') ? (
+                              <iframe
+                                src={videoUrl.replace('watch?v=', 'embed/')}
+                                title={`Video ${index + 1}`}
+                                className="w-full h-full"
+                                allowFullScreen
+                              ></iframe>
+                            ) : (
+                              <video
+                                src={videoUrl}
+                                controls
+                                className="w-full h-full object-contain"
+                              ></video>
+                            )}
+                          </div>
+                          <div className="absolute top-2 right-2">
+                            <MediaDeleteButton
+                              startupId={selectedStartup.id}
+                              mediaType="video"
+                              mediaUrl={videoUrl}
+                              isAdmin={true}
+                              size="sm"
+                              variant="outline"
+                              onDelete={() => handleMediaRemoved(selectedStartup.id, "video", videoUrl)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="flex justify-between">
+                <Button
+                  variant="default"
+                  onClick={() => window.open(`/dashboard/startups/${selectedStartup.id}`, '_blank')}
+                  className="gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  View Startup
+                </Button>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      handleApproval(selectedStartup.id, false);
+                      setPreviewOpen(false);
+                    }}
+                    disabled={approving === selectedStartup.id}
+                    className="gap-2"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Reject
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      handleApproval(selectedStartup.id, true);
+                      setPreviewOpen(false);
+                    }}
+                    disabled={approving === selectedStartup.id}
+                    className="gap-2"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    Approve
+                  </Button>
                 </div>
               </div>
             </div>
           )}
-          
-          <DialogFooter className="flex justify-between items-center gap-2 flex-wrap sm:flex-nowrap">
-            <div>
-              {selectedStartup?.slug && (
-                <Button asChild variant="outline" size="sm" className="gap-1">
-                  <Link href={`/startups/${selectedStartup.slug}`} target="_blank">
-                    Preview on Site
-                    <ExternalLink className="h-3.5 w-3.5 ml-1" />
-                  </Link>
-                </Button>
-              )}
-            </div>
-            
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="border-red-200 hover:bg-red-100 hover:text-red-900"
-                onClick={() => {
-                  if (selectedStartup) {
-                    handleApproval(selectedStartup.id, false);
-                  }
-                }}
-                disabled={approving === selectedStartup?.id}
-              >
-                {approving === selectedStartup?.id ? <LoadingIndicator size="sm" /> : <XCircle className="h-4 w-4 mr-1" />}
-                Reject Startup
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="border-green-200 hover:bg-green-100 hover:text-green-900"
-                onClick={() => {
-                  if (selectedStartup) {
-                    handleApproval(selectedStartup.id, true);
-                  }
-                }}
-                disabled={approving === selectedStartup?.id}
-              >
-                {approving === selectedStartup?.id ? <LoadingIndicator size="sm" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
-                Approve Startup
-              </Button>
-            </div>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
