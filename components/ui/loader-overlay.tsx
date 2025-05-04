@@ -1,6 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
+import PsychedelicLoader from "./psychedelic-loader"
 
 interface LoaderOverlayProps {
   isLoading: boolean
@@ -22,7 +23,7 @@ export default function LoaderOverlay({ isLoading, message }: LoaderOverlayProps
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
         >
           <div className="flex flex-col items-center">
-            <div className="h-16 w-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <PsychedelicLoader />
             {message && (
               <motion.p
                 initial={{ opacity: 0, y: 10 }}

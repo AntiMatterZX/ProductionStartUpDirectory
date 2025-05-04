@@ -24,9 +24,22 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         <div className="w-full max-w-md px-4">{children}</div>
       </main>
 
-      <footer className="border-t py-4 bg-background">
-        <div className="container text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} LaunchPad. All rights reserved.
+      <footer className="bg-background border-t border-border w-full py-4 mt-auto">
+        <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
+          <p className="text-center text-sm text-muted-foreground">
+            &copy; {new Date().getFullYear()} LaunchPad. All rights reserved.
+          </p>
+          <div className="flex items-center gap-4">
+            <a href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Terms
+            </a>
+            <a href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Privacy
+            </a>
+            <a href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Contact
+            </a>
+          </div>
         </div>
       </footer>
     </div>

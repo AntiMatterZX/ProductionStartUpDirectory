@@ -1,7 +1,7 @@
 "use client"
 
-import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import PsychedelicLoader from "./psychedelic-loader"
 
 interface LoadingIndicatorProps {
   className?: string
@@ -17,18 +17,9 @@ export default function LoadingIndicator({ className, size = "md" }: LoadingIndi
 
   return (
     <div className={cn("relative flex items-center justify-center", className)}>
-      <motion.div
-        className={cn(
-          "rounded-full border-2 border-primary/30 border-t-primary/90",
-          sizeClasses[size]
-        )}
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 1.2,
-          repeat: Number.POSITIVE_INFINITY,
-          ease: "linear"
-        }}
-      />
+      <div className={sizeClasses[size]}>
+        <PsychedelicLoader />
+      </div>
     </div>
   )
 } 

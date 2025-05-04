@@ -1,6 +1,7 @@
 "use client"
 
-import { createContext, useContext, useState, ReactNode } from "react"
+import { createContext, useContext, useState, ReactNode, useEffect } from "react"
+import { usePathname, useSearchParams } from "next/navigation"
 import LoaderOverlay from "./loader-overlay"
 
 interface LoadingContextType {
@@ -14,6 +15,14 @@ const LoadingContext = createContext<LoadingContextType | undefined>(undefined)
 export function LoadingProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<string | undefined>(undefined)
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  // Show loading indicator during navigation
+  useEffect(() => {
+    setIsLoading(false)
+    setMessage(undefined)
+  }, [pathname, searchParams])
 
   const startLoading = (msg?: string) => {
     setMessage(msg)
