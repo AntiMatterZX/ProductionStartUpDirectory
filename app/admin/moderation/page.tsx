@@ -16,6 +16,11 @@ export default function ModerationPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Startup Moderation</h1>
         <div className="flex gap-2">
+          <Button variant="default" asChild>
+            <Link href="/admin/moderation/client-view">
+              Client View
+            </Link>
+          </Button>
           <Button variant="destructive" asChild>
             <Link href="/admin/moderation/emergency">
               Emergency Fix
@@ -32,8 +37,8 @@ export default function ModerationPage() {
             </Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/admin/moderation/auto-update">
-              Auto-Update System
+            <Link href="/admin/moderation/direct-fix">
+              Direct Fix
             </Link>
           </Button>
         </div>

@@ -9,6 +9,9 @@ import Link from "next/link"
 import LoadingIndicator from "@/components/ui/loading-indicator"
 import { Badge } from "@/components/ui/badge"
 import { v4 as uuidv4 } from "uuid"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 
 export default function TestStartupPage() {
   const [loading, setLoading] = useState(true)
