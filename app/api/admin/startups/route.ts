@@ -55,8 +55,7 @@ export async function GET(request: NextRequest) {
     // Use the admin client to fetch startups (bypasses RLS)
     let query = supabaseAdmin.from('startups').select(`
       *,
-      categories(id, name),
-      user:user_id(id, email)
+      categories(id, name)
     `)
     
     // Filter by status if specified
