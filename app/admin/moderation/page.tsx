@@ -10,10 +10,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
-import { CheckCircle2, XCircle, Plus, Trash2, AlertCircle, Calendar, User } from "lucide-react"
+import { CheckCircle2, XCircle, Plus, Trash2, AlertCircle, Calendar, User, ListFilter } from "lucide-react"
 import LoadingIndicator from "@/components/ui/loading-indicator"
 import { motion } from "framer-motion"
 import { v4 as uuidv4 } from "uuid"
+import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd"
 
 // Force client-side rendering to ensure fresh data
 export default function ModerationPage() {
@@ -29,6 +30,7 @@ export default function ModerationPage() {
   const [testDescription, setTestDescription] = useState("")
   const { toast } = useToast()
   const supabase = createClientComponentClient()
+  const [showAllStartups, setShowAllStartups] = useState(false);
 
   // Fetch all startups on load
   useEffect(() => {
@@ -52,7 +54,8 @@ export default function ModerationPage() {
           status,
           created_at,
           updated_at,
-          user_id
+          user_id,
+          logo_url
         `)
         .order("created_at", { ascending: false })
       
@@ -313,7 +316,7 @@ export default function ModerationPage() {
   }
 
   // Handle drag end - when a card is dropped into a new column
-  const handleDragEnd = (result: any) => {
+  const handleDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
     // If there's no destination or the card was dropped back to its original position
@@ -335,16 +338,17 @@ export default function ModerationPage() {
       case 'rejected':
         newStatus = 'rejected';
         break;
-      case 'delete':
-        // If dropped on delete zone, delete the startup
-        handleDelete(draggableId);
-        return;
       default:
         return;
     }
 
     // Update the startup's status in the database
     changeStatus(draggableId, newStatus);
+  };
+
+  // Function to toggle between Kanban and All Startups view
+  const toggleView = () => {
+    setShowAllStartups(!showAllStartups);
   };
 
   return (
@@ -356,15 +360,25 @@ export default function ModerationPage() {
             Manage all startups in one place
           </p>
         </div>
-        <Button 
-          variant="default" 
-          onClick={fetchAllStartups}
-          disabled={loading}
-          className="gap-2"
-        >
-          {loading ? <LoadingIndicator size="sm" /> : <AlertCircle className="h-4 w-4" />}
-          Refresh Data
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={toggleView}
+            className="gap-2"
+          >
+            <ListFilter className="h-4 w-4" />
+            {showAllStartups ? "Show Kanban Board" : "Show All Startups"}
+          </Button>
+          <Button 
+            variant="default" 
+            onClick={fetchAllStartups}
+            disabled={loading}
+            className="gap-2"
+          >
+            {loading ? <LoadingIndicator size="sm" /> : <AlertCircle className="h-4 w-4" />}
+            Refresh Data
+          </Button>
+        </div>
       </div>
 
       {/* Create Test Startup + Statistics Cards */}
@@ -453,117 +467,258 @@ export default function ModerationPage() {
         </Card>
       </div>
 
-      {/* Kanban Board */}
+      {/* Kanban Board or All Startups View */}
       {loading ? (
         <div className="flex justify-center py-20">
           <LoadingIndicator size="lg" />
         </div>
-      ) : (
-        <div className="flex gap-6 overflow-x-auto pb-6 snap-x">
-          {/* Pending Column */}
-          <div className="min-w-[350px] w-1/3 snap-start">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-medium text-amber-600 dark:text-amber-400 text-lg">Pending</h3>
-              <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">
-                {pendingStartups?.length || 0}
-              </Badge>
-            </div>
-            <div className="space-y-4 p-4 bg-amber-50/50 dark:bg-amber-950/10 rounded-lg min-h-[400px] border-2 border-amber-200 dark:border-amber-800/30">
-              {!pendingStartups || pendingStartups.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-32 text-amber-400 dark:text-amber-500 text-center p-6 border-2 border-dashed border-amber-200 dark:border-amber-800/30 rounded-lg bg-amber-50 dark:bg-amber-950/20">
-                  <p className="text-sm mb-2">No pending startups</p>
-                  <p className="text-xs text-amber-500/70 dark:text-amber-600/70">All startups have been reviewed</p>
-                </div>
-              ) : (
-                pendingStartups.map((startup) => (
-                  <StartupCard
-                    key={startup.id}
-                    startup={startup}
-                    onApprove={() => handleApproval(startup.id, true)}
-                    onReject={() => handleApproval(startup.id, false)}
-                    onDelete={() => handleDelete(startup.id)}
-                    isApproving={approving === startup.id}
-                    isDeleting={deleting === startup.id}
-                    primary="amber"
-                  />
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Approved Column */}
-          <div className="min-w-[350px] w-1/3 snap-start">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-medium text-green-600 dark:text-green-400 text-lg">Approved</h3>
-              <Badge variant="outline" className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-                {approvedStartups?.length || 0}
-              </Badge>
-            </div>
-            <div className="space-y-4 p-4 bg-green-50/50 dark:bg-green-950/10 rounded-lg min-h-[400px] border-2 border-green-200 dark:border-green-800/30">
-              {!approvedStartups || approvedStartups.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-32 text-green-400 dark:text-green-500 text-center p-6 border-2 border-dashed border-green-200 dark:border-green-800/30 rounded-lg bg-green-50 dark:bg-green-950/20">
-                  <p className="text-sm mb-2">No approved startups</p>
-                  <p className="text-xs text-green-500/70 dark:text-green-600/70">Approve pending startups to see them here</p>
-                </div>
-              ) : (
-                approvedStartups.map((startup) => (
-                  <StartupCard
-                    key={startup.id}
-                    startup={startup}
-                    onDelete={() => handleDelete(startup.id)}
-                    onRevert={() => changeStatus(startup.id, 'pending')}
-                    isDeleting={deleting === startup.id}
-                    primary="green"
-                  />
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Rejected Column */}
-          <div className="min-w-[350px] w-1/3 snap-start">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-medium text-red-600 dark:text-red-400 text-lg">Rejected</h3>
-              <Badge variant="outline" className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
-                {rejectedStartups?.length || 0}
-              </Badge>
-            </div>
-            <div className="space-y-4 p-4 bg-red-50/50 dark:bg-red-950/10 rounded-lg min-h-[400px] border-2 border-red-200 dark:border-red-800/30">
-              {!rejectedStartups || rejectedStartups.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-32 text-red-400 dark:text-red-500 text-center p-6 border-2 border-dashed border-red-200 dark:border-red-800/30 rounded-lg bg-red-50 dark:bg-red-950/20">
-                  <p className="text-sm mb-2">No rejected startups</p>
-                  <p className="text-xs text-red-500/70 dark:text-red-600/70">Rejected startups will appear here</p>
-                </div>
-              ) : (
-                rejectedStartups.map((startup) => (
-                  <StartupCard
-                    key={startup.id}
-                    startup={startup}
-                    onDelete={() => handleDelete(startup.id)}
-                    onRevert={() => changeStatus(startup.id, 'pending')}
-                    isDeleting={deleting === startup.id}
-                    primary="red"
-                  />
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Delete Zone */}
-          <div className="min-w-[200px] flex items-start pt-8 snap-start">
-            <div 
-              className="border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg p-6 h-[200px] w-full flex flex-col items-center justify-center text-neutral-500 dark:text-neutral-400 hover:bg-red-50 hover:border-red-300 dark:hover:bg-red-950/20 dark:hover:border-red-800/30 hover:text-red-500 dark:hover:text-red-400 transition-all duration-300 cursor-pointer"
-              onClick={() => toast({ 
-                title: "Delete Startups", 
-                description: "Drag and drop startups here to delete them" 
-              })}
-            >
-              <Trash2 className="h-10 w-10 mb-2" />
-              <p className="text-sm font-medium">Drop to Delete</p>
-              <p className="text-xs mt-1 text-center">Drag cards here to permanently delete startups</p>
-            </div>
+      ) : showAllStartups ? (
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold">All Startups</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {startups.map((startup) => (
+              <Card key={startup.id} className="border-2 hover:shadow-md transition-all duration-300">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-bold text-lg leading-tight">{startup.name || "Unnamed Startup"}</h3>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                        ID: {startup.id ? startup.id.substring(0, 8) + '...' : "Unknown"}
+                      </p>
+                    </div>
+                    <Badge 
+                      variant="outline" 
+                      className={`font-medium ${
+                        startup.status === 'pending' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300' :
+                        startup.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' :
+                        'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+                      }`}
+                    >
+                      {startup.status ? startup.status.charAt(0).toUpperCase() + startup.status.slice(1) : "Unknown"}
+                    </Badge>
+                  </div>
+                  
+                  <div className="mb-3">
+                    <p className="text-sm line-clamp-2 text-neutral-700 dark:text-neutral-300">
+                      {startup.description || "No description provided"}
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {startup.slug && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        asChild
+                        className="flex-1"
+                      >
+                        <Link href={`/startups/${startup.slug}`} target="_blank">
+                          Preview
+                        </Link>
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="border-red-200 hover:bg-red-100 hover:text-red-900 dark:border-red-800/30 dark:hover:bg-red-950/30"
+                      onClick={() => handleDelete(startup.id)}
+                      disabled={deleting === startup.id}
+                    >
+                      {deleting === startup.id ? <LoadingIndicator size="sm" /> : <Trash2 className="h-4 w-4 mr-1" />}
+                      Delete
+                    </Button>
+                    
+                    {startup.status !== 'pending' && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => changeStatus(startup.id, 'pending')}
+                      >
+                        Set as Pending
+                      </Button>
+                    )}
+                    
+                    {startup.status !== 'approved' && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="flex-1 border-green-200 hover:bg-green-100 hover:text-green-900 dark:border-green-800/30 dark:hover:bg-green-950/30"
+                        onClick={() => changeStatus(startup.id, 'approved')}
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        Approve
+                      </Button>
+                    )}
+                    
+                    {startup.status !== 'rejected' && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="flex-1 border-red-200 hover:bg-red-100 hover:text-red-900 dark:border-red-800/30 dark:hover:bg-red-950/30"
+                        onClick={() => changeStatus(startup.id, 'rejected')}
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Reject
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
+      ) : (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="flex gap-6 overflow-x-auto pb-6 snap-x">
+            {/* Pending Column */}
+            <Droppable droppableId="pending" type="COLUMN">
+              {(provided) => (
+                <div 
+                  className="min-w-[350px] w-1/3 snap-start"
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="font-medium text-amber-600 dark:text-amber-400 text-lg">Pending</h3>
+                    <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">
+                      {pendingStartups?.length || 0}
+                    </Badge>
+                  </div>
+                  <div className="space-y-4 p-4 bg-amber-50/50 dark:bg-amber-950/10 rounded-lg min-h-[400px] border-2 border-amber-200 dark:border-amber-800/30">
+                    {!pendingStartups || pendingStartups.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-32 text-amber-400 dark:text-amber-500 text-center p-6 border-2 border-dashed border-amber-200 dark:border-amber-800/30 rounded-lg bg-amber-50 dark:bg-amber-950/20">
+                        <p className="text-sm mb-2">No pending startups</p>
+                        <p className="text-xs text-amber-500/70 dark:text-amber-600/70">All startups have been reviewed</p>
+                      </div>
+                    ) : (
+                      pendingStartups.map((startup, index) => (
+                        <Draggable key={startup.id} draggableId={startup.id} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
+                              <StartupCard
+                                startup={startup}
+                                onApprove={() => handleApproval(startup.id, true)}
+                                onReject={() => handleApproval(startup.id, false)}
+                                onDelete={() => handleDelete(startup.id)}
+                                isApproving={approving === startup.id}
+                                isDeleting={deleting === startup.id}
+                                primary="amber"
+                                isDragging={snapshot.isDragging}
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))
+                    )}
+                    {provided.placeholder}
+                  </div>
+                </div>
+              )}
+            </Droppable>
+
+            {/* Approved Column */}
+            <Droppable droppableId="approved" type="COLUMN">
+              {(provided) => (
+                <div 
+                  className="min-w-[350px] w-1/3 snap-start"
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="font-medium text-green-600 dark:text-green-400 text-lg">Approved</h3>
+                    <Badge variant="outline" className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                      {approvedStartups?.length || 0}
+                    </Badge>
+                  </div>
+                  <div className="space-y-4 p-4 bg-green-50/50 dark:bg-green-950/10 rounded-lg min-h-[400px] border-2 border-green-200 dark:border-green-800/30">
+                    {!approvedStartups || approvedStartups.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-32 text-green-400 dark:text-green-500 text-center p-6 border-2 border-dashed border-green-200 dark:border-green-800/30 rounded-lg bg-green-50 dark:bg-green-950/20">
+                        <p className="text-sm mb-2">No approved startups</p>
+                        <p className="text-xs text-green-500/70 dark:text-green-600/70">Approve pending startups to see them here</p>
+                      </div>
+                    ) : (
+                      approvedStartups.map((startup, index) => (
+                        <Draggable key={startup.id} draggableId={startup.id} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
+                              <StartupCard
+                                startup={startup}
+                                onDelete={() => handleDelete(startup.id)}
+                                onRevert={() => changeStatus(startup.id, 'pending')}
+                                isDeleting={deleting === startup.id}
+                                primary="green"
+                                isDragging={snapshot.isDragging}
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))
+                    )}
+                    {provided.placeholder}
+                  </div>
+                </div>
+              )}
+            </Droppable>
+
+            {/* Rejected Column */}
+            <Droppable droppableId="rejected" type="COLUMN">
+              {(provided) => (
+                <div 
+                  className="min-w-[350px] w-1/3 snap-start"
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="font-medium text-red-600 dark:text-red-400 text-lg">Rejected</h3>
+                    <Badge variant="outline" className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+                      {rejectedStartups?.length || 0}
+                    </Badge>
+                  </div>
+                  <div className="space-y-4 p-4 bg-red-50/50 dark:bg-red-950/10 rounded-lg min-h-[400px] border-2 border-red-200 dark:border-red-800/30">
+                    {!rejectedStartups || rejectedStartups.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-32 text-red-400 dark:text-red-500 text-center p-6 border-2 border-dashed border-red-200 dark:border-red-800/30 rounded-lg bg-red-50 dark:bg-red-950/20">
+                        <p className="text-sm mb-2">No rejected startups</p>
+                        <p className="text-xs text-red-500/70 dark:text-red-600/70">Rejected startups will appear here</p>
+                      </div>
+                    ) : (
+                      rejectedStartups.map((startup, index) => (
+                        <Draggable key={startup.id} draggableId={startup.id} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
+                              <StartupCard
+                                startup={startup}
+                                onDelete={() => handleDelete(startup.id)}
+                                onRevert={() => changeStatus(startup.id, 'pending')}
+                                isDeleting={deleting === startup.id}
+                                primary="red"
+                                isDragging={snapshot.isDragging}
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))
+                    )}
+                    {provided.placeholder}
+                  </div>
+                </div>
+              )}
+            </Droppable>
+          </div>
+        </DragDropContext>
       )}
     </div>
   )
@@ -579,6 +734,7 @@ interface StartupCardProps {
   isApproving?: boolean;
   isDeleting?: boolean;
   primary: 'amber' | 'green' | 'red';
+  isDragging?: boolean;
 }
 
 function StartupCard({ 
@@ -589,7 +745,8 @@ function StartupCard({
   onRevert,
   isApproving, 
   isDeleting,
-  primary
+  primary,
+  isDragging
 }: StartupCardProps) {
   const colorClasses = {
     amber: {
@@ -621,15 +778,26 @@ function StartupCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`rounded-lg border-2 ${colors.border} ${colors.bg} shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden`}
+      className={`rounded-lg border-2 ${colors.border} ${colors.bg} ${isDragging ? 'shadow-xl' : 'shadow-sm hover:shadow-md'} transition-all duration-300 overflow-hidden`}
     >
       <div className="p-4">
         <div className="flex items-start justify-between mb-3">
-          <div>
-            <h3 className="font-bold text-lg leading-tight">{startup.name || "Unnamed Startup"}</h3>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-              ID: {startup.id ? startup.id.substring(0, 8) + '...' : "Unknown"}
-            </p>
+          <div className="flex items-center gap-2">
+            {startup.logo_url && (
+              <div className="w-8 h-8 rounded-full overflow-hidden">
+                <img 
+                  src={startup.logo_url} 
+                  alt={`${startup.name} logo`} 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <div>
+              <h3 className="font-bold text-lg leading-tight">{startup.name || "Unnamed Startup"}</h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                ID: {startup.id ? startup.id.substring(0, 8) + '...' : "Unknown"}
+              </p>
+            </div>
           </div>
           <Badge variant="outline" className={`${colors.badge} font-medium`}>
             {primary.charAt(0).toUpperCase() + primary.slice(1)}
