@@ -163,17 +163,17 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
         
         // Fetch social links separately with error handling
         try {
-          const { data: socialLinksData, error: socialLinksError } = await supabase
-            .from("social_links")
-            .select("id, platform, url")
-            .eq("startup_id", startupId);
-          
-          if (socialLinksError) {
+        const { data: socialLinksData, error: socialLinksError } = await supabase
+          .from("social_links")
+          .select("id, platform, url")
+          .eq("startup_id", startupId);
+        
+        if (socialLinksError) {
             console.warn("Error fetching social links (table may not exist):", socialLinksError);
             // Set empty social links
             data.social_links = [];
           } else {
-            data.social_links = socialLinksData || [];
+        data.social_links = socialLinksData || [];
           }
         } catch (socialException) {
           console.warn("Exception fetching social links:", socialException);
@@ -631,14 +631,14 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
                           mediaItems.images
                             .filter(url => url !== startup.logo_url && url !== startup.banner_url)
                             .map((url, index) => (
-                              <div key={index} className="border rounded-lg overflow-hidden">
-                                <img 
-                                  src={url}
+                            <div key={index} className="border rounded-lg overflow-hidden">
+                              <img 
+                                src={url}
                                   alt={`Startup gallery image ${index + 1}`}
-                                  className="w-full h-48 object-cover"
-                                />
-                              </div>
-                            ))
+                                className="w-full h-48 object-cover"
+                              />
+                            </div>
+                          ))
                         ) : (
                           <div className="col-span-2 flex justify-center p-8 border-2 border-dashed rounded-lg">
                             <div className="flex flex-col items-center text-muted-foreground">

@@ -87,9 +87,9 @@ export default function StartupDetailPage({ params }: { params: { slug: string }
         // 2. Fetch social links separately with error handling
         try {
           const { data: socialLinksData, error: socialLinksError } = await supabase
-            .from("social_links")
+          .from("social_links")
             .select("platform, url")
-            .eq("startup_id", startup.id);
+          .eq("startup_id", startup.id);
           
           if (socialLinksError) {
             console.warn("Error fetching social links (table may not exist):", socialLinksError);

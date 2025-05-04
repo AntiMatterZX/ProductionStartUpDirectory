@@ -39,13 +39,13 @@ export default function StartupMediaDisplay({
   
   // Handle media deletion
   const handleDeleteMedia = (mediaType: string, url: string) => {
-    if (onMediaRemoved) {
-      onMediaRemoved(mediaType, url);
-    }
-    
-    // Close image preview if it's the deleted image
-    if (selectedImage === url) {
-      setSelectedImage(null);
+      if (onMediaRemoved) {
+        onMediaRemoved(mediaType, url);
+      }
+      
+      // Close image preview if it's the deleted image
+      if (selectedImage === url) {
+        setSelectedImage(null);
     }
   };
   
@@ -196,7 +196,7 @@ export default function StartupMediaDisplay({
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-medium">Banner Image</h3>
                     <Badge variant="outline" className="text-xs px-1 py-0 h-5">Banner</Badge>
-                  </div>
+                        </div>
                   <div className="w-full h-36 bg-muted rounded-md flex items-center justify-center p-2 mb-2">
                     {bannerUrl ? (
                       <div className="relative group w-full h-full">
@@ -205,15 +205,15 @@ export default function StartupMediaDisplay({
                           alt="Banner Image" 
                           className="w-full h-full object-cover"
                         />
-                        
-                        {isEditing && (
+                    
+                    {isEditing && (
                           <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <MediaDeleteButton
                               startupId={startupId}
                               mediaType="banner"
                               mediaUrl={bannerUrl}
                               onDelete={() => bannerUrl && handleDeleteMedia("banner", bannerUrl)}
-                              size="sm"
+                        size="sm"
                             />
                           </div>
                         )}
@@ -281,77 +281,77 @@ export default function StartupMediaDisplay({
                           </div>
                         </DialogContent>
                       </Dialog>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
               <p className="text-muted-foreground text-center py-8 text-sm">No gallery images available</p>
-            )}
-          </TabsContent>
-          
+          )}
+        </TabsContent>
+        
           {/* Documents Tab */}
           <TabsContent value="documents" className="h-full overflow-auto">
-            {mediaDocuments.length > 0 ? (
+          {mediaDocuments.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {mediaDocuments.map((url, index) => (
-                  <Card key={`doc-${index}`} className="group relative">
+              {mediaDocuments.map((url, index) => (
+                <Card key={`doc-${index}`} className="group relative">
                     <CardContent className="p-3 flex items-center">
                       <FileText className="h-8 w-8 text-muted-foreground mr-3" />
-                      <div className="flex-1 overflow-hidden">
+                    <div className="flex-1 overflow-hidden">
                         <h4 className="text-sm font-medium truncate">Document {index + 1}</h4>
-                        <a 
-                          href={url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
+                      <a 
+                        href={url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
                           className="text-xs text-primary hover:underline truncate block"
-                        >
-                          View Document
-                        </a>
-                      </div>
-                      
-                      {isEditing && (
+                      >
+                        View Document
+                      </a>
+                    </div>
+                    
+                    {isEditing && (
                         <MediaDeleteButton
                           startupId={startupId}
                           mediaType="document"
                           mediaUrl={url}
                           onDelete={() => handleDeleteMedia("document", url)}
-                          size="sm"
+                        size="sm"
                         />
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
               <p className="text-muted-foreground text-center py-8 text-sm">No documents available</p>
-            )}
-          </TabsContent>
-          
+          )}
+        </TabsContent>
+        
           {/* Videos Tab */}
           <TabsContent value="videos" className="h-full overflow-auto">
-            {mediaVideos.length > 0 ? (
+          {mediaVideos.length > 0 ? (
               <div className="grid grid-cols-1 gap-3">
-                {mediaVideos.map((url, index) => (
-                  <Card key={`video-${index}`} className="group relative">
+              {mediaVideos.map((url, index) => (
+                <Card key={`video-${index}`} className="group relative">
                     <CardContent className="p-3">
-                      <div className="aspect-video overflow-hidden rounded bg-muted mb-2">
-                        {url.includes('youtube.com') || url.includes('youtu.be') ? (
-                          <iframe
-                            src={url.replace('watch?v=', 'embed/')}
-                            title={`Video ${index + 1}`}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            className="w-full h-full"
-                          ></iframe>
-                        ) : (
-                          <video 
-                            src={url} 
-                            controls
-                            className="w-full h-full object-contain"
-                          ></video>
-                        )}
-                      </div>
+                    <div className="aspect-video overflow-hidden rounded bg-muted mb-2">
+                      {url.includes('youtube.com') || url.includes('youtu.be') ? (
+                        <iframe
+                          src={url.replace('watch?v=', 'embed/')}
+                          title={`Video ${index + 1}`}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full"
+                        ></iframe>
+                      ) : (
+                        <video 
+                          src={url} 
+                          controls
+                          className="w-full h-full object-contain"
+                        ></video>
+                      )}
+                    </div>
                       
                       {isEditing && (
                         <div className="flex justify-end">
@@ -360,18 +360,18 @@ export default function StartupMediaDisplay({
                             mediaType="video"
                             mediaUrl={url}
                             onDelete={() => handleDeleteMedia("video", url)}
-                            size="sm"
+                          size="sm"
                           />
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
               <p className="text-muted-foreground text-center py-8 text-sm">No videos available</p>
-            )}
-          </TabsContent>
+          )}
+        </TabsContent>
         </div>
       </Tabs>
     </div>

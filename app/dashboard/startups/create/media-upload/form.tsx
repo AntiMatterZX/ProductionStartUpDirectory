@@ -272,62 +272,62 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
         <div className="space-y-4 p-4 bg-muted/20 rounded-lg border">
           <h3 className="text-lg font-medium">Banner Image</h3>
           <p className="text-sm text-muted-foreground">This image appears at the top of your startup profile page.</p>
-          
+
           <FormField
             control={form.control}
             name="coverImage"
             render={({ field }) => (
               <FormItem>
-                <FormControl>
-                  <div className="flex flex-col items-center space-y-2">
-                    {coverPreview ? (
-                      <div className="relative w-full h-48">
-                        <img
-                          src={coverPreview || "/placeholder.svg"}
-                          alt="Cover image preview"
-                          className="w-full h-full object-cover rounded-md border"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => clearFile(field, setCoverPreview, coverInputRef)}
-                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+              <FormControl>
+                <div className="flex flex-col items-center space-y-2">
+                  {coverPreview ? (
+                    <div className="relative w-full h-48">
+                      <img
+                        src={coverPreview || "/placeholder.svg"}
+                        alt="Cover image preview"
+                        className="w-full h-full object-cover rounded-md border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => clearFile(field, setCoverPreview, coverInputRef)}
+                        className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center w-full">
+                      <div className="flex items-center justify-center w-full h-48 border-2 border-dashed rounded-md border-muted-foreground/25">
+                        {isUploading ? (
+                          <Loader2 className="h-10 w-10 text-primary/50 animate-spin" />
+                        ) : (
+                          <ImageIcon className="h-10 w-10 text-muted-foreground/50" />
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex flex-col items-center w-full">
-                        <div className="flex items-center justify-center w-full h-48 border-2 border-dashed rounded-md border-muted-foreground/25">
-                          {isUploading ? (
-                            <Loader2 className="h-10 w-10 text-primary/50 animate-spin" />
-                          ) : (
-                            <ImageIcon className="h-10 w-10 text-muted-foreground/50" />
-                          )}
-                        </div>
-                        <label htmlFor="cover-upload" className="cursor-pointer mt-2">
-                          <div className="flex items-center gap-1 text-sm text-primary">
-                            <Upload className="h-4 w-4" />
+                      <label htmlFor="cover-upload" className="cursor-pointer mt-2">
+                        <div className="flex items-center gap-1 text-sm text-primary">
+                          <Upload className="h-4 w-4" />
                             <span>Upload Banner Image</span>
-                          </div>
-                          <Input
-                            id="cover-upload"
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleFileChange(e, field, setCoverPreview)}
-                            disabled={isUploading}
-                            ref={coverInputRef}
-                          />
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                </FormControl>
+                        </div>
+                        <Input
+                          id="cover-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileChange(e, field, setCoverPreview)}
+                          disabled={isUploading}
+                          ref={coverInputRef}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </FormControl>
                 <FormDescription>Upload a banner image for your startup profile (PNG or JPG, max 5MB)</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         </div>
         
         {/* Additional Media Section */}
@@ -336,59 +336,59 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
           <p className="text-sm text-muted-foreground">Add a pitch deck and video to showcase your startup.</p>
           
           <div className="grid md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="pitchDeck"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Pitch Deck</FormLabel>
-                  <FormControl>
-                    <div className="flex flex-col items-center space-y-2">
-                      {pitchDeckName ? (
-                        <div className="relative flex items-center p-3 w-full border rounded-md">
-                          <FileText className="h-5 w-5 mr-2 text-muted-foreground" />
-                          <span className="text-sm truncate">{pitchDeckName}</span>
-                          <button
-                            type="button"
-                            onClick={() => clearPitchDeck(field, pitchDeckInputRef)}
-                            className="ml-auto bg-destructive text-destructive-foreground rounded-full p-1"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center w-full">
-                          <div className="flex items-center justify-center w-full h-24 border-2 border-dashed rounded-md border-muted-foreground/25">
-                            {isUploading ? (
-                              <Loader2 className="h-10 w-10 text-primary/50 animate-spin" />
-                            ) : (
-                              <FileText className="h-10 w-10 text-muted-foreground/50" />
-                            )}
-                          </div>
-                          <label htmlFor="pitch-deck-upload" className="cursor-pointer mt-2">
-                            <div className="flex items-center gap-1 text-sm text-primary">
-                              <Upload className="h-4 w-4" />
-                              <span>Upload Pitch Deck</span>
-                            </div>
-                            <Input
-                              id="pitch-deck-upload"
-                              type="file"
-                              accept=".pdf,.pptx,.ppt"
-                              className="hidden"
-                              onChange={(e) => handlePitchDeckChange(e, field)}
-                              disabled={isUploading}
-                              ref={pitchDeckInputRef}
-                            />
-                          </label>
-                        </div>
-                      )}
+        <FormField
+          control={form.control}
+          name="pitchDeck"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Pitch Deck</FormLabel>
+              <FormControl>
+                <div className="flex flex-col items-center space-y-2">
+                  {pitchDeckName ? (
+                    <div className="relative flex items-center p-3 w-full border rounded-md">
+                      <FileText className="h-5 w-5 mr-2 text-muted-foreground" />
+                      <span className="text-sm truncate">{pitchDeckName}</span>
+                      <button
+                        type="button"
+                        onClick={() => clearPitchDeck(field, pitchDeckInputRef)}
+                        className="ml-auto bg-destructive text-destructive-foreground rounded-full p-1"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
-                  </FormControl>
-                  <FormDescription>Upload your pitch deck (PDF or PowerPoint, max 5MB)</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  ) : (
+                    <div className="flex flex-col items-center w-full">
+                      <div className="flex items-center justify-center w-full h-24 border-2 border-dashed rounded-md border-muted-foreground/25">
+                        {isUploading ? (
+                          <Loader2 className="h-10 w-10 text-primary/50 animate-spin" />
+                        ) : (
+                          <FileText className="h-10 w-10 text-muted-foreground/50" />
+                        )}
+                      </div>
+                      <label htmlFor="pitch-deck-upload" className="cursor-pointer mt-2">
+                        <div className="flex items-center gap-1 text-sm text-primary">
+                          <Upload className="h-4 w-4" />
+                          <span>Upload Pitch Deck</span>
+                        </div>
+                        <Input
+                          id="pitch-deck-upload"
+                          type="file"
+                          accept=".pdf,.pptx,.ppt"
+                          className="hidden"
+                          onChange={(e) => handlePitchDeckChange(e, field)}
+                          disabled={isUploading}
+                          ref={pitchDeckInputRef}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </FormControl>
+              <FormDescription>Upload your pitch deck (PDF or PowerPoint, max 5MB)</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
             <FormField
               control={form.control}
