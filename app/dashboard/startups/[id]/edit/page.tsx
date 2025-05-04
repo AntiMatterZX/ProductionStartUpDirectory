@@ -46,6 +46,10 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
     step3: false
   })
   
+  // Social links state
+  const [socialLinks, setSocialLinks] = useState<Record<string, string>>({})
+  const [loadingSocial, setLoadingSocial] = useState(false)
+  
   // Fetch startup data
   useEffect(() => {
     const fetchStartupData = async () => {
@@ -129,6 +133,9 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
           documents: startup.media_documents || [],
           videos: startup.media_videos || []
         })
+        
+        // Fetch social links
+        await fetchSocialLinks()
         
         console.log("Startup data loaded successfully:", startup.name)
         
@@ -312,6 +319,39 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
       })
     } finally {
       setIsSaving(false)
+    }
+  }
+  
+  // Fetch social links
+  const fetchSocialLinks = async () => {
+    try {
+      setLoadingSocial(true)
+      
+      const { data: socialLinksData, error: socialError } = await supabase
+        .from("social_links")
+        .select("id, platform, url")
+        .eq("startup_id", params.id)
+      
+      if (socialError) {
+        console.error("Error fetching social links:", socialError)
+        setSocialLinks({})
+        return
+      }
+      
+      // Convert the array to an object for easier editing
+      const socialLinksObj: Record<string, string> = {}
+      if (socialLinksData && socialLinksData.length > 0) {
+        socialLinksData.forEach(link => {
+          socialLinksObj[link.platform] = link.url
+        })
+      }
+      
+      setSocialLinks(socialLinksObj)
+    } catch (error) {
+      console.error("Error fetching social links:", error)
+      setSocialLinks({})
+    } finally {
+      setLoadingSocial(false)
     }
   }
   

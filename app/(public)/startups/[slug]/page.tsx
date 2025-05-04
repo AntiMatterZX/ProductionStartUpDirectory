@@ -84,11 +84,23 @@ export default function StartupDetailPage({ params }: { params: { slug: string }
           .eq("id", startup.category_id)
           .single();
 
-        // 2. Fetch social links
-        const { data: socialLinksData } = await supabase
-          .from("social_links")
-          .select("*")
-          .eq("startup_id", startup.id);
+        // 2. Fetch social links separately with error handling
+        try {
+          const { data: socialLinksData, error: socialLinksError } = await supabase
+            .from("social_links")
+            .select("platform, url")
+            .eq("startup_id", startup.id);
+          
+          if (socialLinksError) {
+            console.warn("Error fetching social links (table may not exist):", socialLinksError);
+            startup.social_links = [];
+          } else {
+            startup.social_links = socialLinksData || [];
+          }
+        } catch (socialException) {
+          console.warn("Exception fetching social links:", socialException);
+          startup.social_links = [];
+        }
 
         // 3. Instead of fetching from startup_media table, create media objects from arrays
         const startup_media = [];
@@ -180,14 +192,14 @@ export default function StartupDetailPage({ params }: { params: { slug: string }
         console.log("Processed startup data:", {
           id: startup.id,
           name: startup.name,
-          socialLinks: socialLinksData || [],
+          socialLinks: startup.social_links || [],
           lookingFor: lookingForOptions || []
         });
 
         setStartup({
           ...startup,
           categories: categoryData || null,
-          social_links: socialLinksData || [],
+          social_links: startup.social_links || [],
           startup_media: startup_media,
           looking_for: lookingForOptions || [],
           votes: {

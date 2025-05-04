@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { 
   CheckCircle2, XCircle, Plus, Trash2, AlertCircle, Calendar, 
-  User, ListFilter, ShieldAlert, Eye, ExternalLink, Clock, FileText
+  User, ListFilter, ShieldAlert, Eye, ExternalLink, FileText
 } from "lucide-react"
 import LoadingIndicator from "@/components/ui/loading-indicator"
 import { motion } from "framer-motion"
@@ -35,7 +35,7 @@ export default function ModerationPage() {
   const [pendingStartups, setPendingStartups] = useState<any[]>([])
   const [approvedStartups, setApprovedStartups] = useState<any[]>([])
   const [rejectedStartups, setRejectedStartups] = useState<any[]>([])
-  const [approving, setApproving] = useState<string | null>(null)
+  const [approving, setApproving] = useState<{id: string, action: 'approve' | 'reject'} | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [testName, setTestName] = useState("")
@@ -125,7 +125,7 @@ export default function ModerationPage() {
   // Handle approval/rejection
   async function handleApproval(id: string, approve: boolean) {
     try {
-      setApproving(id)
+      setApproving({id, action: approve ? 'approve' : 'reject'})
       
       // Call the admin API endpoint instead of direct Supabase update
       const response = await fetch('/api/admin/startups/status', {
@@ -436,6 +436,10 @@ export default function ModerationPage() {
     }
   };
 
+  // Add helper functions to check approving state
+  const isApprovingStartup = (id: string) => approving !== null && approving.id === id && approving.action === 'approve';
+  const isRejectingStartup = (id: string) => approving !== null && approving.id === id && approving.action === 'reject';
+
   return (
     <div className="p-6 bg-neutral-50 dark:bg-neutral-900 min-h-screen">
       <div className="flex justify-between items-center mb-6">
@@ -692,7 +696,8 @@ export default function ModerationPage() {
                                 onReject={() => handleApproval(startup.id, false)}
                                 onDelete={() => handleDelete(startup.id)}
                                 onPreview={() => handlePreview(startup)}
-                                isApproving={approving === startup.id}
+                                isApproving={isApprovingStartup(startup.id)}
+                                isRejecting={isRejectingStartup(startup.id)}
                                 isDeleting={deleting === startup.id}
                                 primary="amber"
                                 isDragging={snapshot.isDragging}
@@ -1037,7 +1042,7 @@ export default function ModerationPage() {
                       handleApproval(selectedStartup.id, false);
                       setPreviewOpen(false);
                     }}
-                    disabled={approving === selectedStartup.id}
+                    disabled={isRejectingStartup(selectedStartup.id) || isApprovingStartup(selectedStartup.id)}
                     className="gap-2"
                   >
                     <XCircle className="h-4 w-4" />
@@ -1049,7 +1054,7 @@ export default function ModerationPage() {
                       handleApproval(selectedStartup.id, true);
                       setPreviewOpen(false);
                     }}
-                    disabled={approving === selectedStartup.id}
+                    disabled={isRejectingStartup(selectedStartup.id) || isApprovingStartup(selectedStartup.id)}
                     className="gap-2"
                   >
                     <CheckCircle2 className="h-4 w-4" />
@@ -1072,8 +1077,9 @@ interface StartupCardProps {
   onReject?: () => void;
   onDelete: () => void;
   onRevert?: () => void;
-  onPreview?: () => void; // Add preview function
+  onPreview?: () => void;
   isApproving?: boolean;
+  isRejecting?: boolean;
   isDeleting?: boolean;
   primary: 'amber' | 'green' | 'red';
   isDragging?: boolean;
@@ -1087,6 +1093,7 @@ function StartupCard({
   onRevert,
   onPreview,
   isApproving, 
+  isRejecting,
   isDeleting,
   primary,
   isDragging
@@ -1202,9 +1209,9 @@ function StartupCard({
                 size="sm" 
                 className="flex-1 border-red-200 hover:bg-red-100 hover:text-red-900 dark:border-red-800/30 dark:hover:bg-red-950/30"
                 onClick={onReject}
-                disabled={isApproving}
+                disabled={isRejecting || isApproving}
               >
-                {isApproving ? <LoadingIndicator size="sm" /> : <XCircle className="h-4 w-4 mr-1" />}
+                {isRejecting ? <LoadingIndicator size="sm" /> : <XCircle className="h-4 w-4 mr-1" />}
                 Reject
               </Button>
               <Button 
@@ -1212,7 +1219,7 @@ function StartupCard({
                 size="sm" 
                 className="flex-1 border-green-200 hover:bg-green-100 hover:text-green-900 dark:border-green-800/30 dark:hover:bg-green-950/30"
                 onClick={onApprove}
-                disabled={isApproving}
+                disabled={isRejecting || isApproving}
               >
                 {isApproving ? <LoadingIndicator size="sm" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
                 Approve

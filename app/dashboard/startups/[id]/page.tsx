@@ -105,7 +105,8 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
           .from("startups")
           .select(`
             *,
-            categories(id, name)
+            categories(id, name),
+            startup_looking_for(option_id, looking_for_options(*))
           `)
           .eq("id", startupId)
           .single();
@@ -160,18 +161,24 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
         data.location = data.location || '';
         data.website_url = data.website_url || '';
         
-        // Fetch social links separately 
-        const { data: socialLinksData, error: socialLinksError } = await supabase
-          .from("social_links")
-          .select("id, platform, url")
-          .eq("startup_id", startupId);
-        
-        if (socialLinksError) {
-          console.error("Error fetching social links:", socialLinksError);
+        // Fetch social links separately with error handling
+        try {
+          const { data: socialLinksData, error: socialLinksError } = await supabase
+            .from("social_links")
+            .select("id, platform, url")
+            .eq("startup_id", startupId);
+          
+          if (socialLinksError) {
+            console.warn("Error fetching social links (table may not exist):", socialLinksError);
+            // Set empty social links
+            data.social_links = [];
+          } else {
+            data.social_links = socialLinksData || [];
+          }
+        } catch (socialException) {
+          console.warn("Exception fetching social links:", socialException);
+          data.social_links = [];
         }
-        
-        // Add social links to the startup data
-        data.social_links = socialLinksData || [];
         
         // Copy the data to state
         setStartup(data);

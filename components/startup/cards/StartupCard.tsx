@@ -5,6 +5,7 @@ import { CalendarIcon, MapPinIcon, Users2Icon, ExternalLink, AlertCircle, CheckC
 import { formatDistanceToNow } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import StatusButtons from "@/components/admin/StatusButtons"
 
 interface StartupCardProps {
   startup: any // Using any for simplicity, but should use the Startup type
@@ -56,6 +57,13 @@ export default function StartupCard({
         return "border-amber-200 dark:border-amber-900"
     }
   }
+
+  // Handle status change with our callback
+  const handleStatusChange = (newStatus: string) => {
+    if (onUpdateStatus) {
+      onUpdateStatus(startup.id, newStatus as 'pending' | 'approved' | 'rejected');
+    }
+  };
 
   return (
     <div
@@ -148,48 +156,14 @@ export default function StartupCard({
       </CardFooter>
       
       {/* Status change controls - only shown if requested */}
-      {showStatusControls && onUpdateStatus && (
+      {showStatusControls && (
         <div className="px-4 pb-4 mt-[-8px]">
           <div className="flex justify-center gap-2 border-t pt-3">
-            {/* Only show status buttons for statuses that aren't current */}
-            {startup.status !== "pending" && (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => onUpdateStatus(startup.id, "pending")}
-                disabled={isUpdating}
-                className="bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800"
-              >
-                <AlertCircle className="h-3 w-3 mr-1" />
-                Mark Pending
-              </Button>
-            )}
-            
-            {startup.status !== "approved" && (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => onUpdateStatus(startup.id, "approved")}
-                disabled={isUpdating}
-                className="bg-green-50 text-green-800 border-green-200 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
-              >
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Approve
-              </Button>
-            )}
-            
-            {startup.status !== "rejected" && (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => onUpdateStatus(startup.id, "rejected")}
-                disabled={isUpdating}
-                className="bg-red-50 text-red-800 border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
-              >
-                <XCircle className="h-3 w-3 mr-1" />
-                Reject
-              </Button>
-            )}
+            <StatusButtons 
+              startupId={startup.id}
+              currentStatus={startup.status}
+              onStatusChange={handleStatusChange}
+            />
           </div>
         </div>
       )}
