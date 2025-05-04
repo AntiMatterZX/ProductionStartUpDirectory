@@ -180,6 +180,11 @@ export async function POST(request: NextRequest) {
       mediaVideos.push(videoUrl);
     }
 
+    // Also add any additional video URLs from mediaInfo if they exist
+    if (mediaInfo.videoUrl && !mediaVideos.includes(mediaInfo.videoUrl)) {
+      mediaVideos.push(mediaInfo.videoUrl);
+    }
+
     try {
       // Create the startup entry
       const { data: startup, error: createError } = await supabase
@@ -190,19 +195,17 @@ export async function POST(request: NextRequest) {
           description: detailedInfo.description,
           tagline: basicInfo.tagline || null,
           logo_url: logoUrl,
-          cover_image_url: coverImageUrl,
-          industry_id: basicInfo.industry,
+          category_id: basicInfo.industry,
           founding_date: basicInfo.foundingDate,
-          website: basicInfo.website || null,
+          website_url: basicInfo.website || null,
           status: "pending",
           funding_stage: detailedInfo.fundingStage,
           funding_amount: detailedInfo.fundingAmount || null,
-          team_size: detailedInfo.teamSize,
+          employee_count: detailedInfo.teamSize,
           location: detailedInfo.location,
           linkedin_url: mediaInfo.socialLinks?.linkedin || null,
           twitter_url: mediaInfo.socialLinks?.twitter || null,
           pitch_deck_url: pitchDeckUrl,
-          video_url: videoUrl,
           user_id: session.user.id,
           media_images: mediaImages,
           media_documents: mediaDocuments,
