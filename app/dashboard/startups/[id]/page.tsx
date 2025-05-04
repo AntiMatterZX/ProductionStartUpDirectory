@@ -105,7 +105,6 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
           .select(`
             *,
             categories(id, name),
-            startup_looking_for(option_id, looking_for_options(id, name)),
             social_links(id, platform, url)
           `)
           .eq("id", startupId)
@@ -170,6 +169,18 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
           documents: data.media_documents || [],
           videos: data.media_videos || []
         });
+        
+        // Fetch looking for options
+        const { data: lookingForOptionsData, error: lookingForOptionsError } = await supabase
+          .from("looking_for_options")
+          .select("*")
+          .order("name");
+        
+        if (lookingForOptionsError) {
+          console.error("Error fetching looking for options:", lookingForOptionsError);
+        } else {
+          setLookingForOptions(lookingForOptionsData || []);
+        }
         
       } catch (error: any) {
         console.error("Error fetching startup:", error);
@@ -722,13 +733,17 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
                 <CardTitle>Looking For</CardTitle>
               </CardHeader>
               <CardContent>
-                {startup.startup_looking_for && startup.startup_looking_for.length > 0 ? (
+                {startup.looking_for && startup.looking_for.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {startup.startup_looking_for.map((item: any, index: number) => (
-                      <div key={index} className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors">
-                        {item.looking_for_options?.name || "Unknown"}
-                      </div>
-                    ))}
+                    {startup.looking_for.map((optionId: number, index: number) => {
+                      // Find the option name from the fetched options
+                      const option = lookingForOptions.find(opt => opt.id === optionId);
+                      return (
+                        <div key={index} className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors">
+                          {option?.name || `Option ${optionId}`}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-center py-2">No options selected</p>

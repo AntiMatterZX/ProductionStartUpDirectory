@@ -105,7 +105,6 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
           .select(`
             *,
             categories(id, name),
-            startup_looking_for(option_id, looking_for_options(id, name)),
             social_links(id, platform, url)
           `)
           .eq("id", startupId)
@@ -133,9 +132,7 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
         }
 
         // Map database data to form structure
-        const lookingForOptions = startup.startup_looking_for?.map(
-          (item: any) => item.option_id
-        ) || [];
+        const lookingForOptions = startup.looking_for || [];
 
         const socialLinks = {
           linkedin: "",

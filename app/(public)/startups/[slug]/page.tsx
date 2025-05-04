@@ -96,11 +96,11 @@ export default function StartupDetailPage({ params }: { params: { slug: string }
           .select("*")
           .eq("startup_id", startup.id);
 
-        // 4. Fetch looking_for options
-        const { data: lookingForData } = await supabase
-          .from("startup_looking_for")
-          .select("looking_for_options(id, name)")
-          .eq("startup_id", startup.id);
+        // 4. Fetch looking_for options - Updated for new schema
+        const { data: lookingForOptions } = await supabase
+          .from("looking_for_options")
+          .select("id, name")
+          .in("id", startup.looking_for || []);
 
         // 5. Fetch vote count
         const { data: votesData } = await supabase
@@ -118,7 +118,7 @@ export default function StartupDetailPage({ params }: { params: { slug: string }
           categories: categoryData || null,
           social_links: socialLinksData || [],
           startup_media: mediaData || [],
-          looking_for: lookingForData?.map((item) => item.looking_for_options) || [],
+          looking_for: lookingForOptions || [],
           votes: {
             upvotes,
             downvotes,
