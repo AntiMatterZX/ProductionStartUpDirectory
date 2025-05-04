@@ -1,7 +1,6 @@
 "use client"
 
 import React from "react"
-import { AnimatePresence, motion } from "framer-motion"
 import { CheckIcon } from "lucide-react"
 
 interface FormStepperProps {
@@ -40,33 +39,10 @@ export default function FormStepper({
                         : "border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500"
                     }`}
                   >
-                    <AnimatePresence mode="wait">
-                      {isActive ? (
-                        <motion.div
-                          key="icon-marker-check"
-                          initial={{ rotate: 180, opacity: 0 }}
-                          animate={{ rotate: 0, opacity: 1 }}
-                          exit={{ rotate: -180, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="flex items-center justify-center"
-                        >
-                          <CheckIcon className="h-5 w-5" />
-                        </motion.div>
-                      ) : (
-                        <motion.span
-                          key="icon-marker-num"
-                          initial={{ rotate: 180, opacity: 0 }}
-                          animate={{ rotate: 0, opacity: 1 }}
-                          exit={{ rotate: -180, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          {step}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
+                    {isActive ? <CheckIcon className="h-5 w-5" /> : <span>{step}</span>}
                   </div>
-                  {isActive && (
-                    <div className="absolute z-0 -inset-1.5 bg-primary/10 rounded-full animate-pulse" />
+                  {isCurrentStep && (
+                    <div className="absolute z-0 -inset-1.5 bg-primary/10 rounded-full" />
                   )}
                 </div>
                 
@@ -85,10 +61,9 @@ export default function FormStepper({
               
               {step !== stepArray.length && (
                 <div className="w-full h-1 rounded-full bg-gray-200 dark:bg-gray-700 relative">
-                  <motion.div
+                  <div 
                     className="absolute top-0 bottom-0 left-0 bg-primary rounded-full"
-                    animate={{ width: isActive ? "100%" : 0 }}
-                    transition={{ ease: "easeInOut", duration: 0.3 }}
+                    style={{ width: isActive ? "100%" : "0%" }}
                   />
                 </div>
               )}

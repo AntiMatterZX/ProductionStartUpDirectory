@@ -7,14 +7,12 @@ import FormStepper from "@/components/startup/creation/FormStepper"
 import BasicInfoForm from "./basic-info/form"
 import DetailedInfoForm from "./detailed-info/form"
 import MediaUploadForm from "./media-upload/form"
-import ReviewForm from "./review/form"
 import { toast } from "@/components/ui/use-toast"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
 import type { StartupFormData } from "@/types/startup"
 import type { Database } from "@/types/database"
-import { AnimatePresence, motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, CheckCircle2, Save } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Save } from "lucide-react"
 import { useLoading } from "@/components/ui/loading-context"
 import PsychedelicLoader from "@/components/ui/psychedelic-loader"
 
@@ -43,9 +41,9 @@ export default function CreateStartupPage() {
       lookingFor: [],
     },
     mediaInfo: {
-      logo: undefined,
-      coverImage: undefined,
-      pitchDeck: undefined,
+      logo: null,
+      coverImage: null,
+      pitchDeck: null,
       videoUrl: "",
       socialLinks: {
         linkedin: "",
@@ -54,7 +52,7 @@ export default function CreateStartupPage() {
     },
   })
 
-  // New state for form validity
+  // Form validity tracking
   const [formValidity, setFormValidity] = useState({
     step1: false,
     step2: false,
@@ -94,6 +92,9 @@ export default function CreateStartupPage() {
     // Only allow navigation to previously completed steps or the next available step
     if (step < currentStep || (step === currentStep + 1 && canProceedToNextStep())) {
       setCurrentStep(step)
+      
+      // Scroll to top when changing steps
+      window.scrollTo(0, 0)
     }
   }
 
@@ -110,30 +111,44 @@ export default function CreateStartupPage() {
     }
   }
 
-  const handleNext = (data: any, step: number, isValid: boolean = true) => {
-    // Update form validity state
-    if (step === 1) {
-      setFormData((prev) => ({ ...prev, basicInfo: data }))
-      setFormValidity((prev) => ({ ...prev, step1: isValid }))
-      if (isValid) setCurrentStep(2)
-    } else if (step === 2) {
-      setFormData((prev) => ({ ...prev, detailedInfo: data }))
-      setFormValidity((prev) => ({ ...prev, step2: isValid }))
-      if (isValid) setCurrentStep(3)
-    } else if (step === 3) {
-      setFormData((prev) => ({ ...prev, mediaInfo: data }))
-      setFormValidity((prev) => ({ ...prev, step3: isValid }))
-      if (isValid) setCurrentStep(4) // Go to review step
+  const handleNext = (data: any, isValid: boolean = true) => {
+    // Update form validity state based on current step
+    switch (currentStep) {
+      case 1:
+        setFormData((prev) => ({ ...prev, basicInfo: data }))
+        setFormValidity((prev) => ({ ...prev, step1: isValid }))
+        if (isValid) {
+          setCurrentStep(2)
+          window.scrollTo(0, 0)
+        }
+        break
+      case 2:
+        setFormData((prev) => ({ ...prev, detailedInfo: data }))
+        setFormValidity((prev) => ({ ...prev, step2: isValid }))
+        if (isValid) {
+          setCurrentStep(3)
+          window.scrollTo(0, 0)
+        }
+        break
+      case 3:
+        setFormData((prev) => ({ ...prev, mediaInfo: data }))
+        setFormValidity((prev) => ({ ...prev, step3: isValid }))
+        if (isValid) {
+          setCurrentStep(4)
+          window.scrollTo(0, 0)
+        }
+        break
     }
   }
 
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
+      window.scrollTo(0, 0)
     }
   }
 
-  const handleSubmit = async (completeData: StartupFormData) => {
+  const handleSubmit = async () => {
     try {
       setIsSubmitting(true)
       startLoading("Creating your startup... This might take a moment.")
@@ -152,26 +167,26 @@ export default function CreateStartupPage() {
       }
 
       // Create a FormData object to handle file uploads
-      const formData = new FormData()
+      const formDataObj = new FormData()
 
       // Add basic info and detailed info as JSON strings
-      formData.append("basicInfo", JSON.stringify(completeData.basicInfo))
-      formData.append("detailedInfo", JSON.stringify(completeData.detailedInfo))
+      formDataObj.append("basicInfo", JSON.stringify(formData.basicInfo))
+      formDataObj.append("detailedInfo", JSON.stringify(formData.detailedInfo))
 
       // Handle media info separately to properly handle files
-      const mediaInfoCopy = { ...completeData.mediaInfo }
+      const mediaInfoCopy = { ...formData.mediaInfo }
 
       // Add files directly to FormData
-      if (completeData.mediaInfo.logo) {
-        formData.append("logo", completeData.mediaInfo.logo)
+      if (formData.mediaInfo.logo) {
+        formDataObj.append("logo", formData.mediaInfo.logo)
       }
 
-      if (completeData.mediaInfo.coverImage) {
-        formData.append("coverImage", completeData.mediaInfo.coverImage)
+      if (formData.mediaInfo.coverImage) {
+        formDataObj.append("coverImage", formData.mediaInfo.coverImage)
       }
 
-      if (completeData.mediaInfo.pitchDeck) {
-        formData.append("pitchDeck", completeData.mediaInfo.pitchDeck)
+      if (formData.mediaInfo.pitchDeck) {
+        formDataObj.append("pitchDeck", formData.mediaInfo.pitchDeck)
       }
 
       // Remove file objects from the JSON representation
@@ -180,16 +195,16 @@ export default function CreateStartupPage() {
       delete mediaInfoCopy.pitchDeck
 
       // Add the remaining media info as a JSON string
-      formData.append("mediaInfo", JSON.stringify(mediaInfoCopy))
+      formDataObj.append("mediaInfo", JSON.stringify(mediaInfoCopy))
 
       const response = await fetch("/api/startups", {
         method: "POST",
-        body: formData,
+        body: formDataObj,
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || "Failed to create startup")
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to create startup")
       }
 
       const data = await response.json()
@@ -222,15 +237,109 @@ export default function CreateStartupPage() {
     )
   }
 
-  // Animation variants for page transitions
-  const pageVariants = {
-    initial: { opacity: 0, x: 10 },
-    enter: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -10 }
-  }
+  // Render the current step
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <BasicInfoForm 
+            onSubmit={(data, isValid) => handleNext(data, isValid)} 
+            initialData={formData.basicInfo} 
+          />
+        );
+      case 2:
+        return (
+          <DetailedInfoForm
+            onSubmit={(data, isValid) => handleNext(data, isValid)}
+            initialData={formData.detailedInfo}
+            onBack={handleBack}
+          />
+        );
+      case 3:
+        return (
+          <MediaUploadForm
+            onSubmit={(data, isValid) => handleNext(data, isValid)}
+            initialData={formData.mediaInfo}
+            onBack={handleBack}
+            isSubmitting={isSubmitting}
+          />
+        );
+      case 4:
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-center py-6">
+              <div className="bg-primary/10 p-4 rounded-full">
+                <CheckCircle2 className="h-12 w-12 text-primary" />
+              </div>
+            </div>
+            
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold">Ready to Submit</h2>
+              <p className="text-muted-foreground">
+                Please review your information before final submission
+              </p>
+            </div>
+
+            <div className="space-y-4 my-6">
+              <h3 className="font-medium">Basic Information</h3>
+              <div className="bg-muted/50 p-4 rounded-md">
+                <p><span className="font-medium">Name:</span> {formData.basicInfo.name}</p>
+                <p><span className="font-medium">Tagline:</span> {formData.basicInfo.tagline}</p>
+              </div>
+              
+              <h3 className="font-medium">Detailed Information</h3>
+              <div className="bg-muted/50 p-4 rounded-md">
+                <p><span className="font-medium">Location:</span> {formData.detailedInfo.location}</p>
+                <p><span className="font-medium">Funding Stage:</span> {formData.detailedInfo.fundingStage}</p>
+              </div>
+
+              <h3 className="font-medium">Media Information</h3>
+              <div className="bg-muted/50 p-4 rounded-md">
+                <p><span className="font-medium">Logo:</span> {formData.mediaInfo.logo ? "Uploaded" : "None"}</p>
+                <p><span className="font-medium">Cover Image:</span> {formData.mediaInfo.coverImage ? "Uploaded" : "None"}</p>
+              </div>
+            </div>
+
+            <div className="flex justify-between pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="lg" 
+                className="min-w-[100px]" 
+                onClick={handleBack}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button 
+                type="button" 
+                size="lg" 
+                className="min-w-[120px]"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Submit
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="container max-w-4xl py-10">
+    <div className="container max-w-4xl py-10 overflow-x-hidden">
       <h1 className="text-3xl font-bold mb-8">Create Your Startup Profile</h1>
 
       <div className="mb-10">
@@ -243,137 +352,8 @@ export default function CreateStartupPage() {
       </div>
 
       <Card className="shadow-sm">
-        <CardContent className="p-6 md:p-8">
-          <AnimatePresence mode="wait">
-            {currentStep === 1 && (
-              <motion.div
-                key="step1"
-                initial="initial"
-                animate="enter"
-                exit="exit"
-                variants={pageVariants}
-                transition={{ duration: 0.3 }}
-              >
-                <BasicInfoForm 
-                  onSubmit={(data, isValid) => handleNext(data, 1, isValid)} 
-                  initialData={formData.basicInfo} 
-                />
-              </motion.div>
-            )}
-
-            {currentStep === 2 && (
-              <motion.div
-                key="step2"
-                initial="initial"
-                animate="enter"
-                exit="exit"
-                variants={pageVariants}
-                transition={{ duration: 0.3 }}
-              >
-                <DetailedInfoForm
-                  onSubmit={(data, isValid) => handleNext(data, 2, isValid)}
-                  initialData={formData.detailedInfo}
-                  onBack={handleBack}
-                />
-              </motion.div>
-            )}
-
-            {currentStep === 3 && (
-              <motion.div
-                key="step3"
-                initial="initial"
-                animate="enter"
-                exit="exit"
-                variants={pageVariants}
-                transition={{ duration: 0.3 }}
-              >
-                <MediaUploadForm
-                  onSubmit={(data, isValid) => handleNext(data, 3, isValid)}
-                  initialData={formData.mediaInfo}
-                  onBack={handleBack}
-                  isSubmitting={isSubmitting}
-                />
-              </motion.div>
-            )}
-
-            {currentStep === 4 && (
-              <motion.div
-                key="step4"
-                initial="initial"
-                animate="enter"
-                exit="exit"
-                variants={pageVariants}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="space-y-6">
-                  <div className="flex items-center justify-center py-6">
-                    <div className="bg-primary/10 p-4 rounded-full">
-                      <CheckCircle2 className="h-12 w-12 text-primary" />
-                    </div>
-                  </div>
-                  
-                  <div className="text-center space-y-2">
-                    <h2 className="text-2xl font-bold">Ready to Submit</h2>
-                    <p className="text-muted-foreground">
-                      Please review your information before final submission
-                    </p>
-                  </div>
-
-                  <div className="space-y-4 my-6">
-                    <h3 className="font-medium">Basic Information</h3>
-                    <div className="bg-muted/50 p-4 rounded-md">
-                      <p><span className="font-medium">Name:</span> {formData.basicInfo.name}</p>
-                      <p><span className="font-medium">Tagline:</span> {formData.basicInfo.tagline}</p>
-                    </div>
-                    
-                    <h3 className="font-medium">Detailed Information</h3>
-                    <div className="bg-muted/50 p-4 rounded-md">
-                      <p><span className="font-medium">Location:</span> {formData.detailedInfo.location}</p>
-                      <p><span className="font-medium">Funding Stage:</span> {formData.detailedInfo.fundingStage}</p>
-                    </div>
-
-                    <h3 className="font-medium">Media Information</h3>
-                    <div className="bg-muted/50 p-4 rounded-md">
-                      <p><span className="font-medium">Logo:</span> {formData.mediaInfo.logo ? "Uploaded" : "None"}</p>
-                      <p><span className="font-medium">Cover Image:</span> {formData.mediaInfo.coverImage ? "Uploaded" : "None"}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between pt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="lg" 
-                      className="min-w-[100px]" 
-                      onClick={handleBack}
-                    >
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Back
-                    </Button>
-                    <Button 
-                      type="button" 
-                      size="lg" 
-                      className="min-w-[120px]"
-                      onClick={() => handleSubmit(formData)}
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className="h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Submitting...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="mr-2 h-4 w-4" />
-                          Submit
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <CardContent className="p-6 md:p-8 overflow-visible">
+          {renderStep()}
         </CardContent>
       </Card>
     </div>
