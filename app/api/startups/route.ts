@@ -5,6 +5,9 @@ import { startupFormSchema } from "@/lib/validations/startup"
 import type { Database } from "@/types/database"
 import { revalidatePath } from "next/cache"
 import { generateUniqueSlug } from "@/lib/utils/helpers/slug-generator"
+import { sendEmail, startupCreationTemplate } from "@/lib/email"
+
+const ADMIN_EMAIL = 'varunbhole@gmail.com'; // The email address to notify
 
 export async function POST(request: NextRequest) {
   try {
@@ -264,72 +267,103 @@ export async function POST(request: NextRequest) {
     
     console.log("API Route: Prepared looking_for array:", lookingFor);
 
-    // Prepare the startup data for insertion
-    const startupData = {
-      name: basicInfo.name,
-      slug,
-      description: detailedInfo.description,
-      website_url: basicInfo.websiteUrl || null,
-      logo_url: logoUrl,
-      founding_date: basicInfo.foundingDate || null,
-      employee_count: detailedInfo.teamSize ? parseInt(detailedInfo.teamSize) : null,
-      funding_stage: detailedInfo.fundingStage || null,
-      funding_amount: detailedInfo.fundingAmount ? parseFloat(detailedInfo.fundingAmount) : null,
-      location: detailedInfo.location || null,
-      category_id: basicInfo.categoryId || null,
-      user_id: session.user.id,
-      status: "active",
-      tagline: basicInfo.tagline || null,
-      linkedin_url: mediaInfo.socialLinks?.linkedin || null,
-      twitter_url: mediaInfo.socialLinks?.twitter || null,
-      looking_for: lookingFor,
-      media_images: mediaImages,
-      media_documents: mediaDocuments,
-      media_videos: mediaVideos
-    };
-
-    console.log("API Route: Prepared data for DB insertion");
-
-    // Create the new startup record with consolidated fields
-    console.log("API Route: Inserting startup into database");
-    const { data: startup, error: createError } = await supabase
-      .from("startups")
-      .insert(startupData)
-      .select()
-      .single();
-
-    if (createError) {
-      console.error("API Route: Error creating startup:", createError);
-      return NextResponse.json({ 
-        message: "Failed to create startup", 
-        error: createError.message, 
-        details: createError 
-      }, { status: 500 });
-    }
-
-    console.log("API Route: Successfully created startup with ID:", startup.id);
-
-    // Create an audit log entry
+    // Insert the startup into the database
     try {
-      console.log("API Route: Creating audit log entry");
-      await supabase.from("audit_log").insert({
-        user_id: session.user.id,
-        action: "create",
-        entity_type: "startup",
-        entity_id: startup.id,
-        details: { name: basicInfo.name },
+      console.log("API Route: Creating startup record in database");
+      const { data: startupData, error: startupError } = await supabase
+        .from("startups")
+        .insert({
+          name: basicInfo.name,
+          slug: basicInfo.slug || slug,
+          tagline: basicInfo.tagline || null,
+          description: detailedInfo.description,
+          logo_url: logoUrl,
+          funding_stage: detailedInfo.fundingStage || null,
+          funding_amount: detailedInfo.fundingAmount || null,
+          team_size: detailedInfo.teamSize || null,
+          location: detailedInfo.location || null,
+          website: basicInfo.website || null,
+          looking_for: detailedInfo.lookingFor || [],
+          status: "pending", // All new startups start with pending status
+          industry: basicInfo.industry || null,
+          founding_date: basicInfo.foundingDate || null,
+          user_id: session.user.id,
+          media_images: mediaImages,
+          media_videos: mediaVideos,
+          media_documents: mediaDocuments,
+        })
+        .select()
+        .single();
+      
+      if (startupError) {
+        console.error("API Route: Error creating startup:", startupError);
+        return NextResponse.json(
+          { message: "Failed to create startup", error: startupError.message },
+          { status: 500 }
+        );
+      }
+      
+      console.log("API Route: Startup created successfully:", startupData?.id);
+      
+      // Create social links if provided
+      if (mediaInfo.socialLinks && Object.keys(mediaInfo.socialLinks).length > 0) {
+        console.log("API Route: Adding social links");
+        
+        for (const [platform, url] of Object.entries(mediaInfo.socialLinks)) {
+          if (url) {
+            const { data: linkData, error: linkError } = await supabase
+              .from("social_links")
+              .insert({
+                startup_id: startupData?.id,
+                platform: platform,
+                url: url,
+              });
+            
+            if (linkError) {
+              console.error(`API Route: Error adding ${platform} social link:`, linkError);
+              // Continue despite error, not critical
+            } else {
+              console.log(`API Route: Added ${platform} social link`);
+            }
+          }
+        }
+      }
+      
+      // Send email notification to admin
+      try {
+        await sendEmail({
+          to: ADMIN_EMAIL,
+          subject: `New Startup Created: ${basicInfo.name}`,
+          html: startupCreationTemplate(basicInfo.name, basicInfo.slug || slug)
+        });
+        
+        console.log("API Route: Admin notification email sent successfully");
+      } catch (emailError) {
+        console.error("API Route: Error sending admin notification email:", emailError);
+        // Continue despite email error, not critical for startup creation
+      }
+      
+      // Revalidate paths to update any pages showing startups
+      revalidatePath("/admin/moderation");
+      revalidatePath("/admin/dashboard");
+      revalidatePath("/startups");
+      revalidatePath(`/startups/${basicInfo.slug || slug}`);
+      
+      return NextResponse.json({ 
+        message: "Startup created successfully", 
+        id: startupData?.id, 
+        slug: startupData?.slug 
       });
-      console.log("API Route: Audit log entry created");
-    } catch (auditError) {
-      // Don't fail the whole request if audit logging fails
-      console.error("API Route: Error creating audit log:", auditError);
+    } catch (error) {
+      console.error("API Route: Unexpected error creating startup:", error);
+      return NextResponse.json(
+        { 
+          message: "An unexpected error occurred", 
+          error: error instanceof Error ? error.message : String(error) 
+        },
+        { status: 500 }
+      );
     }
-
-    console.log("API Route: Startup creation complete, returning success response");
-    return NextResponse.json({
-      message: "Startup created successfully",
-      id: startup.id,
-    });
   } catch (error: any) {
     console.error("API Route: Unhandled error in startup creation:", error);
     // Log the full error details including stack trace
