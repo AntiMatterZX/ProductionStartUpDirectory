@@ -310,9 +310,8 @@ export async function POST(request: NextRequest) {
           status: "active",
           media_images: mediaImages,
           media_documents: mediaDocuments,
-          media_videos: [],
+          media_videos: mediaVideos,
           looking_for: detailedInfo.lookingFor || [],
-          video_url: mediaInfo.videoUrl?.trim() || null,
         })
         .select("id, slug")
         .single();
