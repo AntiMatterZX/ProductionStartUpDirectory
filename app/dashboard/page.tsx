@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 import { formatDate } from "@/lib/utils"
 import { ArrowRight, FilePlus, BarChart, Rocket, Users } from "lucide-react"
 import { Session } from "@supabase/supabase-js"
+import PsychedelicLoader from "@/components/ui/psychedelic-loader"
 
 // Define types for our data
 type ProfileType = {
@@ -36,6 +37,9 @@ type ActivityType = {
   status: string;
   updated_at: string;
 }
+
+// Force dynamic rendering to ensure fresh data
+export const dynamic = 'force-dynamic';
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -202,7 +206,9 @@ export default function DashboardPage() {
     return (
       <div className="container py-10 flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="h-64 w-64">
+            <PsychedelicLoader />
+          </div>
           <p className="mt-4 text-muted-foreground">Loading your dashboard...</p>
         </div>
       </div>

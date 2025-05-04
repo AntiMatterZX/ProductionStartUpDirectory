@@ -5,6 +5,9 @@ import { DashboardHeader } from "@/components/dashboard/header"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { SidebarProvider } from "@/components/dashboard/sidebar-context"
 
+// Force dynamic rendering to ensure fresh data
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {

@@ -3,6 +3,9 @@ import Link from "next/link"
 import { Suspense } from "react"
 import LoadingIndicator from "@/components/ui/loading-indicator"
 
+// Force dynamic rendering to ensure fresh data
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboardPage() {
   return (
     <Suspense fallback={<DashboardSkeleton />}>

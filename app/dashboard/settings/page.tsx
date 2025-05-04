@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/ui/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import PsychedelicLoader from "@/components/ui/psychedelic-loader"
 import type { Database } from "@/types/database"
 
 export default function SettingsPage() {
@@ -40,7 +41,9 @@ export default function SettingsPage() {
     return (
       <div className="container py-10 flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="h-64 w-64">
+            <PsychedelicLoader />
+          </div>
           <p className="mt-4 text-muted-foreground">Loading settings...</p>
         </div>
       </div>

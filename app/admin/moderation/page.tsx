@@ -7,10 +7,27 @@ import { ApprovalButtons } from "@/components/admin/ApprovalButtons"
 import { Suspense } from "react"
 import LoadingIndicator from "@/components/ui/loading-indicator"
 
+// Force dynamic rendering to ensure fresh data
+export const dynamic = 'force-dynamic';
+
 export default function ModerationPage() {
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">Startup Moderation</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Startup Moderation</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/moderation/raw">
+              View Raw Data
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/admin/moderation/auto-update">
+              Auto-Update System
+            </Link>
+          </Button>
+        </div>
+      </div>
       <Suspense fallback={<ModerationSkeleton />}>
         <ModerationContent />
       </Suspense>
@@ -22,8 +39,17 @@ async function ModerationContent() {
   // Get the Supabase client
   const supabase = await createServerComponentClient()
 
-  // Fetch pending startups
-  const { data: pendingStartups } = await supabase
+  console.log("Fetching pending startups...")
+  
+  // Try to get ALL startups first to see what's happening
+  const { data: allStartups, error: allError } = await supabase
+    .from("startups")
+    .select("id, name, status")
+    
+  console.log("All startups:", allStartups)
+  
+  // Fetch pending startups - be very explicit and use direct SQL
+  const { data: pendingStartups, error: pendingError } = await supabase
     .from("startups")
     .select(`
       id,
@@ -36,8 +62,15 @@ async function ModerationContent() {
       user_id,
       profiles(full_name, email)
     `)
-    .eq("status", "pending")
+    .filter('status', 'eq', 'pending')
     .order("created_at", { ascending: false })
+    
+  console.log("Pending startups query result:", pendingStartups)
+  console.log("Pending startups query error:", pendingError)
+  
+  if (pendingError) {
+    console.error("Error fetching pending startups:", pendingError)
+  }
 
   // Fetch recently approved/rejected startups
   const { data: recentActionStartups } = await supabase

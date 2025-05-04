@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button"
 import { PlusIcon } from "lucide-react"
 import StartupCard from "@/components/startup/cards/StartupCard"
 
+// Force dynamic rendering to ensure fresh data
+export const dynamic = 'force-dynamic';
+
 export default async function StartupsPage() {
   const supabase = await createServerComponentClient()
 
