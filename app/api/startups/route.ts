@@ -173,6 +173,7 @@ export async function POST(request: NextRequest) {
     // Add pitch deck to media_documents array if it exists
     if (pitchDeckUrl) {
       mediaDocuments.push(pitchDeckUrl);
+      // Note: The pitch deck is stored in the media_documents array instead of a separate column
     }
 
     // Add video URL to media_videos array if it exists
@@ -205,7 +206,6 @@ export async function POST(request: NextRequest) {
           location: detailedInfo.location,
           linkedin_url: mediaInfo.socialLinks?.linkedin || null,
           twitter_url: mediaInfo.socialLinks?.twitter || null,
-          pitch_deck_url: pitchDeckUrl,
           user_id: session.user.id,
           media_images: mediaImages,
           media_documents: mediaDocuments,
