@@ -17,6 +17,7 @@ export default function StartupsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showKanban, setShowKanban] = useState(true)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
   
   // Filtered startups for Kanban
   const pendingStartups = startups.filter(s => s.status === "pending")
@@ -69,6 +70,54 @@ export default function StartupsPage() {
     }
   }
   
+  const updateStartupStatus = async (startupId: string, newStatus: 'pending' | 'approved' | 'rejected') => {
+    try {
+      setUpdatingStatus(startupId)
+      
+      // Call the API endpoint for status update
+      const response = await fetch('/api/startups/status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ startupId, status: newStatus }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to update status')
+      }
+      
+      // Update local state to reflect the change
+      setStartups(prevStartups => 
+        prevStartups.map(startup => 
+          startup.id === startupId ? { ...startup, status: newStatus } : startup
+        )
+      )
+      
+      toast({
+        title: "Status Updated",
+        description: `Startup is now ${newStatus}`,
+        variant: "default",
+      })
+      
+      // Refresh data after status update to ensure consistency
+      setTimeout(() => {
+        fetchStartups()
+      }, 1000)
+      
+    } catch (error) {
+      console.error(`Error updating status to ${newStatus}:`, error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update startup status",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+  
   const toggleView = () => {
     setShowKanban(!showKanban)
   }
@@ -117,9 +166,15 @@ export default function StartupsPage() {
             <div className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-md">
               <h3 className="font-medium text-amber-800 dark:text-amber-300">Pending ({pendingStartups.length})</h3>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {pendingStartups.map((startup) => (
-                <StartupCard key={startup.id} startup={startup} />
+                <StartupCard 
+                  key={startup.id} 
+                  startup={startup} 
+                  showStatusControls={true}
+                  onUpdateStatus={updateStartupStatus}
+                  isUpdating={updatingStatus === startup.id}
+                />
               ))}
               {pendingStartups.length === 0 && (
                 <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
@@ -134,9 +189,15 @@ export default function StartupsPage() {
             <div className="bg-green-50 dark:bg-green-950/30 p-3 rounded-md">
               <h3 className="font-medium text-green-800 dark:text-green-300">Approved ({approvedStartups.length})</h3>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {approvedStartups.map((startup) => (
-                <StartupCard key={startup.id} startup={startup} />
+                <StartupCard 
+                  key={startup.id} 
+                  startup={startup} 
+                  showStatusControls={true}
+                  onUpdateStatus={updateStartupStatus}
+                  isUpdating={updatingStatus === startup.id}
+                />
               ))}
               {approvedStartups.length === 0 && (
                 <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
@@ -151,9 +212,15 @@ export default function StartupsPage() {
             <div className="bg-red-50 dark:bg-red-950/30 p-3 rounded-md">
               <h3 className="font-medium text-red-800 dark:text-red-300">Rejected ({rejectedStartups.length})</h3>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {rejectedStartups.map((startup) => (
-                <StartupCard key={startup.id} startup={startup} />
+                <StartupCard 
+                  key={startup.id} 
+                  startup={startup} 
+                  showStatusControls={true}
+                  onUpdateStatus={updateStartupStatus}
+                  isUpdating={updatingStatus === startup.id}
+                />
               ))}
               {rejectedStartups.length === 0 && (
                 <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
@@ -170,7 +237,13 @@ export default function StartupsPage() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {startups.map((startup) => (
-          <StartupCard key={startup.id} startup={startup} />
+          <StartupCard 
+            key={startup.id} 
+            startup={startup} 
+            showStatusControls={true}
+            onUpdateStatus={updateStartupStatus}
+            isUpdating={updatingStatus === startup.id}
+          />
         ))}
       </div>
     )
