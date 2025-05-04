@@ -52,7 +52,7 @@ export default function ModerationPage() {
           status,
           created_at,
           updated_at,
-          profiles(full_name, email)
+          user_id
         `)
         .order("created_at", { ascending: false })
       
@@ -216,18 +216,28 @@ export default function ModerationPage() {
     try {
       setCreating(true)
       
-      // Get first user for user_id
-      const { data: users, error: userError } = await supabase
-        .from("profiles")
-        .select("id")
-        .limit(1)
-
-      if (userError) throw userError
-      if (!users || users.length === 0) {
-        throw new Error("No users found")
+      // Generate a dummy user ID if we can't find one
+      let userId = null
+      
+      try {
+        // Try to get a user from the profiles table
+        const { data: users, error: userError } = await supabase
+          .from("profiles")
+          .select("id")
+          .limit(1)
+  
+        if (!userError && users && users.length > 0) {
+          userId = users[0].id
+        }
+      } catch (err) {
+        console.log("Could not fetch user ID, will use a random UUID instead")
+      }
+      
+      // Use random UUID if no user found
+      if (!userId) {
+        userId = uuidv4()
       }
 
-      const userId = users[0].id
       const testId = Math.floor(Math.random() * 10000)
       const now = new Date().toISOString()
       const slug = `${testName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${testId}`
@@ -345,8 +355,7 @@ export default function ModerationPage() {
                 ID: {startup.id}
               </p>
               <p className="text-sm text-muted-foreground">
-                Submitted by: {startup.profiles?.full_name || "Unknown"}
-                {startup.profiles?.email && ` (${startup.profiles.email})`}
+                User ID: {startup.user_id || "Unknown"}
               </p>
               <p className="text-sm text-muted-foreground">
                 Created: {startup.created_at ? new Date(startup.created_at).toLocaleString() : "Unknown date"}
