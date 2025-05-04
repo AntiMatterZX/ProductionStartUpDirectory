@@ -11,9 +11,18 @@ const ADMIN_EMAIL = 'varunbhole@gmail.com'; // The email address to notify
 
 // Helper function to reduce code duplication in file uploads
 async function uploadFile(supabase: any, file: File, userId: string, type: 'logos' | 'images' | 'documents') {
-  if (!file) return null;
+  if (!file) {
+    console.error("No file provided to uploadFile");
+    throw new Error("No file provided");
+  }
   
   try {
+    // Validate file before uploading
+    if (!(file instanceof File)) {
+      console.error("Invalid file object:", file);
+      throw new Error("Invalid file object");
+    }
+    
     // Extract file extension and create unique filename
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'unknown';
     const fileName = `${type.slice(0, -1)}-${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
@@ -26,7 +35,7 @@ async function uploadFile(supabase: any, file: File, userId: string, type: 'logo
       fileName: file.name
     });
     
-    // Upload to "public" bucket in Supabase Storage
+    // Upload to "startups" bucket in Supabase Storage
     const { data, error } = await supabase.storage
       .from("startups")
       .upload(filePath, file, {
@@ -36,7 +45,7 @@ async function uploadFile(supabase: any, file: File, userId: string, type: 'logo
     
     if (error) {
       console.error(`Error uploading ${type}:`, error.message);
-      return null;
+      throw new Error(`Error uploading ${type}: ${error.message}`);
     }
     
     // Get public URL
@@ -44,11 +53,16 @@ async function uploadFile(supabase: any, file: File, userId: string, type: 'logo
       .from("startups")
       .getPublicUrl(filePath);
     
+    if (!urlData || !urlData.publicUrl) {
+      console.error("Failed to get public URL for uploaded file");
+      throw new Error("Failed to get public URL for uploaded file");
+    }
+    
     console.log(`File uploaded successfully. Public URL: ${urlData.publicUrl}`);
     return urlData.publicUrl;
   } catch (error) {
     console.error(`Error in uploadFile for ${type}:`, error);
-    return null;
+    throw error; // Rethrow to be handled by the caller
   }
 }
 
@@ -171,9 +185,17 @@ export async function POST(request: NextRequest) {
     }
     
     // Process file uploads and get URLs using our helper function
-    const logoUrl = logo && typeof logo !== 'string' 
-      ? await uploadFile(supabase, logo, session.user.id, 'logos') 
-      : basicInfo?.logoUrl || null;
+    let logoUrl = null;
+    if (logo && typeof logo !== 'string') {
+      try {
+        logoUrl = await uploadFile(supabase, logo, session.user.id, 'logos');
+      } catch (logoError) {
+        console.error("Error uploading logo:", logoError);
+        // Don't throw here - allow creation to continue without logo
+      }
+    } else {
+      logoUrl = basicInfo?.logoUrl || null;
+    }
       
     let coverImageUrl = null;
     if (coverImage && typeof coverImage !== 'string') {
@@ -185,18 +207,26 @@ export async function POST(request: NextRequest) {
         console.log("Cover image uploaded successfully:", coverImageUrl);
         
         // Add to media_images array if it's not already there
-        if (!mediaInfo.media_images.includes(coverImageUrl)) {
+        if (coverImageUrl && Array.isArray(mediaInfo.media_images) && !mediaInfo.media_images.includes(coverImageUrl)) {
           mediaInfo.media_images.push(coverImageUrl);
         }
-      } catch (error) {
-        console.error("Error uploading cover image:", error);
-        throw new Error("Failed to upload cover image");
+      } catch (coverError) {
+        console.error("Error uploading cover image:", coverError);
+        // Don't throw here - allow creation to continue without cover image
       }
     }
       
-    const pitchDeckUrl = pitchDeck && typeof pitchDeck !== 'string'
-      ? await uploadFile(supabase, pitchDeck, session.user.id, 'documents')
-      : mediaInfo?.pitchDeckUrl || null;
+    let pitchDeckUrl = null;
+    if (pitchDeck && typeof pitchDeck !== 'string') {
+      try {
+        pitchDeckUrl = await uploadFile(supabase, pitchDeck, session.user.id, 'documents');
+      } catch (pitchDeckError) {
+        console.error("Error uploading pitch deck:", pitchDeckError);
+        // Don't throw here - allow creation to continue without pitch deck
+      }
+    } else {
+      pitchDeckUrl = mediaInfo?.pitchDeckUrl || null;
+    }
       
     const videoUrl = mediaInfo?.videoUrl || null;
 

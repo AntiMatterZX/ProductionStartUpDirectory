@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { v4 as uuidv4 } from "uuid"
 import { generateSlug } from "@/lib/utils/helpers/slug-generator"
+import { uploadFile } from "@/lib/utils/helpers/file-upload"
 
 export async function PUT(
   request: NextRequest,
@@ -81,29 +82,119 @@ export async function PUT(
       updateData.slug = generateSlug(basicInfo.slug)
     }
     
-    // Upload new files if provided
-    let logoUrl = null
-    let coverImageUrl = null
-    let pitchDeckUrl = null
+    // Handle file uploads
+    let logoUrl = null;
+    let coverImageUrl = null;
+    let pitchDeckUrl = null;
+    const mediaEntries = [];
+
+    if (logo) {
+      try {
+        const logoFile = logo as File;
+        // Use the shared uploadFile helper instead of duplicate code
+        logoUrl = await uploadFile(
+          logoFile,
+          session.user.id,
+          "logo",
+          (progress: number) => {
+            // No progress handling needed here
+          }
+        );
+        
+        if (logoUrl) {
+          // Delete existing logo
+          await supabase
+            .from("startup_media")
+            .delete()
+            .eq("startup_id", startupId)
+            .eq("media_type", "logo");
+          
+          // Add new logo
+          mediaEntries.push({
+            startup_id: startupId,
+            media_type: "logo",
+            url: logoUrl,
+            title: "Logo",
+            is_featured: true,
+          });
+        }
+      } catch (logoError) {
+        console.error("Error uploading logo:", logoError);
+        // Continue without logo update
+      }
+    }
+
+    if (coverImage) {
+      try {
+        const coverFile = coverImage as File;
+        // Use the shared uploadFile helper
+        coverImageUrl = await uploadFile(
+          coverFile,
+          session.user.id,
+          "banner",
+          (progress: number) => {
+            // No progress handling needed here
+          }
+        );
+        
+        if (coverImageUrl) {
+          // Delete existing featured image
+          await supabase
+            .from("startup_media")
+            .delete()
+            .eq("startup_id", startupId)
+            .eq("media_type", "image")
+            .eq("is_featured", true);
+          
+          // Add new featured image
+          mediaEntries.push({
+            startup_id: startupId,
+            media_type: "image",
+            url: coverImageUrl,
+            title: "Cover Image",
+            is_featured: true,
+          });
+        }
+      } catch (coverError) {
+        console.error("Error uploading cover image:", coverError);
+        // Continue without cover image update
+      }
+    }
     
-    if (mediaInfo.logo) {
-      const logoFile = mediaInfo.logo as unknown as File
-      const logoExt = logoFile.name.split(".").pop()
-      const logoPath = `${session.user.id}/${Date.now()}-logo.${logoExt}`
-
-      const { data: logoData, error: logoError } = await supabase.storage
-        .from("startup-media")
-        .upload(logoPath, logoFile, {
-          cacheControl: "3600",
-          upsert: false,
-        })
-
-      if (logoError) {
-        console.error("Error uploading logo:", logoError)
-      } else {
-        const { data: logoUrlData } = supabase.storage.from("startup-media").getPublicUrl(logoPath)
-        logoUrl = logoUrlData.publicUrl
-        updateData.logo_url = logoUrl
+    if (pitchDeck) {
+      try {
+        const deckFile = pitchDeck as File;
+        // Use the shared uploadFile helper
+        pitchDeckUrl = await uploadFile(
+          deckFile,
+          session.user.id,
+          "pitch_deck",
+          (progress: number) => {
+            // No progress handling needed here
+          }
+        );
+        
+        if (pitchDeckUrl) {
+          // Delete existing pitch deck
+          await supabase
+            .from("startup_media")
+            .delete()
+            .eq("startup_id", startupId)
+            .eq("media_type", "document")
+            .eq("title", "Pitch Deck");
+          
+          // Add new pitch deck
+          mediaEntries.push({
+            startup_id: startupId,
+            media_type: "document",
+            url: pitchDeckUrl,
+            title: "Pitch Deck",
+            is_featured: false,
+          });
+        }
+      } catch (deckError) {
+        console.error("Error uploading pitch deck:", deckError);
+        // Continue without pitch deck update
       }
     }
     
