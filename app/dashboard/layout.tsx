@@ -4,8 +4,6 @@ import { getAuthUser } from "@/lib/auth/auth"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { SidebarProvider } from "@/components/dashboard/sidebar-context"
-import { DashboardLoading } from "@/components/dashboard/loading"
-import { Suspense } from "react"
 
 // Force dynamic rendering to ensure fresh data
 export const dynamic = 'force-dynamic';
@@ -24,17 +22,15 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen bg-background overflow-hidden">
+      <div className="flex h-screen bg-background">
         <DashboardSidebar />
         
         <div className="flex flex-col flex-1 w-full overflow-hidden">
           <DashboardHeader user={user} />
           
-          <main className="flex-1 p-4 md:p-6 w-full overflow-hidden">
-            <div className="mx-auto max-w-7xl w-full h-full">
-              <Suspense fallback={<DashboardLoading />}>
-                {children}
-              </Suspense>
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 w-full">
+            <div className="mx-auto max-w-7xl w-full">
+              {children}
             </div>
           </main>
         </div>

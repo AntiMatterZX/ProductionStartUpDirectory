@@ -168,22 +168,6 @@ html, body {
   max-width: 100vw;
 }
 
-/* Prevent scrolling in fixed-height containers */
-.no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* Extra small text */
-.text-2xs {
-  font-size: 0.65rem;
-  line-height: 1rem;
-}
-
 /* Fix for mobile viewport issues */
 @media (max-width: 640px) {
   .section-container {
