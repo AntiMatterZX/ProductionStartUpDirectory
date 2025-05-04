@@ -3,7 +3,11 @@
  */
 
 export const STORAGE_BUCKETS = {
-  // Main public bucket for all media types
+  // Main bucket for startup-related media
+  STARTUPS: "startups",
+  // For user profile pictures and related content
+  USERS: "users",
+  // For system-wide assets
   PUBLIC: "public",
 }
 
@@ -11,7 +15,18 @@ export const STORAGE_BUCKETS = {
  * Helper function to get the appropriate bucket for a media type
  */
 export function getBucketForMediaType(mediaType: string): string {
-  // All media types use the same public bucket
+  // All startup media goes to the STARTUPS bucket
+  if (mediaType === "logo" || 
+      mediaType === "image" || 
+      mediaType === "coverImage" || 
+      mediaType === "document" || 
+      mediaType === "pitch_deck" || 
+      mediaType === "pitchDeck" || 
+      mediaType === "video") {
+    return STORAGE_BUCKETS.STARTUPS;
+  }
+  
+  // Default to public bucket for other types
   return STORAGE_BUCKETS.PUBLIC;
 }
 
@@ -21,17 +36,17 @@ export function getBucketForMediaType(mediaType: string): string {
 export function getStoragePath(userId: string, mediaType: string, fileName: string): string {
   switch (mediaType) {
     case "logo":
-      return `${userId}/logos/${fileName}`;
+      return `startups/${userId}/logos/${fileName}`;
     case "image":
     case "coverImage":
-      return `${userId}/images/${fileName}`;
+      return `startups/${userId}/images/${fileName}`;
     case "document":
     case "pitch_deck":
     case "pitchDeck":
-      return `${userId}/documents/${fileName}`;
+      return `startups/${userId}/documents/${fileName}`;
     case "video":
-      return `${userId}/videos/${fileName}`;
+      return `startups/${userId}/videos/${fileName}`;
     default:
-      return `${userId}/other/${fileName}`;
+      return `startups/${userId}/other/${fileName}`;
   }
 } 

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Upload, X, ImageIcon, FileText, LinkIcon, Loader2, ArrowLeft, ArrowRight } from "lucide-react"
 import { mediaUploadSchema, type MediaUploadFormValues } from "@/lib/validations/startup"
 import type { StartupMediaInfo } from "@/types/startup"
+import { Progress } from "@/components/ui/progress"
+import { toast } from "@/components/ui/use-toast"
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
@@ -26,6 +28,11 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [pitchDeckName, setPitchDeckName] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  
+  // Add refs for file inputs to enable reset
+  const logoInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
+  const pitchDeckInputRef = useRef<HTMLInputElement>(null)
 
   const form = useForm<MediaUploadFormValues>({
     resolver: zodResolver(mediaUploadSchema),
@@ -50,10 +57,46 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
     const file = e.target.files?.[0]
     if (!file) return;
     
+    // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       form.setError(field.name as any, {
         type: "manual",
         message: "File size must be less than 5MB",
+      })
+      toast({
+        title: "File too large",
+        description: "Maximum file size is 5MB",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    // Validate file type for images
+    if ((field.name === 'logo' || field.name === 'coverImage') && !file.type.startsWith('image/')) {
+      form.setError(field.name as any, {
+        type: "manual",
+        message: "Please select an image file",
+      })
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    // Validate file type for documents
+    if (field.name === 'pitchDeck' && 
+        !['application/pdf', 'application/vnd.ms-powerpoint', 
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation'].includes(file.type)) {
+      form.setError(field.name as any, {
+        type: "manual",
+        message: "Please select a PDF or PowerPoint file",
+      })
+      toast({
+        title: "Invalid file type",
+        description: "Please select a PDF or PowerPoint file",
+        variant: "destructive",
       })
       return
     }
@@ -63,23 +106,29 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
     // Use setTimeout to prevent UI freezing during file processing
     setTimeout(() => {
       field.onChange(file)
-      const reader = new FileReader()
       
-      reader.onloadend = () => {
-        setPreview(reader.result as string)
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader()
+        
+        reader.onloadend = () => {
+          setPreview(reader.result as string)
+          setIsUploading(false)
+        }
+        
+        reader.onerror = () => {
+          setIsUploading(false)
+          form.setError(field.name as any, {
+            type: "manual",
+            message: "Error reading file",
+          })
+        }
+        
+        reader.readAsDataURL(file)
+      } else {
+        // For non-image files, just set uploading to false
         setIsUploading(false)
       }
-      
-      reader.onerror = () => {
-        setIsUploading(false)
-        form.setError(field.name as any, {
-          type: "manual",
-          message: "Error reading file",
-        })
-      }
-      
-      reader.readAsDataURL(file)
-    }, 10)
+    }, 50)
   }, [form])
 
   const handlePitchDeckChange = useCallback((e: React.ChangeEvent<HTMLInputElement>, field: any) => {
@@ -91,6 +140,26 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
         type: "manual",
         message: "File size must be less than 5MB",
       })
+      toast({
+        title: "File too large",
+        description: "Maximum file size is 5MB",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    // Validate file type for documents
+    if (!['application/pdf', 'application/vnd.ms-powerpoint', 
+           'application/vnd.openxmlformats-officedocument.presentationml.presentation'].includes(file.type)) {
+      form.setError(field.name as any, {
+        type: "manual",
+        message: "Please select a PDF or PowerPoint file",
+      })
+      toast({
+        title: "Invalid file type",
+        description: "Please select a PDF or PowerPoint file",
+        variant: "destructive",
+      })
       return
     }
 
@@ -101,17 +170,23 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
       field.onChange(file)
       setPitchDeckName(file.name)
       setIsUploading(false)
-    }, 10)
+    }, 50)
   }, [form])
 
-  const clearFile = useCallback((field: any, setPreview: (preview: string | null) => void) => {
+  const clearFile = useCallback((field: any, setPreview: (preview: string | null) => void, inputRef: React.RefObject<HTMLInputElement>) => {
     field.onChange(null)
     setPreview(null)
+    if (inputRef.current) {
+      inputRef.current.value = ''
+    }
   }, [])
 
-  const clearPitchDeck = useCallback((field: any) => {
+  const clearPitchDeck = useCallback((field: any, inputRef: React.RefObject<HTMLInputElement>) => {
     field.onChange(null)
     setPitchDeckName(null)
+    if (inputRef.current) {
+      inputRef.current.value = ''
+    }
   }, [])
 
   const handleSubmit = (data: MediaUploadFormValues) => {
@@ -146,7 +221,7 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
                         />
                         <button
                           type="button"
-                          onClick={() => clearFile(field, setLogoPreview)}
+                          onClick={() => clearFile(field, setLogoPreview, logoInputRef)}
                           className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
                         >
                           <X className="h-4 w-4" />
@@ -173,6 +248,7 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
                             className="hidden"
                             onChange={(e) => handleFileChange(e, field, setLogoPreview)}
                             disabled={isUploading}
+                            ref={logoInputRef}
                           />
                         </label>
                       </div>
@@ -227,7 +303,7 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
                       />
                       <button
                         type="button"
-                        onClick={() => clearFile(field, setCoverPreview)}
+                        onClick={() => clearFile(field, setCoverPreview, coverInputRef)}
                         className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
                       >
                         <X className="h-4 w-4" />
@@ -254,6 +330,7 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
                           className="hidden"
                           onChange={(e) => handleFileChange(e, field, setCoverPreview)}
                           disabled={isUploading}
+                          ref={coverInputRef}
                         />
                       </label>
                     </div>
@@ -280,7 +357,7 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
                       <span className="text-sm truncate">{pitchDeckName}</span>
                       <button
                         type="button"
-                        onClick={() => clearPitchDeck(field)}
+                        onClick={() => clearPitchDeck(field, pitchDeckInputRef)}
                         className="ml-auto bg-destructive text-destructive-foreground rounded-full p-1"
                       >
                         <X className="h-4 w-4" />
@@ -307,6 +384,7 @@ export default function MediaUploadForm({ onSubmit, onBack, initialData = {}, is
                           className="hidden"
                           onChange={(e) => handlePitchDeckChange(e, field)}
                           disabled={isUploading}
+                          ref={pitchDeckInputRef}
                         />
                       </label>
                     </div>

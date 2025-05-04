@@ -3,6 +3,25 @@ import { createServerComponentClient } from "@/lib/supabase/server-component"
 import { cookies } from "next/headers"
 import { revalidatePath } from "next/cache"
 import { STORAGE_BUCKETS, getBucketForMediaType } from "@/lib/utils/config/storage-buckets"
+import { deleteFile, getPathFromUrl } from "@/lib/utils/helpers/file-upload"
+
+// Helper to normalize media types
+function normalizeMediaType(mediaType: string): string {
+  // Normalize camelCase to snake_case and handle common variations
+  switch (mediaType.toLowerCase()) {
+    case "logo":
+      return "logo";
+    case "coverimage":
+    case "cover_image":
+    case "cover":
+      return "image";
+    case "pitchdeck":
+    case "pitch_deck":
+      return "document";
+    default:
+      return mediaType.toLowerCase();
+  }
+}
 
 export async function POST(
   request: NextRequest,
@@ -47,10 +66,10 @@ export async function POST(
     }
 
     // Extract data from the form
-    let mediaType, url, title;
+    let mediaType, url, title, description;
     try {
       const body = await request.json();
-      ({ mediaType, url, title } = body);
+      ({ mediaType, url, title, description } = body);
     } catch (error) {
       console.error("Error parsing request body:", error);
       return NextResponse.json(
@@ -66,10 +85,13 @@ export async function POST(
       )
     }
 
+    // Normalize the media type
+    const normalizedMediaType = normalizeMediaType(mediaType);
+
     // Get the current media arrays
     const { data: currentMedia, error: mediaFetchError } = await supabase
       .from("startups")
-      .select("media_images, media_documents, media_videos, logo_url")
+      .select("media_images, media_documents, media_videos, logo_url, logo_media_url, pitch_deck_url")
       .eq("id", startupId)
       .single()
 
@@ -82,34 +104,53 @@ export async function POST(
     }
 
     // Initialize arrays if they don't exist
-    const mediaImages = currentMedia.media_images || [];
-    const mediaDocuments = currentMedia.media_documents || [];
-    const mediaVideos = currentMedia.media_videos || [];
+    const mediaImages = Array.isArray(currentMedia.media_images) ? [...currentMedia.media_images] : [];
+    const mediaDocuments = Array.isArray(currentMedia.media_documents) ? [...currentMedia.media_documents] : [];
+    const mediaVideos = Array.isArray(currentMedia.media_videos) ? [...currentMedia.media_videos] : [];
 
     // Determine which array to update based on media type
     let updateData: Record<string, any> = {};
     
-    if (mediaType === "logo") {
-      // For logos, we update both the logo_url field and add to the media_images array
+    if (normalizedMediaType === "logo") {
+      // For logos, we update the logo_url field and add to the media_images array if it's not already there
       updateData = {
         logo_url: url,
-        media_images: [...mediaImages, url]
+        logo_media_url: url
       };
-    } else if (mediaType === "image" || mediaType === "coverImage") {
-      updateData = {
-        media_images: [...mediaImages, url]
-      };
-    } else if (mediaType === "document" || mediaType === "pitch_deck" || mediaType === "pitchDeck") {
-      updateData = {
-        media_documents: [...mediaDocuments, url]
-      };
-    } else if (mediaType === "video") {
-      updateData = {
-        media_videos: [...mediaVideos, url]
-      };
+      
+      // Only add to media_images if not already there
+      if (!mediaImages.includes(url)) {
+        updateData.media_images = [...mediaImages, url];
+      }
+    } else if (normalizedMediaType === "image") {
+      // Only add to media_images if not already there
+      if (!mediaImages.includes(url)) {
+        updateData.media_images = [...mediaImages, url];
+      } else {
+        updateData.media_images = mediaImages; // Keep the same array
+      }
+    } else if (normalizedMediaType === "document") {
+      // Only add to media_documents if not already there
+      if (!mediaDocuments.includes(url)) {
+        updateData.media_documents = [...mediaDocuments, url];
+      } else {
+        updateData.media_documents = mediaDocuments; // Keep the same array
+      }
+      
+      // If this is the first document or explicitly marked as pitch deck, set as pitch_deck_url
+      if (mediaDocuments.length === 0 || mediaType.toLowerCase().includes("pitch")) {
+        updateData.pitch_deck_url = url;
+      }
+    } else if (normalizedMediaType === "video") {
+      // Only add to media_videos if not already there
+      if (!mediaVideos.includes(url)) {
+        updateData.media_videos = [...mediaVideos, url];
+      } else {
+        updateData.media_videos = mediaVideos; // Keep the same array
+      }
     } else {
       return NextResponse.json(
-        { message: "Invalid media type" },
+        { message: `Invalid media type: ${mediaType}` },
         { status: 400 }
       )
     }
@@ -135,7 +176,7 @@ export async function POST(
         action: "update_media",
         entity_type: "startup",
         entity_id: startupId,
-        details: { mediaType, title, url },
+        details: { mediaType: normalizedMediaType, title, url },
       });
     } catch (error) {
       // Don't fail if audit log fails
@@ -152,6 +193,8 @@ export async function POST(
     return NextResponse.json({
       message: "Media updated successfully",
       id: startupId,
+      url: url,
+      mediaType: normalizedMediaType
     })
   } catch (error: any) {
     console.error("Error in media update:", error)
@@ -182,6 +225,13 @@ export async function DELETE(
       )
     }
 
+    if (!mediaType || !url) {
+      return NextResponse.json(
+        { message: "Media type and URL are required" },
+        { status: 400 }
+      )
+    }
+
     // Get session
     const {
       data: { session },
@@ -197,7 +247,7 @@ export async function DELETE(
     // First verify the user owns this startup
     const { data: startup, error: ownershipError } = await supabase
       .from("startups")
-      .select("user_id, slug, media_images, media_documents, media_videos, logo_url")
+      .select("user_id, slug, media_images, media_documents, media_videos, logo_url, logo_media_url, pitch_deck_url")
       .eq("id", startupId)
       .single()
 
@@ -215,61 +265,60 @@ export async function DELETE(
       )
     }
 
-    // Initialize arrays
-    const mediaImages = startup.media_images || [];
-    const mediaDocuments = startup.media_documents || [];
-    const mediaVideos = startup.media_videos || [];
+    // Normalize the media type
+    const normalizedMediaType = normalizeMediaType(mediaType);
+    
+    // Initialize arrays and ensure they're arrays
+    const mediaImages = Array.isArray(startup.media_images) ? [...startup.media_images] : [];
+    const mediaDocuments = Array.isArray(startup.media_documents) ? [...startup.media_documents] : [];
+    const mediaVideos = Array.isArray(startup.media_videos) ? [...startup.media_videos] : [];
+    
     let updateData: Record<string, any> = {};
 
-    // Remove the URL from the appropriate media array
-    if (mediaType === "logo" || mediaType === "image" || mediaType === "coverImage") {
-      const updatedImages = mediaImages.filter((item: string) => item !== url);
-      updateData = { media_images: updatedImages };
+    // Try to delete from storage
+    try {
+      const bucket = getBucketForMediaType(normalizedMediaType);
+      const path = getPathFromUrl(url, bucket);
       
-      // If removing the logo, also clear the logo_url field
-      if (mediaType === "logo" && startup.logo_url === url) {
-        updateData = { ...updateData, logo_url: null };
-      }
-    } else if (mediaType === "document" || mediaType === "pitch_deck" || mediaType === "pitchDeck") {
-      const updatedDocs = mediaDocuments.filter((item: string) => item !== url);
-      updateData = { media_documents: updatedDocs };
-    } else if (mediaType === "video") {
-      const updatedVideos = mediaVideos.filter((item: string) => item !== url);
-      updateData = { media_videos: updatedVideos };
-    } else {
-      return NextResponse.json(
-        { message: "Invalid media type" },
-        { status: 400 }
-      )
+      // Attempt to delete the file from storage
+      await deleteFile(normalizedMediaType, path);
+    } catch (error) {
+      console.error("Error deleting file from storage:", error);
+      // Continue with database update even if storage delete fails
     }
 
-    // Update the startup record
+    // Update the appropriate arrays or fields
+    if (normalizedMediaType === "logo" || normalizedMediaType === "image") {
+      updateData.media_images = mediaImages.filter(item => item !== url);
+      
+      // If this was the logo, clear the logo field
+      if (startup.logo_url === url || startup.logo_media_url === url) {
+        updateData.logo_url = null;
+        updateData.logo_media_url = null;
+      }
+    } else if (normalizedMediaType === "document") {
+      updateData.media_documents = mediaDocuments.filter(item => item !== url);
+      
+      // If this was the pitch deck, clear the pitch deck field
+      if (startup.pitch_deck_url === url) {
+        updateData.pitch_deck_url = null;
+      }
+    } else if (normalizedMediaType === "video") {
+      updateData.media_videos = mediaVideos.filter(item => item !== url);
+    }
+
+    // Update the database
     const { error: updateError } = await supabase
       .from("startups")
       .update(updateData)
       .eq("id", startupId)
 
     if (updateError) {
-      console.error("Error updating startup media:", updateError);
+      console.error("Error updating startup after media deletion:", updateError);
       return NextResponse.json(
-        { message: "Failed to remove media", error: updateError.message },
+        { message: "Failed to update media records", error: updateError.message },
         { status: 500 }
       )
-    }
-
-    // Try to delete the file from storage
-    try {
-      // Extract bucket and path from URL
-      const bucket = getBucketForMediaType(mediaType);
-      const urlParts = url.split(`/public/${bucket}/`);
-      
-      if (urlParts.length === 2) {
-        const path = urlParts[1];
-        await supabase.storage.from(bucket).remove([path]);
-      }
-    } catch (error) {
-      // Don't fail if storage deletion fails
-      console.error("Error deleting file from storage:", error);
     }
 
     // Create an audit log entry
@@ -279,14 +328,14 @@ export async function DELETE(
         action: "delete_media",
         entity_type: "startup",
         entity_id: startupId,
-        details: { mediaType, url },
+        details: { mediaType: normalizedMediaType, url },
       });
     } catch (error) {
       // Don't fail if audit log fails
       console.error("Error creating audit log:", error);
     }
 
-    // Revalidate paths to ensure UI updates
+    // Revalidate paths
     revalidatePath(`/dashboard/startups/${startupId}`);
     revalidatePath(`/startups`);
     if (startup.slug) {
@@ -294,10 +343,11 @@ export async function DELETE(
     }
 
     return NextResponse.json({
-      message: "Media removed successfully",
+      message: "Media deleted successfully",
+      id: startupId,
     })
   } catch (error: any) {
-    console.error("Error removing media:", error)
+    console.error("Error in media deletion:", error)
     return NextResponse.json(
       { message: "Internal server error", error: error.message },
       { status: 500 }
