@@ -369,11 +369,11 @@ export default function CreateStartupPage() {
   };
 
   return (
-    <div className="w-full">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <h1 className="text-2xl font-bold mb-6">Create Your Startup Profile</h1>
+    <div className="w-full h-full flex flex-col">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 w-full flex-1 flex flex-col">
+        <h1 className="text-2xl font-bold mb-4">Create Your Startup Profile</h1>
 
-        <div className="mb-8">
+        <div className="mb-4">
           <FormStepper 
             currentStep={currentStep} 
             totalSteps={totalSteps} 
@@ -382,8 +382,8 @@ export default function CreateStartupPage() {
           />
         </div>
 
-        <Card className="shadow-sm mb-6">
-          <CardContent className="p-4 sm:p-6 md:p-8">
+        <Card className="shadow-sm flex-1 flex flex-col overflow-hidden">
+          <CardContent className="p-4 sm:p-6 md:p-8 flex-1 overflow-auto no-scrollbar">
             {renderStep()}
           </CardContent>
         </Card>
