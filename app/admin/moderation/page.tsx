@@ -16,6 +16,16 @@ export default function ModerationPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Startup Moderation</h1>
         <div className="flex gap-2">
+          <Button variant="destructive" asChild>
+            <Link href="/admin/moderation/emergency">
+              Emergency Fix
+            </Link>
+          </Button>
+          <Button variant="default" asChild>
+            <Link href="/admin/moderation/test">
+              Test Creator
+            </Link>
+          </Button>
           <Button variant="outline" asChild>
             <Link href="/admin/moderation/raw">
               View Raw Data
@@ -39,17 +49,10 @@ async function ModerationContent() {
   // Get the Supabase client
   const supabase = await createServerComponentClient()
 
-  console.log("Fetching pending startups...")
+  console.log("Fetching ALL startups regardless of status...")
   
-  // Try to get ALL startups first to see what's happening
+  // FETCH ALL STARTUPS - no filtering by status to diagnose the issue
   const { data: allStartups, error: allError } = await supabase
-    .from("startups")
-    .select("id, name, status")
-    
-  console.log("All startups:", allStartups)
-  
-  // Fetch pending startups - be very explicit and use direct SQL
-  const { data: pendingStartups, error: pendingError } = await supabase
     .from("startups")
     .select(`
       id,
@@ -62,15 +65,19 @@ async function ModerationContent() {
       user_id,
       profiles(full_name, email)
     `)
-    .filter('status', 'eq', 'pending')
     .order("created_at", { ascending: false })
     
-  console.log("Pending startups query result:", pendingStartups)
-  console.log("Pending startups query error:", pendingError)
+  console.log("All startups:", allStartups?.map(s => ({ id: s.id, name: s.name, status: s.status })))
+  console.log("All startups query error:", allError)
   
-  if (pendingError) {
-    console.error("Error fetching pending startups:", pendingError)
-  }
+  // Manually filter for pending startups on the server side
+  const pendingStartups = allStartups?.filter(startup => 
+    startup.status === 'pending' || 
+    startup.status === 'Pending' || 
+    (typeof startup.status === 'string' && startup.status.toLowerCase() === 'pending')
+  ) || [];
+  
+  console.log("Manually filtered pending startups:", pendingStartups?.map(s => ({ id: s.id, name: s.name, status: s.status })))
 
   // Fetch recently approved/rejected startups
   const { data: recentActionStartups } = await supabase
