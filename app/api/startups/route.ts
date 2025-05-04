@@ -14,26 +14,37 @@ async function uploadFile(supabase: any, file: File, userId: string, type: 'logo
   if (!file) return null;
   
   try {
-    const fileExt = 'name' in file ? (file.name as string).split('.').pop() : 'unknown';
-    const fileName = `${type.slice(0, -1)}-${Date.now()}.${fileExt}`;
+    // Extract file extension and create unique filename
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'unknown';
+    const fileName = `${type.slice(0, -1)}-${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
     const filePath = `${userId}/${type}/${fileName}`;
+
+    // For debugging
+    console.log(`Uploading file to ${filePath}`, {
+      fileType: file.type,
+      fileSize: file.size,
+      fileName: file.name
+    });
     
+    // Upload to "public" bucket in Supabase Storage
     const { data, error } = await supabase.storage
-      .from("public")
+      .from("startups")
       .upload(filePath, file, {
         cacheControl: "3600",
-        upsert: false,
+        upsert: true,
       });
     
     if (error) {
-      console.error(`Error uploading ${type}: ${error.message}`);
+      console.error(`Error uploading ${type}:`, error.message);
       return null;
     }
     
+    // Get public URL
     const { data: urlData } = supabase.storage
-      .from("public")
+      .from("startups")
       .getPublicUrl(filePath);
     
+    console.log(`File uploaded successfully. Public URL: ${urlData.publicUrl}`);
     return urlData.publicUrl;
   } catch (error) {
     console.error(`Error in uploadFile for ${type}:`, error);
@@ -99,6 +110,18 @@ export async function POST(request: NextRequest) {
     const coverImage = formData.get("coverImage");
     const pitchDeck = formData.get("pitchDeck");
     
+    // Make sure the "startups" bucket exists
+    const { error: bucketError } = await supabase.storage.getBucket("startups");
+    if (bucketError && bucketError.message.includes("does not exist")) {
+      const { error: createBucketError } = await supabase.storage.createBucket("startups", {
+        public: true
+      });
+      if (createBucketError) {
+        console.error("Error creating bucket:", createBucketError);
+        return NextResponse.json({ message: "Failed to create storage bucket", error: createBucketError.message }, { status: 500 });
+      }
+    }
+    
     // Process file uploads and get URLs using our helper function
     const logoUrl = logo && typeof logo !== 'string' 
       ? await uploadFile(supabase, logo, session.user.id, 'logos') 
@@ -157,70 +180,78 @@ export async function POST(request: NextRequest) {
       mediaVideos.push(videoUrl);
     }
 
-    // Create the startup entry
-    const { data: startup, error: createError } = await supabase
-      .from("startups")
-      .insert({
-        name: basicInfo.name,
-        slug,
-        description: detailedInfo.description,
-        tagline: basicInfo.tagline || null,
-        logo_url: logoUrl,
-        cover_image_url: coverImageUrl,
-        industry_id: basicInfo.industry,
-        founding_date: basicInfo.foundingDate,
-        website: basicInfo.website || null,
-        status: "pending",
-        funding_stage: detailedInfo.fundingStage,
-        funding_amount: detailedInfo.fundingAmount || null,
-        team_size: detailedInfo.teamSize,
-        location: detailedInfo.location,
-        linkedin_url: mediaInfo.socialLinks?.linkedin || null,
-        twitter_url: mediaInfo.socialLinks?.twitter || null,
-        pitch_deck_url: pitchDeckUrl,
-        video_url: videoUrl,
-        user_id: session.user.id,
-        media_images: mediaImages,
-        media_documents: mediaDocuments,
-        media_videos: mediaVideos,
-        looking_for: detailedInfo.lookingFor || [],
-      })
-      .select()
-      .single();
-
-    if (createError) {
-      console.error("Error creating startup:", createError);
-      return NextResponse.json({ message: "Failed to create startup in database", error: createError.message }, { status: 500 });
-    }
-
-    // Send email notification about the new startup to admin
     try {
-      await sendEmail({
-        to: ADMIN_EMAIL,
-        subject: `New Startup Pending: ${basicInfo.name}`,
-        html: startupCreationTemplate({
-          startupName: basicInfo.name,
-          startupId: startup.id,
-          userId: session.user.id,
-          userName: session.user.email || 'Unknown',
-          createdAt: new Date().toISOString()
+      // Create the startup entry
+      const { data: startup, error: createError } = await supabase
+        .from("startups")
+        .insert({
+          name: basicInfo.name,
+          slug,
+          description: detailedInfo.description,
+          tagline: basicInfo.tagline || null,
+          logo_url: logoUrl,
+          cover_image_url: coverImageUrl,
+          industry_id: basicInfo.industry,
+          founding_date: basicInfo.foundingDate,
+          website: basicInfo.website || null,
+          status: "pending",
+          funding_stage: detailedInfo.fundingStage,
+          funding_amount: detailedInfo.fundingAmount || null,
+          team_size: detailedInfo.teamSize,
+          location: detailedInfo.location,
+          linkedin_url: mediaInfo.socialLinks?.linkedin || null,
+          twitter_url: mediaInfo.socialLinks?.twitter || null,
+          pitch_deck_url: pitchDeckUrl,
+          video_url: videoUrl,
+          user_id: session.user.id,
+          media_images: mediaImages,
+          media_documents: mediaDocuments,
+          media_videos: mediaVideos,
+          looking_for: detailedInfo.lookingFor || [],
         })
-      });
-    } catch (emailError) {
-      // Log but don't fail the request if email sending fails
-      console.error("Error sending email notification:", emailError);
+        .select()
+        .single();
+
+      if (createError) {
+        console.error("Error creating startup:", createError);
+        return NextResponse.json({ message: "Failed to create startup in database", error: createError.message }, { status: 500 });
+      }
+
+      // Send email notification about the new startup to admin
+      try {
+        await sendEmail({
+          to: ADMIN_EMAIL,
+          subject: `New Startup Pending: ${basicInfo.name}`,
+          html: startupCreationTemplate({
+            startupName: basicInfo.name,
+            startupId: startup.id,
+            userId: session.user.id,
+            userName: session.user.email || 'Unknown',
+            createdAt: new Date().toISOString()
+          })
+        });
+      } catch (emailError) {
+        // Log but don't fail the request if email sending fails
+        console.error("Error sending email notification:", emailError);
+      }
+
+      // Revalidate the startups page
+      revalidatePath('/startups');
+      revalidatePath('/admin/moderation');
+      revalidatePath(`/startups/${slug}`);
+
+      return NextResponse.json({ 
+        message: "Startup created successfully", 
+        id: startup.id, 
+        slug: startup.slug 
+      }, { status: 201 });
+    } catch (dbError) {
+      console.error("Database error:", dbError);
+      return NextResponse.json({ 
+        message: "Database error while creating startup", 
+        error: dbError instanceof Error ? dbError.message : String(dbError)
+      }, { status: 500 });
     }
-
-    // Revalidate the startups page
-    revalidatePath('/startups');
-    revalidatePath('/admin/moderation');
-    revalidatePath(`/startups/${slug}`);
-
-    return NextResponse.json({ 
-      message: "Startup created successfully", 
-      id: startup.id, 
-      slug: startup.slug 
-    }, { status: 201 });
   } catch (error) {
     console.error("Error in POST /api/startups:", error);
     return NextResponse.json({ 

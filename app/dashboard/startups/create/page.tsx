@@ -208,29 +208,53 @@ export default function CreateStartupPage() {
       // Add the remaining media info as a JSON string
       formDataObj.append("mediaInfo", JSON.stringify(mediaInfoCopy))
 
+      // Log for debugging
+      console.log("Submitting startup data:", {
+        basicInfo: formData.basicInfo,
+        detailedInfo: formData.detailedInfo,
+        mediaInfo: {
+          ...mediaInfoCopy,
+          logo: formData.mediaInfo.logo ? "File attached" : null,
+          coverImage: formData.mediaInfo.coverImage ? "File attached" : null,
+          pitchDeck: formData.mediaInfo.pitchDeck ? "File attached" : null,
+        }
+      });
+
       const response = await fetch("/api/startups", {
         method: "POST",
         body: formDataObj,
       })
 
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to create startup")
+        console.error("Error response:", responseData);
+        throw new Error(responseData.message || responseData.error || "Failed to create startup")
       }
-
-      const data = await response.json()
-
+      
       toast({
         title: "Success!",
         description: "Your startup has been created successfully.",
       })
 
-      router.push(`/dashboard/startups/${data.id}`)
+      router.push(`/dashboard/startups/${responseData.id}`)
     } catch (error: any) {
       console.error("Error creating startup:", error);
+      
+      // Provide more specific error messages based on error type
+      let errorMessage = "There was a problem creating your startup.";
+      
+      if (error.message.includes("storage") || error.message.includes("bucket")) {
+        errorMessage = "File upload failed. Please try using smaller files or a different format.";
+      } else if (error.message.includes("database")) {
+        errorMessage = "Database error. Please check your input and try again.";
+      } else if (error.message.includes("slug")) {
+        errorMessage = "The startup URL slug is already taken. Please choose a different name.";
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "There was a problem creating your startup.",
+        description: error.message || errorMessage,
         variant: "destructive",
       })
     } finally {
