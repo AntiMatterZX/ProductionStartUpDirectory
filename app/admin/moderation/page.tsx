@@ -33,6 +33,7 @@ export default function ModerationPage() {
   // Fetch all startups on load
   useEffect(() => {
     fetchAllStartups()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Fetch all startups
@@ -55,27 +56,36 @@ export default function ModerationPage() {
         `)
         .order("created_at", { ascending: false })
       
-      if (error) throw error
+      if (error) {
+        throw error
+      }
       
       console.log("All startups:", data)
-      setStartups(data || [])
       
-      // Separate into different status categories
-      const pending = data?.filter(startup => 
-        startup.status === 'pending' || 
-        startup.status === 'Pending' || 
-        (typeof startup.status === 'string' && startup.status.toLowerCase() === 'pending')
-      ) || []
+      // Handle case where data is null or undefined
+      const startupData = data || []
+      setStartups(startupData)
       
-      const approved = data?.filter(startup => 
-        startup.status === 'approved'
-      ) || []
+      // Use more robust filtering with normalization for status values
+      const pending = startupData.filter(startup => 
+        typeof startup.status === 'string' && 
+        startup.status.toLowerCase() === 'pending'
+      )
       
-      const rejected = data?.filter(startup => 
-        startup.status === 'rejected'
-      ) || []
+      const approved = startupData.filter(startup => 
+        typeof startup.status === 'string' && 
+        startup.status.toLowerCase() === 'approved'
+      )
+      
+      const rejected = startupData.filter(startup => 
+        typeof startup.status === 'string' && 
+        startup.status.toLowerCase() === 'rejected'
+      )
       
       console.log("Pending startups:", pending)
+      console.log("Approved startups:", approved)
+      console.log("Rejected startups:", rejected)
+      
       setPendingStartups(pending)
       setApprovedStartups(approved)
       setRejectedStartups(rejected)
@@ -83,7 +93,7 @@ export default function ModerationPage() {
       console.error("Error fetching startups:", err)
       toast({
         title: "Error",
-        description: "Failed to load startups",
+        description: "Failed to load startups. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -106,15 +116,23 @@ export default function ModerationPage() {
       
       if (error) throw error
       
-      // Find the startup that was updated
-      const updatedStartup = startups.find(s => s.id === id)
+      // Update local state - find startup and update all collections
+      const updatedStartupIndex = startups.findIndex(s => s.id === id)
       
-      if (updatedStartup) {
-        // Update local state
-        updatedStartup.status = approve ? "approved" : "rejected"
-        updatedStartup.updated_at = new Date().toISOString()
+      if (updatedStartupIndex !== -1) {
+        // Create a copy of the startup with updated status
+        const updatedStartup = {
+          ...startups[updatedStartupIndex],
+          status: approve ? "approved" : "rejected",
+          updated_at: new Date().toISOString()
+        }
         
-        setStartups([...startups])
+        // Update the main startups array
+        const updatedStartups = [...startups]
+        updatedStartups[updatedStartupIndex] = updatedStartup
+        setStartups(updatedStartups)
+        
+        // Update filtered arrays
         setPendingStartups(pendingStartups.filter(s => s.id !== id))
         
         if (approve) {
@@ -122,20 +140,27 @@ export default function ModerationPage() {
         } else {
           setRejectedStartups([updatedStartup, ...rejectedStartups])
         }
+        
+        toast({
+          title: approve ? "Startup approved" : "Startup rejected",
+          description: approve 
+            ? "The startup has been approved and is now public" 
+            : "The startup has been rejected",
+          variant: approve ? "default" : "destructive",
+        })
+      } else {
+        // If we couldn't find the startup in local state, refresh all data
+        await fetchAllStartups()
+        toast({
+          title: "Status updated",
+          description: "The startup status has been updated and data refreshed",
+        })
       }
-      
-      toast({
-        title: approve ? "Startup approved" : "Startup rejected",
-        description: approve 
-          ? "The startup has been approved and is now public" 
-          : "The startup has been rejected",
-        variant: approve ? "default" : "destructive",
-      })
     } catch (err) {
       console.error("Error approving/rejecting startup:", err)
       toast({
         title: "Action failed",
-        description: "There was an error processing your request",
+        description: "There was an error processing your request. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -169,7 +194,7 @@ export default function ModerationPage() {
       console.error("Error deleting startup:", err)
       toast({
         title: "Deletion failed",
-        description: "There was an error deleting the startup",
+        description: "There was an error deleting the startup. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -181,7 +206,7 @@ export default function ModerationPage() {
   async function createTestStartup() {
     if (!testName) {
       toast({
-        title: "Error",
+        title: "Validation error",
         description: "Please enter a startup name",
         variant: "destructive",
       })
@@ -224,23 +249,22 @@ export default function ModerationPage() {
 
       if (error) throw error
       
-      toast({
-        title: "Test startup created",
-        description: "New pending startup has been created successfully",
-      })
+      // Refresh all startups to ensure latest data
+      await fetchAllStartups()
       
       // Clear form
       setTestName("")
       setTestDescription("")
       
-      // Refresh all startups
-      fetchAllStartups()
-      
+      toast({
+        title: "Test startup created",
+        description: "New pending startup has been created successfully",
+      })
     } catch (err) {
       console.error("Error creating test startup:", err)
       toast({
         title: "Creation failed",
-        description: "There was an error creating the test startup",
+        description: "There was an error creating the test startup. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -280,29 +304,41 @@ export default function ModerationPage() {
 
   // Render startup card
   function StartupCard({ startup, showActions = true }: { startup: any, showActions?: boolean }) {
-    const isPending = startup.status === 'pending' || 
-      startup.status === 'Pending' || 
-      (typeof startup.status === 'string' && startup.status.toLowerCase() === 'pending')
+    const isPending = typeof startup.status === 'string' && startup.status.toLowerCase() === 'pending'
+    const isApproved = typeof startup.status === 'string' && startup.status.toLowerCase() === 'approved'
+    const isRejected = typeof startup.status === 'string' && startup.status.toLowerCase() === 'rejected'
     
+    // Normalize status display
+    const statusDisplay = typeof startup.status === 'string' 
+      ? startup.status.charAt(0).toUpperCase() + startup.status.slice(1).toLowerCase()
+      : 'Unknown'
+    
+    // Status-based styling classes
+    const cardClasses = isPending 
+      ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/20' 
+      : isApproved 
+        ? 'border-green-200 bg-green-50/50 dark:bg-green-950/20' 
+        : isRejected 
+          ? 'border-red-200 bg-red-50/50 dark:bg-red-950/20' 
+          : 'border-slate-200'
+          
+    const badgeClasses = isPending 
+      ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' 
+      : isApproved 
+        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
+        : isRejected 
+          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' 
+          : 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300'
+
     return (
-      <Card key={startup.id} className={`overflow-hidden ${
-        isPending ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/20' :
-        startup.status === 'approved' ? 'border-green-200 bg-green-50/50 dark:bg-green-950/20' :
-        startup.status === 'rejected' ? 'border-red-200 bg-red-50/50 dark:bg-red-950/20' :
-        ''
-      }`}>
+      <Card key={startup.id} className={`overflow-hidden ${cardClasses}`}>
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row justify-between gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-lg">{startup.name}</h3>
-                <Badge variant="outline" className={`
-                  ${isPending ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' : 
-                  startup.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 
-                  startup.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : 
-                  'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300'}
-                `}>
-                  {startup.status || "Unknown"}
+                <h3 className="font-bold text-lg">{startup.name || "Unnamed Startup"}</h3>
+                <Badge variant="outline" className={badgeClasses}>
+                  {statusDisplay}
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -313,7 +349,7 @@ export default function ModerationPage() {
                 {startup.profiles?.email && ` (${startup.profiles.email})`}
               </p>
               <p className="text-sm text-muted-foreground">
-                Created: {new Date(startup.created_at).toLocaleString()}
+                Created: {startup.created_at ? new Date(startup.created_at).toLocaleString() : "Unknown date"}
               </p>
               <p className="line-clamp-2 text-sm mt-2">
                 {startup.description || "No description provided"}
@@ -460,25 +496,25 @@ export default function ModerationPage() {
               <div className="flex justify-between items-center">
                 <span>Total Startups</span>
                 <Badge variant="outline" className="text-base">
-                  {startups.length}
+                  {startups?.length || 0}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span>Pending Approval</span>
                 <Badge variant="outline" className="bg-amber-100 text-amber-800 text-base">
-                  {pendingStartups.length}
+                  {pendingStartups?.length || 0}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span>Approved</span>
                 <Badge variant="outline" className="bg-green-100 text-green-800 text-base">
-                  {approvedStartups.length}
+                  {approvedStartups?.length || 0}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span>Rejected</span>
                 <Badge variant="outline" className="bg-red-100 text-red-800 text-base">
-                  {rejectedStartups.length}
+                  {rejectedStartups?.length || 0}
                 </Badge>
               </div>
             </div>
@@ -489,16 +525,16 @@ export default function ModerationPage() {
       <Tabs defaultValue="pending" className="w-full">
         <TabsList className="grid grid-cols-4 mb-4">
           <TabsTrigger value="pending">
-            Pending ({pendingStartups.length})
+            Pending ({pendingStartups?.length || 0})
           </TabsTrigger>
           <TabsTrigger value="approved">
-            Approved ({approvedStartups.length})
+            Approved ({approvedStartups?.length || 0})
           </TabsTrigger>
           <TabsTrigger value="rejected">
-            Rejected ({rejectedStartups.length})
+            Rejected ({rejectedStartups?.length || 0})
           </TabsTrigger>
           <TabsTrigger value="all">
-            All Startups ({startups.length})
+            All Startups ({startups?.length || 0})
           </TabsTrigger>
         </TabsList>
         
@@ -507,7 +543,7 @@ export default function ModerationPage() {
             <div className="flex justify-center py-10">
               <LoadingIndicator size="lg" />
             </div>
-          ) : pendingStartups.length === 0 ? (
+          ) : !pendingStartups || pendingStartups.length === 0 ? (
             <div className="text-center py-12 bg-muted/20 rounded-lg">
               <h3 className="text-xl font-semibold mb-2">No pending startups</h3>
               <p className="text-muted-foreground">
@@ -528,9 +564,9 @@ export default function ModerationPage() {
             <div className="flex justify-center py-10">
               <LoadingIndicator size="lg" />
             </div>
-          ) : approvedStartups.length === 0 ? (
+          ) : !approvedStartups || approvedStartups.length === 0 ? (
             <div className="text-center py-12 bg-muted/20 rounded-lg">
-              <p className="text-muted-foreground">No approved startups</p>
+              <p className="text-muted-foreground">No approved startups found</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -546,9 +582,9 @@ export default function ModerationPage() {
             <div className="flex justify-center py-10">
               <LoadingIndicator size="lg" />
             </div>
-          ) : rejectedStartups.length === 0 ? (
+          ) : !rejectedStartups || rejectedStartups.length === 0 ? (
             <div className="text-center py-12 bg-muted/20 rounded-lg">
-              <p className="text-muted-foreground">No rejected startups</p>
+              <p className="text-muted-foreground">No rejected startups found</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -564,9 +600,9 @@ export default function ModerationPage() {
             <div className="flex justify-center py-10">
               <LoadingIndicator size="lg" />
             </div>
-          ) : startups.length === 0 ? (
+          ) : !startups || startups.length === 0 ? (
             <div className="text-center py-12 bg-muted/20 rounded-lg">
-              <p className="text-muted-foreground">No startups found</p>
+              <p className="text-muted-foreground">No startups found in the database</p>
             </div>
           ) : (
             <div className="space-y-4">
