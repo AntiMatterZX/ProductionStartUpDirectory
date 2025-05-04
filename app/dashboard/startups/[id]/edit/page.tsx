@@ -390,181 +390,228 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
   }
 
   return (
-    <div className="container py-6 space-y-8">
+    <div className="container py-6 space-y-8 max-w-7xl mx-auto px-4 sm:px-6">
       {/* Header with actions */}
-      <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
+      <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold">{startupData?.name || "Edit Startup"}</h1>
-          {startupData?.tagline && (
-            <p className="text-muted-foreground">{startupData.tagline}</p>
-          )}
+          <h1 className="text-2xl sm:text-3xl font-bold">{startupData?.name || "Edit Startup"}</h1>
+          <p className="text-muted-foreground mt-1">{startupData?.tagline || "A short, catchy description for my startup"}</p>
         </div>
         
-        <div className="flex gap-3">
-          <Button asChild variant="outline">
-            <Link href={`/dashboard/startups/${startupId}`}>
+        <div className="flex gap-3 w-full sm:w-auto">
+          <Button asChild variant="outline" className="flex-1 sm:flex-initial justify-center">
+            <Link href={`/startups/${startupData?.slug || startupId}`} target="_blank">
               <Eye className="h-4 w-4 mr-2" />
-              View Startup
+              View Public Page
             </Link>
           </Button>
           
-          <Button 
-            onClick={() => handleSubmit(formData)}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? <LoadingIndicator size="sm" className="mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-            Save Changes
+          <Button asChild className="flex-1 sm:flex-initial justify-center">
+            <Link href={`/dashboard/startups/${startupId}/edit`}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit Startup
+            </Link>
           </Button>
         </div>
       </div>
       
       {/* Main Content */}
-      <div className="grid md:grid-cols-5 gap-6">
-        {/* Left Column */}
-        <div className="md:col-span-2 space-y-6">
-          <Card>
-            <CardContent className="p-5 md:p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column - Media */}
+        <div className="space-y-6">
+          <Card className="overflow-hidden">
+            <CardContent className="p-4 sm:p-6">
               <div className="space-y-4">
-                <h2 className="text-xl font-semibold flex items-center">
-                  Media
-                  <span className="ml-2">
-                    <Badge variant="outline">Edit Mode</Badge>
-                  </span>
-                </h2>
+                <h2 className="text-xl font-semibold">Media</h2>
                 <p className="text-sm text-muted-foreground">
                   Upload and manage your startup's media assets
                 </p>
                 
-                <div className="space-y-6">
-                  {/* Logo Upload Section */}
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-medium">Company Logo</h3>
-                      <StartupLogoUpload 
-                        startupId={startupId}
-                        userId={startupData?.user_id || ""}
-                        currentLogoUrl={logoUrl}
-                        onUploaded={handleLogoUploaded}
-                        buttonText="Upload Logo"
-                        className="flex items-center gap-1"
-                      />
+                <Tabs defaultValue="logo" className="w-full">
+                  <TabsList className="grid grid-cols-3 mb-4 w-full">
+                    <TabsTrigger value="logo" className="text-xs sm:text-sm">Logo & Images</TabsTrigger>
+                    <TabsTrigger value="documents" className="text-xs sm:text-sm">Documents</TabsTrigger>
+                    <TabsTrigger value="videos" className="text-xs sm:text-sm">Videos & Links</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="logo" className="space-y-6">
+                    {/* Company Logo Section */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center flex-wrap gap-2">
+                        <h3 className="font-medium">Company Logo</h3>
+                        <StartupLogoUpload 
+                          startupId={startupId}
+                          userId={startupData?.user_id || ""}
+                          currentLogoUrl={logoUrl}
+                          onUploaded={handleLogoUploaded}
+                          buttonText="Upload Logo"
+                          className="flex items-center gap-1"
+                        />
+                      </div>
+                      
+                      <div className="border rounded-md p-4 sm:p-6 flex items-center justify-center bg-muted/20">
+                        {logoUrl ? (
+                          <img
+                            src={logoUrl}
+                            alt="Company Logo"
+                            className="max-w-[120px] sm:max-w-[180px] max-h-[120px] sm:max-h-[180px] object-contain"
+                          />
+                        ) : (
+                          <div className="text-center text-muted-foreground">
+                            <p>No logo uploaded yet</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
-                    <div className="border rounded-md p-6 flex items-center justify-center bg-muted/20">
-                      {logoUrl ? (
-                        <img
-                          src={logoUrl}
-                          alt="Company Logo"
-                          className="max-w-[180px] max-h-[180px] object-contain"
-                        />
-                      ) : (
-                        <div className="text-center text-muted-foreground">
-                          <p>No logo uploaded yet</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Other Media Upload Sections */}
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-medium">Images & Media</h3>
-                      <div className="flex gap-2">
+                    {/* Images Section */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center flex-wrap gap-2">
+                        <h3 className="font-medium">Images</h3>
                         <StartupMediaUpload
                           startupId={startupId}
                           userId={startupData?.user_id || ""}
                           mediaType="image"
                           onUploaded={handleMediaUploaded}
-                          buttonLabel="Add Image"
-                        />
-                        <StartupMediaUpload
-                          startupId={startupId}
-                          userId={startupData?.user_id || ""}
-                          mediaType="document"
-                          onUploaded={handleMediaUploaded}
-                          buttonLabel="Add Document"
-                          acceptedFileTypes=".pdf,.doc,.docx,.ppt,.pptx"
+                          buttonLabel="Upload Image"
                         />
                       </div>
+                      
+                      <div className="border rounded-md p-4 sm:p-6 flex items-center justify-center bg-muted/20 min-h-[200px]">
+                        {startupData?.media_images && startupData.media_images.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {startupData.media_images.map((imageUrl: string, index: number) => (
+                              <img
+                                key={index}
+                                src={imageUrl}
+                                alt={`Startup image ${index + 1}`}
+                                className="w-full h-[100px] object-cover rounded-md"
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center text-muted-foreground">
+                            <p>No images uploaded yet</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="documents" className="space-y-4">
+                    <div className="flex justify-between items-center flex-wrap gap-2">
+                      <h3 className="font-medium">Documents</h3>
+                      <StartupMediaUpload
+                        startupId={startupId}
+                        userId={startupData?.user_id || ""}
+                        mediaType="document"
+                        onUploaded={handleMediaUploaded}
+                        buttonLabel="Upload Document"
+                      />
                     </div>
                     
-                    <div className="border rounded-md p-4 bg-muted/10 h-[150px] flex items-center justify-center">
-                      <p className="text-sm text-muted-foreground text-center">
-                        Images and documents will appear in the startup details page.<br />
-                        You can upload multiple files.
-                      </p>
+                    <div className="border rounded-md p-4 sm:p-6 bg-muted/20 min-h-[200px]">
+                      {startupData?.media_documents && startupData.media_documents.length > 0 ? (
+                        <div className="space-y-3">
+                          {startupData.media_documents.map((docUrl: string, index: number) => (
+                            <div key={index} className="flex justify-between items-center p-3 bg-background rounded-md border">
+                              <span className="truncate max-w-[150px] sm:max-w-none">{docUrl.split('/').pop()}</span>
+                              <Button variant="ghost" size="sm" asChild>
+                                <a href={docUrl} target="_blank" rel="noopener noreferrer">View</a>
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center text-muted-foreground flex items-center justify-center h-[200px]">
+                          <p>No documents uploaded yet</p>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  </TabsContent>
                   
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">
-                      Supported formats: PNG, JPG, PDF, DOC(X), PPT(X)
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Max file size: 5MB per file
-                    </p>
-                  </div>
-                </div>
+                  <TabsContent value="videos" className="space-y-4">
+                    <div className="flex justify-between items-center flex-wrap gap-2">
+                      <h3 className="font-medium">Videos</h3>
+                      <StartupMediaUpload
+                        startupId={startupId}
+                        userId={startupData?.user_id || ""}
+                        mediaType="video"
+                        onUploaded={handleMediaUploaded}
+                        buttonLabel="Add Video"
+                      />
+                    </div>
+                    
+                    <div className="border rounded-md p-4 sm:p-6 bg-muted/20 min-h-[200px]">
+                      {formData.mediaInfo.videoUrl ? (
+                        <div className="aspect-video overflow-hidden rounded-md">
+                          <iframe
+                            width="100%"
+                            height="100%"
+                            src={formData.mediaInfo.videoUrl}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          ></iframe>
+                        </div>
+                      ) : (
+                        <div className="text-center text-muted-foreground flex items-center justify-center h-[200px]">
+                          <p>No videos added yet</p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </div>
             </CardContent>
           </Card>
         </div>
         
-        {/* Right Column - Forms */}
-        <div className="md:col-span-3 space-y-6">
-          <Card>
-            <CardContent className="p-5 md:p-6">
-              <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="w-full grid grid-cols-3">
-                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                  <TabsTrigger value="detailed">Detailed Info</TabsTrigger>
-                  <TabsTrigger value="social">Media & Links</TabsTrigger>
-                </TabsList>
+        {/* Right Column - Startup Details */}
+        <div className="space-y-6">
+          <Card className="overflow-hidden">
+            <CardContent className="p-4 sm:p-6">
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold">Startup Details</h2>
                 
-                <div className="mt-6">
+                <Tabs defaultValue="basic" className="w-full">
+                  <TabsList className="grid grid-cols-2 mb-4 w-full">
+                    <TabsTrigger value="basic" className="text-xs sm:text-sm">Basic Info</TabsTrigger>
+                    <TabsTrigger value="detailed" className="text-xs sm:text-sm">Additional Details</TabsTrigger>
+                  </TabsList>
+                  
                   <TabsContent value="basic">
                     <BasicInfoForm
-                      onSubmit={(data, isValid) => {
-                        updateFormData(1, data)
-                        updateFormValidity(1, isValid)
-                      }}
                       initialData={formData.basicInfo}
+                      onSubmit={(data, isValid) => {
+                        updateFormData(1, data);
+                        updateFormValidity(1, isValid);
+                      }}
                       hideButtons={true}
                     />
                   </TabsContent>
                   
                   <TabsContent value="detailed">
                     <DetailedInfoForm
-                      onSubmit={(data, isValid) => {
-                        updateFormData(2, data)
-                        updateFormValidity(2, isValid)
-                      }}
-                      onBack={() => {}}
                       initialData={formData.detailedInfo}
-                      hideButtons={true}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="social">
-                    <MediaUploadForm
                       onSubmit={(data, isValid) => {
-                        updateFormData(3, data)
-                        updateFormValidity(3, isValid)
+                        updateFormData(2, data);
+                        updateFormValidity(2, isValid);
                       }}
                       onBack={() => {}}
-                      initialData={formData.mediaInfo}
                       hideButtons={true}
                     />
                   </TabsContent>
-                </div>
-              </Tabs>
+                </Tabs>
+              </div>
             </CardContent>
           </Card>
           
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row justify-between gap-3">
             <Button 
               variant="outline" 
               onClick={() => router.push(`/dashboard/startups/${startupId}`)}
+              className="w-full sm:w-auto order-2 sm:order-1"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Cancel
@@ -573,6 +620,7 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
             <Button 
               onClick={() => handleSubmit(formData)}
               disabled={isSubmitting}
+              className="w-full sm:w-auto order-1 sm:order-2"
             >
               {isSubmitting ? <LoadingIndicator size="sm" className="mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Save Changes
