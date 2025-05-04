@@ -246,28 +246,30 @@ export default function StartupsPage() {
   }
 
   return (
-    <div className="px-4 py-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <h1 className="text-2xl font-bold">My Startups</h1>
-        <div className="flex gap-3 w-full md:w-auto">
-          <Button 
-            variant="outline" 
-            onClick={toggleView}
-            className="gap-2 w-full md:w-auto"
-          >
-            <ListFilter className="h-4 w-4" />
-            {showKanban ? "Grid View" : "Kanban Board"}
-          </Button>
-          <Link href="/dashboard/startups/create" className="w-full md:w-auto">
-            <Button className="w-full">
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Create Startup
+    <div className="h-full overflow-y-auto">
+      <div className="p-4 md:p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <h1 className="text-2xl font-bold">My Startups</h1>
+          <div className="flex gap-3 w-full md:w-auto">
+            <Button 
+              variant="outline" 
+              onClick={toggleView}
+              className="gap-2 w-full md:w-auto"
+            >
+              <ListFilter className="h-4 w-4" />
+              {showKanban ? "Grid View" : "Kanban Board"}
             </Button>
-          </Link>
+            <Link href="/dashboard/startups/create" className="w-full md:w-auto">
+              <Button className="w-full">
+                <PlusIcon className="mr-2 h-4 w-4" />
+                Create Startup
+              </Button>
+            </Link>
+          </div>
         </div>
-      </div>
 
-      {renderContent()}
+        {renderContent()}
+      </div>
     </div>
   )
 }

@@ -13,7 +13,6 @@ import type { StartupFormData } from "@/types/startup"
 import type { Database } from "@/types/database"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, CheckCircle2, Save } from "lucide-react"
-import { useLoading } from "@/components/ui/loading-context"
 
 export default function CreateStartupPage() {
   const router = useRouter()
@@ -21,7 +20,6 @@ export default function CreateStartupPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const { startLoading, stopLoading } = useLoading()
   const [formData, setFormData] = useState<StartupFormData>({
     basicInfo: {
       name: "",
@@ -91,7 +89,10 @@ export default function CreateStartupPage() {
       setCurrentStep(step)
       
       // Scroll to top when changing steps
-      window.scrollTo(0, 0)
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      })
     }
   }
 
@@ -116,7 +117,10 @@ export default function CreateStartupPage() {
         setFormValidity((prev) => ({ ...prev, step1: isValid }))
         if (isValid) {
           setCurrentStep(2)
-          window.scrollTo(0, 0)
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+          })
         }
         break
       case 2:
@@ -124,7 +128,10 @@ export default function CreateStartupPage() {
         setFormValidity((prev) => ({ ...prev, step2: isValid }))
         if (isValid) {
           setCurrentStep(3)
-          window.scrollTo(0, 0)
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+          })
         }
         break
       case 3:
@@ -132,7 +139,10 @@ export default function CreateStartupPage() {
         setFormValidity((prev) => ({ ...prev, step3: isValid }))
         if (isValid) {
           setCurrentStep(4)
-          window.scrollTo(0, 0)
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+          })
         }
         break
     }
@@ -141,7 +151,10 @@ export default function CreateStartupPage() {
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
-      window.scrollTo(0, 0)
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      })
     }
   }
 
@@ -150,7 +163,6 @@ export default function CreateStartupPage() {
     
     try {
       setIsSubmitting(true)
-      startLoading("Creating your startup...")
 
       // Check authentication status again before submitting
       const { data: { session } } = await supabase.auth.getSession()
@@ -223,13 +235,12 @@ export default function CreateStartupPage() {
       })
     } finally {
       setIsSubmitting(false)
-      stopLoading()
     }
   }
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center h-full">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
@@ -248,7 +259,7 @@ export default function CreateStartupPage() {
       case 2:
         return (
           <DetailedInfoForm
-            onSubmit={(data, isValid) => handleNext(data, isValid)}
+            onSubmit={(data) => handleNext(data, true)}
             initialData={formData.detailedInfo}
             onBack={handleBack}
           />
@@ -334,23 +345,25 @@ export default function CreateStartupPage() {
   };
 
   return (
-    <div className="px-4 py-10 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Create Your Startup Profile</h1>
+    <div className="h-full overflow-y-auto py-6">
+      <div className="max-w-4xl mx-auto px-4">
+        <h1 className="text-2xl font-bold mb-6">Create Your Startup Profile</h1>
 
-      <div className="mb-8">
-        <FormStepper 
-          currentStep={currentStep} 
-          totalSteps={totalSteps} 
-          stepTitles={stepTitles}
-          onStepChange={handleStepChange} 
-        />
+        <div className="mb-8">
+          <FormStepper 
+            currentStep={currentStep} 
+            totalSteps={totalSteps} 
+            stepTitles={stepTitles}
+            onStepChange={handleStepChange} 
+          />
+        </div>
+
+        <Card className="shadow-sm mb-6">
+          <CardContent className="p-6 md:p-8">
+            {renderStep()}
+          </CardContent>
+        </Card>
       </div>
-
-      <Card className="shadow-sm">
-        <CardContent className="p-6 md:p-8 overflow-visible">
-          {renderStep()}
-        </CardContent>
-      </Card>
     </div>
   )
 }
