@@ -127,15 +127,22 @@ export default function ModerationPage() {
     try {
       setApproving(id)
       
-      const { error } = await supabase
-        .from("startups")
-        .update({ 
-          status: approve ? "approved" : "rejected",
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", id)
+      // Call the admin API endpoint instead of direct Supabase update
+      const response = await fetch('/api/admin/startups/status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          startupId: id, 
+          status: approve ? "approved" : "rejected" 
+        }),
+      });
       
-      if (error) throw error
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update status');
+      }
       
       // Find the startup being updated
       const startupToUpdate = startups.find(s => s.id === id)
@@ -302,15 +309,22 @@ export default function ModerationPage() {
   // Change startup status - for drag and drop
   async function changeStatus(id: string, newStatus: string) {
     try {
-      const { error } = await supabase
-        .from("startups")
-        .update({ 
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", id)
+      // Call the admin API endpoint instead of direct Supabase update
+      const response = await fetch('/api/admin/startups/status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          startupId: id, 
+          status: newStatus 
+        }),
+      });
       
-      if (error) throw error
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update status');
+      }
       
       // Refresh all startups
       fetchAllStartups()

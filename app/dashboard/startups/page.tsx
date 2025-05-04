@@ -73,14 +73,25 @@ export default function StartupsPage() {
     try {
       setUpdatingStatus(startupId)
       
-      // Call the API endpoint for status update
-      const response = await fetch('/api/startups/status', {
+      // Try the admin endpoint first (which will work for admins)
+      let response = await fetch('/api/admin/startups/status', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ startupId, status: newStatus }),
       })
+      
+      // If admin endpoint fails with 403 (user is not admin), fallback to regular endpoint
+      if (response.status === 403) {
+        response = await fetch('/api/startups/status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ startupId, status: newStatus }),
+        })
+      }
       
       if (!response.ok) {
         const errorData = await response.json()
