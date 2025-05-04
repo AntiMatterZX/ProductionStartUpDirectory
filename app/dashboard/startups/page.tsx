@@ -6,9 +6,8 @@ import { createClientComponentClient } from "@/lib/supabase/client-component"
 import { Button } from "@/components/ui/button"
 import { PlusIcon, ListFilter } from "lucide-react"
 import StartupCard from "@/components/startup/cards/StartupCard"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { useRouter } from "next/navigation"
 import { toast } from "@/components/ui/use-toast"
+import { useRouter } from "next/navigation"
 
 export default function StartupsPage() {
   const router = useRouter()
@@ -98,13 +97,10 @@ export default function StartupsPage() {
       toast({
         title: "Status Updated",
         description: `Startup is now ${newStatus}`,
-        variant: "default",
       })
       
       // Refresh data after status update to ensure consistency
-      setTimeout(() => {
-        fetchStartups()
-      }, 1000)
+      fetchStartups()
       
     } catch (error) {
       console.error(`Error updating status to ${newStatus}:`, error)
@@ -126,7 +122,7 @@ export default function StartupsPage() {
     if (loading) {
       return (
         <div className="flex justify-center items-center py-20">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
       )
     }
@@ -250,9 +246,9 @@ export default function StartupsPage() {
   }
 
   return (
-    <div className="container py-10">
+    <div className="px-4 py-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <h1 className="text-3xl font-bold">My Startups</h1>
+        <h1 className="text-2xl font-bold">My Startups</h1>
         <div className="flex gap-3 w-full md:w-auto">
           <Button 
             variant="outline" 

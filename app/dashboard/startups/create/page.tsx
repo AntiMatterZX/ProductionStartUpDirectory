@@ -14,7 +14,6 @@ import type { Database } from "@/types/database"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, CheckCircle2, Save } from "lucide-react"
 import { useLoading } from "@/components/ui/loading-context"
-import PsychedelicLoader from "@/components/ui/psychedelic-loader"
 
 export default function CreateStartupPage() {
   const router = useRouter()
@@ -65,7 +64,6 @@ export default function CreateStartupPage() {
   useEffect(() => {
     async function checkAuth() {
       try {
-        startLoading("Checking authorization...")
         const { data: { session } } = await supabase.auth.getSession()
         
         if (!session) {
@@ -81,12 +79,11 @@ export default function CreateStartupPage() {
         console.error("Error checking auth:", error)
       } finally {
         setIsLoading(false)
-        stopLoading()
       }
     }
     
     checkAuth()
-  }, [supabase, router, startLoading, stopLoading])
+  }, [supabase, router])
 
   const handleStepChange = (step: number) => {
     // Only allow navigation to previously completed steps or the next available step
@@ -149,9 +146,11 @@ export default function CreateStartupPage() {
   }
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+    
     try {
       setIsSubmitting(true)
-      startLoading("Creating your startup... This might take a moment.")
+      startLoading("Creating your startup...")
 
       // Check authentication status again before submitting
       const { data: { session } } = await supabase.auth.getSession()
@@ -159,7 +158,7 @@ export default function CreateStartupPage() {
       if (!session) {
         toast({
           title: "Authentication required",
-          description: "Your session has expired. Please log in again to create a startup",
+          description: "Your session has expired. Please log in again",
           variant: "destructive",
         })
         router.push("/login?redirect=/dashboard/startups/create")
@@ -216,6 +215,7 @@ export default function CreateStartupPage() {
 
       router.push(`/dashboard/startups/${data.id}`)
     } catch (error: any) {
+      console.error("Error creating startup:", error);
       toast({
         title: "Error",
         description: error.message || "There was a problem creating your startup.",
@@ -229,10 +229,8 @@ export default function CreateStartupPage() {
 
   if (isLoading) {
     return (
-      <div className="container max-w-4xl py-10 flex items-center justify-center">
-        <div className="h-64 w-64">
-          <PsychedelicLoader />
-        </div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
   }
@@ -269,7 +267,7 @@ export default function CreateStartupPage() {
           <div className="space-y-6">
             <div className="flex items-center justify-center py-6">
               <div className="bg-primary/10 p-4 rounded-full">
-                <CheckCircle2 className="h-12 w-12 text-primary" />
+                <CheckCircle2 className="h-8 w-8 text-primary" />
               </div>
             </div>
             
@@ -303,18 +301,15 @@ export default function CreateStartupPage() {
             <div className="flex justify-between pt-4">
               <Button 
                 type="button" 
-                variant="outline" 
-                size="lg" 
-                className="min-w-[100px]" 
+                variant="outline"
                 onClick={handleBack}
+                disabled={isSubmitting}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
               </Button>
               <Button 
-                type="button" 
-                size="lg" 
-                className="min-w-[120px]"
+                type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
               >
@@ -339,10 +334,10 @@ export default function CreateStartupPage() {
   };
 
   return (
-    <div className="container max-w-4xl py-10 overflow-x-hidden">
-      <h1 className="text-3xl font-bold mb-8">Create Your Startup Profile</h1>
+    <div className="px-4 py-10 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">Create Your Startup Profile</h1>
 
-      <div className="mb-10">
+      <div className="mb-8">
         <FormStepper 
           currentStep={currentStep} 
           totalSteps={totalSteps} 

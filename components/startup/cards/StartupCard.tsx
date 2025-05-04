@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge"
 import { CalendarIcon, MapPinIcon, Users2Icon, ExternalLink, AlertCircle, CheckCircle, XCircle } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { MotionDiv } from "@/components/ui/motion"
 import { cn } from "@/lib/utils"
 
 interface StartupCardProps {
@@ -59,13 +58,11 @@ export default function StartupCard({
   }
 
   return (
-    <MotionDiv
+    <div
       className={cn(
-        "h-full rounded-xl border-2 bg-card text-card-foreground shadow-sm overflow-hidden card-hover", 
+        "relative h-full rounded-xl border-2 bg-card text-card-foreground shadow-sm overflow-hidden",
         getCardBorderClass(startup.status)
       )}
-      whileHover={{ y: -5 }}
-      transition={{ type: "spring", stiffness: 300 }}
     >
       <CardHeader
         className={`pb-2 p-4 ${
@@ -200,9 +197,9 @@ export default function StartupCard({
       {/* Loading overlay */}
       {isUpdating && (
         <div className="absolute inset-0 bg-black/10 dark:bg-black/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
-    </MotionDiv>
+    </div>
   )
 }
