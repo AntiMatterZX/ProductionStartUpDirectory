@@ -10,11 +10,22 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
-import { CheckCircle2, XCircle, Plus, Trash2, AlertCircle, Calendar, User, ListFilter, ShieldAlert } from "lucide-react"
+import { 
+  CheckCircle2, XCircle, Plus, Trash2, AlertCircle, Calendar, 
+  User, ListFilter, ShieldAlert, Eye, ExternalLink, Clock
+} from "lucide-react"
 import LoadingIndicator from "@/components/ui/loading-indicator"
 import { motion } from "framer-motion"
 import { v4 as uuidv4 } from "uuid"
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 // Force client-side rendering to ensure fresh data
 export default function ModerationPage() {
@@ -31,6 +42,8 @@ export default function ModerationPage() {
   const { toast } = useToast()
   const supabase = createClientComponentClient()
   const [showAllStartups, setShowAllStartups] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [selectedStartup, setSelectedStartup] = useState<any>(null)
 
   // Fetch all startups on load
   useEffect(() => {
@@ -119,46 +132,42 @@ export default function ModerationPage() {
       
       if (error) throw error
       
-      // Update local state - find startup and update all collections
-      const updatedStartupIndex = startups.findIndex(s => s.id === id)
-      
-      if (updatedStartupIndex !== -1) {
-        // Create a copy of the startup with updated status
-        const updatedStartup = {
-          ...startups[updatedStartupIndex],
-          status: approve ? "approved" : "rejected",
-          updated_at: new Date().toISOString()
-        }
-        
-        // Update the main startups array
-        const updatedStartups = [...startups]
-        updatedStartups[updatedStartupIndex] = updatedStartup
-        setStartups(updatedStartups)
-        
-        // Update filtered arrays
-        setPendingStartups(pendingStartups.filter(s => s.id !== id))
-        
-        if (approve) {
-          setApprovedStartups([updatedStartup, ...approvedStartups])
-        } else {
-          setRejectedStartups([updatedStartup, ...rejectedStartups])
-        }
-        
-        toast({
-          title: approve ? "Startup approved" : "Startup rejected",
-          description: approve 
-            ? "The startup has been approved and is now public" 
-            : "The startup has been rejected",
-          variant: approve ? "default" : "destructive",
-        })
-      } else {
-        // If we couldn't find the startup in local state, refresh all data
-        await fetchAllStartups()
-        toast({
-          title: "Status updated",
-          description: "The startup status has been updated and data refreshed",
-        })
+      // Find the startup being updated
+      const startupToUpdate = startups.find(s => s.id === id)
+      if (!startupToUpdate) {
+        console.error("Couldn't find startup with ID:", id)
+        return
       }
+      
+      // Create updated startup object
+      const updatedStartup = {
+        ...startupToUpdate,
+        status: approve ? "approved" : "rejected",
+        updated_at: new Date().toISOString()
+      }
+      
+      // Update all state arrays
+      setStartups(startups.map(s => s.id === id ? updatedStartup : s))
+      setPendingStartups(pendingStartups.filter(s => s.id !== id))
+      
+      if (approve) {
+        setApprovedStartups([updatedStartup, ...approvedStartups])
+      } else {
+        setRejectedStartups([updatedStartup, ...rejectedStartups])
+      }
+      
+      // Close preview if open
+      if (previewOpen && selectedStartup?.id === id) {
+        setPreviewOpen(false)
+      }
+      
+      toast({
+        title: approve ? "Startup approved" : "Startup rejected",
+        description: approve 
+          ? "The startup has been approved and is now public" 
+          : "The startup has been rejected",
+        variant: approve ? "default" : "destructive",
+      })
     } catch (err) {
       console.error("Error approving/rejecting startup:", err)
       toast({
@@ -350,6 +359,12 @@ export default function ModerationPage() {
   const toggleView = () => {
     setShowAllStartups(!showAllStartups);
   };
+
+  // Preview startup details
+  function handlePreview(startup: any) {
+    setSelectedStartup(startup)
+    setPreviewOpen(true)
+  }
 
   return (
     <div className="p-6 bg-neutral-50 dark:bg-neutral-900 min-h-screen">
@@ -606,6 +621,7 @@ export default function ModerationPage() {
                                 onApprove={() => handleApproval(startup.id, true)}
                                 onReject={() => handleApproval(startup.id, false)}
                                 onDelete={() => handleDelete(startup.id)}
+                                onPreview={() => handlePreview(startup)}
                                 isApproving={approving === startup.id}
                                 isDeleting={deleting === startup.id}
                                 primary="amber"
@@ -655,6 +671,7 @@ export default function ModerationPage() {
                                 startup={startup}
                                 onDelete={() => handleDelete(startup.id)}
                                 onRevert={() => changeStatus(startup.id, 'pending')}
+                                onPreview={() => handlePreview(startup)}
                                 isDeleting={deleting === startup.id}
                                 primary="green"
                                 isDragging={snapshot.isDragging}
@@ -703,6 +720,7 @@ export default function ModerationPage() {
                                 startup={startup}
                                 onDelete={() => handleDelete(startup.id)}
                                 onRevert={() => changeStatus(startup.id, 'pending')}
+                                onPreview={() => handlePreview(startup)}
                                 isDeleting={deleting === startup.id}
                                 primary="red"
                                 isDragging={snapshot.isDragging}
@@ -720,17 +738,150 @@ export default function ModerationPage() {
           </div>
         </DragDropContext>
       )}
+
+      {/* Startup Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedStartup?.name || "Startup Preview"}</DialogTitle>
+            <DialogDescription>
+              Review startup details before making a decision
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedStartup && (
+            <div className="mt-4 space-y-6">
+              {/* Status Badge */}
+              <div className="flex flex-wrap gap-2">
+                <Badge className={`${
+                  selectedStartup.status === 'pending' ? 'bg-amber-100 text-amber-800' :
+                  selectedStartup.status === 'approved' ? 'bg-green-100 text-green-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {selectedStartup.status?.charAt(0).toUpperCase() + selectedStartup.status?.slice(1) || "Unknown"}
+                </Badge>
+                
+                {selectedStartup.slug && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <span>Slug:</span> {selectedStartup.slug}
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium text-muted-foreground">Created At</h3>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm">{new Date(selectedStartup.created_at).toLocaleString()}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium text-muted-foreground">Last Updated</h3>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm">{new Date(selectedStartup.updated_at).toLocaleString()}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium text-muted-foreground">User ID</h3>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm">{selectedStartup.user_id || "Unknown"}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium text-muted-foreground">Startup ID</h3>
+                  <p className="text-sm font-mono">{selectedStartup.id}</p>
+                </div>
+              </div>
+              
+              {/* Logo Preview */}
+              {selectedStartup.logo_url && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Logo</h3>
+                  <div className="w-20 h-20 rounded-lg overflow-hidden border">
+                    <img 
+                      src={selectedStartup.logo_url} 
+                      alt={`${selectedStartup.name} logo`} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {/* Description */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
+                <div className="p-4 bg-muted/20 rounded-md max-h-60 overflow-y-auto">
+                  <p className="text-sm whitespace-pre-wrap">{selectedStartup.description || "No description provided"}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="flex justify-between items-center gap-2 flex-wrap sm:flex-nowrap">
+            <div>
+              {selectedStartup?.slug && (
+                <Button asChild variant="outline" size="sm" className="gap-1">
+                  <Link href={`/startups/${selectedStartup.slug}`} target="_blank">
+                    Preview on Site
+                    <ExternalLink className="h-3.5 w-3.5 ml-1" />
+                  </Link>
+                </Button>
+              )}
+            </div>
+            
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="border-red-200 hover:bg-red-100 hover:text-red-900"
+                onClick={() => {
+                  if (selectedStartup) {
+                    handleApproval(selectedStartup.id, false);
+                  }
+                }}
+                disabled={approving === selectedStartup?.id}
+              >
+                {approving === selectedStartup?.id ? <LoadingIndicator size="sm" /> : <XCircle className="h-4 w-4 mr-1" />}
+                Reject Startup
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="border-green-200 hover:bg-green-100 hover:text-green-900"
+                onClick={() => {
+                  if (selectedStartup) {
+                    handleApproval(selectedStartup.id, true);
+                  }
+                }}
+                disabled={approving === selectedStartup?.id}
+              >
+                {approving === selectedStartup?.id ? <LoadingIndicator size="sm" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+                Approve Startup
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
 
-// Enhanced Startup Card Component
+// Replace StartupCard component with this improved version
 interface StartupCardProps {
   startup: any;
   onApprove?: () => void;
   onReject?: () => void;
   onDelete: () => void;
   onRevert?: () => void;
+  onPreview?: () => void; // Add preview function
   isApproving?: boolean;
   isDeleting?: boolean;
   primary: 'amber' | 'green' | 'red';
@@ -743,6 +894,7 @@ function StartupCard({
   onReject, 
   onDelete, 
   onRevert,
+  onPreview,
   isApproving, 
   isDeleting,
   primary,
@@ -772,6 +924,10 @@ function StartupCard({
   const isPending = primary === 'amber';
   const colors = colorClasses[primary];
 
+  // Get creator information
+  const creatorName = startup.profiles?.full_name || "Unknown User";
+  const creatorEmail = startup.profiles?.email;
+
   return (
     <motion.div
       layout
@@ -784,7 +940,7 @@ function StartupCard({
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
             {startup.logo_url && (
-              <div className="w-8 h-8 rounded-full overflow-hidden">
+              <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200">
                 <img 
                   src={startup.logo_url} 
                   alt={`${startup.name} logo`} 
@@ -794,9 +950,13 @@ function StartupCard({
             )}
             <div>
               <h3 className="font-bold text-lg leading-tight">{startup.name || "Unnamed Startup"}</h3>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                ID: {startup.id ? startup.id.substring(0, 8) + '...' : "Unknown"}
-              </p>
+              <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 flex items-center gap-1">
+                <User className="h-3 w-3" />
+                <span>{creatorName}</span>
+                {creatorEmail && (
+                  <span className="hidden md:inline text-neutral-400">({creatorEmail})</span>
+                )}
+              </div>
             </div>
           </div>
           <Badge variant="outline" className={`${colors.badge} font-medium`}>
@@ -812,10 +972,6 @@ function StartupCard({
         
         <div className="flex flex-col space-y-2 mb-4 text-xs text-neutral-500 dark:text-neutral-400">
           <div className="flex items-center gap-2">
-            <User className="h-3.5 w-3.5" />
-            User ID: {startup.user_id ? startup.user_id.substring(0, 8) + '...' : "Unknown"}
-          </div>
-          <div className="flex items-center gap-2">
             <Calendar className="h-3.5 w-3.5" />
             {startup.created_at ? new Date(startup.created_at).toLocaleString() : "Unknown date"}
           </div>
@@ -823,6 +979,17 @@ function StartupCard({
         
         {/* Actions */}
         <div className="flex flex-wrap gap-2 mt-auto">
+          {/* Preview Button (always show) */}
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="flex-1"
+            onClick={onPreview}
+          >
+            <Eye className="h-4 w-4 mr-1" />
+            Preview
+          </Button>
+          
           {startup.slug && (
             <Button 
               variant="outline" 
@@ -831,7 +998,8 @@ function StartupCard({
               className="flex-1"
             >
               <Link href={`/startups/${startup.slug}`} target="_blank">
-                Preview
+                <ExternalLink className="h-4 w-4 mr-1" />
+                View
               </Link>
             </Button>
           )}

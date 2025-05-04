@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { 
   CheckCircle2, XCircle, AlertTriangle, Eye, Shield, Filter,
-  RefreshCw, MoreHorizontal, AlertCircle, Search, ShieldAlert
+  RefreshCw, MoreHorizontal, AlertCircle, Search, ShieldAlert, User, Calendar, Clock, ExternalLink
 } from "lucide-react"
 import LoadingIndicator from "@/components/ui/loading-indicator"
 import {
@@ -504,82 +504,130 @@ export default function SpamModerationPage() {
 
       {/* Startup Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-auto">
           <DialogHeader>
             <DialogTitle>{selectedStartup?.name || "Startup Preview"}</DialogTitle>
             <DialogDescription>
-              Detailed information about this startup
+              Review startup details before making a decision
             </DialogDescription>
           </DialogHeader>
           
           {selectedStartup && (
-            <div className="mt-4 space-y-4">
-              {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">ID</h3>
-                  <p className="text-sm">{selectedStartup.id}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
-                  <p className="text-sm flex items-center gap-1">
-                    {selectedStartup.status === "approved" ? (
-                      <Badge className="bg-green-100 text-green-800">Approved</Badge>
-                    ) : selectedStartup.status === "rejected" ? (
-                      <Badge className="bg-red-100 text-red-800">Rejected</Badge>
-                    ) : selectedStartup.status === "flagged_spam" ? (
-                      <Badge className="bg-red-100 text-red-800">Flagged Spam</Badge>
-                    ) : (
-                      <Badge className="bg-amber-100 text-amber-800">Pending</Badge>
+            <div className="mt-4 space-y-6">
+              {/* Status Badge */}
+              <div className="flex flex-wrap gap-2">
+                <Badge className={`${
+                  selectedStartup.status === 'pending' ? 'bg-amber-100 text-amber-800' :
+                  selectedStartup.status === 'approved' ? 'bg-green-100 text-green-800' :
+                  selectedStartup.status === 'flagged_spam' ? 'bg-purple-100 text-purple-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {formatStatus(selectedStartup.status) || "Unknown"}
+                </Badge>
+                
+                {selectedStartup.slug && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <span>Slug:</span> {selectedStartup.slug}
+                  </Badge>
+                )}
+                
+                {selectedStartup.spamScore >= 3 && (
+                  <Badge className="bg-red-100 text-red-800">
+                    High Risk
+                  </Badge>
+                )}
+                
+                {selectedStartup.spamScore > 0 && selectedStartup.spamScore < 3 && (
+                  <Badge className="bg-amber-100 text-amber-800">
+                    Suspicious
+                  </Badge>
+                )}
+              </div>
+              
+              {/* User Info */}
+              {selectedStartup.profiles && (
+                <div className="p-4 bg-blue-50/50 dark:bg-blue-950/20 rounded-lg">
+                  <h3 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Submitter Information</h3>
+                  <div className="space-y-1 text-sm">
+                    <p className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <span className="font-medium">Name:</span> {selectedStartup.profiles.full_name || "Unknown"}
+                    </p>
+                    {selectedStartup.profiles.email && (
+                      <p>
+                        <span className="font-medium">Email:</span> {selectedStartup.profiles.email}
+                      </p>
                     )}
-                  </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Created</h3>
-                  <p className="text-sm">{new Date(selectedStartup.created_at).toLocaleString()}</p>
+              )}
+              
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium text-muted-foreground">Created At</h3>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm">{new Date(selectedStartup.created_at).toLocaleString()}</p>
+                  </div>
                 </div>
-                <div>
+                
+                <div className="space-y-1">
                   <h3 className="text-sm font-medium text-muted-foreground">Last Updated</h3>
-                  <p className="text-sm">{new Date(selectedStartup.updated_at).toLocaleString()}</p>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm">{new Date(selectedStartup.updated_at).toLocaleString()}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Slug</h3>
-                  <p className="text-sm">{selectedStartup.slug}</p>
+                
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium text-muted-foreground">User ID</h3>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm">{selectedStartup.user_id || "Unknown"}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">User</h3>
-                  <p className="text-sm">{selectedStartup.profiles?.full_name || selectedStartup.user_id || "Unknown"}</p>
+                
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium text-muted-foreground">Startup ID</h3>
+                  <p className="text-sm font-mono">{selectedStartup.id}</p>
                 </div>
               </div>
               
-              {/* Tagline */}
-              {selectedStartup.tagline && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Tagline</h3>
-                  <p className="text-sm mt-1">{selectedStartup.tagline}</p>
+              {/* Logo Preview */}
+              {selectedStartup.logo_url && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Logo</h3>
+                  <div className="w-20 h-20 rounded-lg overflow-hidden border">
+                    <img 
+                      src={selectedStartup.logo_url} 
+                      alt={`${selectedStartup.name} logo`} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 </div>
               )}
               
               {/* Description */}
-              <div>
+              <div className="space-y-2">
                 <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
-                <div className="mt-1 p-3 bg-muted/20 rounded-md max-h-60 overflow-y-auto">
-                  <p className="text-sm whitespace-pre-wrap">{selectedStartup.description}</p>
+                <div className="p-4 bg-muted/20 rounded-md max-h-60 overflow-y-auto">
+                  <p className="text-sm whitespace-pre-wrap">{selectedStartup.description || "No description provided"}</p>
                 </div>
               </div>
               
               {/* Spam Info */}
               {selectedStartup.spamScore > 0 && (
-                <div>
+                <div className="space-y-2">
                   <h3 className="text-sm font-medium text-red-500 flex items-center gap-1">
                     <AlertCircle className="h-4 w-4" />
                     Spam Detection
                   </h3>
-                  <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-md mt-1">
+                  <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-md">
                     <p className="text-sm font-medium">
                       Spam Score: {selectedStartup.spamScore}
                     </p>
-                    <div className="mt-1">
+                    <div className="mt-2">
                       <h4 className="text-xs font-medium text-muted-foreground">Reasons:</h4>
                       <ul className="text-xs list-disc list-inside">
                         {selectedStartup.spamReasons?.map((reason: string, i: number) => (
@@ -593,24 +641,49 @@ export default function SpamModerationPage() {
             </div>
           )}
           
-          <DialogFooter className="flex gap-2 justify-end">
-            {selectedStartup?.slug && (
-              <Button asChild variant="outline">
-                <Link href={`/startups/${selectedStartup.slug}`} target="_blank">
-                  View on Site
-                </Link>
+          <DialogFooter className="flex justify-between items-center gap-2 flex-wrap sm:flex-nowrap mt-6">
+            <div>
+              {selectedStartup?.slug && (
+                <Button asChild variant="outline" size="sm" className="gap-1">
+                  <Link href={`/startups/${selectedStartup.slug}`} target="_blank">
+                    Preview on Site
+                    <ExternalLink className="h-3.5 w-3.5 ml-1" />
+                  </Link>
+                </Button>
+              )}
+            </div>
+            
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="border-red-200 hover:bg-red-100 hover:text-red-900"
+                onClick={() => {
+                  if (selectedStartup) {
+                    handleAction(selectedStartup.id, 'delete');
+                    setPreviewOpen(false);
+                  }
+                }}
+                disabled={isActionPending}
+              >
+                Delete Startup
               </Button>
-            )}
-            <Button 
-              variant="destructive" 
-              onClick={() => {
-                handleAction(selectedStartup.id, 'delete');
-                setPreviewOpen(false);
-              }}
-              disabled={isActionPending}
-            >
-              Delete Startup
-            </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="border-red-200 hover:bg-red-100 hover:text-red-900"
+                onClick={() => {
+                  if (selectedStartup) {
+                    handleAction(selectedStartup.id, 'flag');
+                    setPreviewOpen(false);
+                  }
+                }}
+                disabled={isActionPending}
+              >
+                Flag as Spam
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -643,13 +716,28 @@ function SpamCard({
     ? "border-amber-200 bg-amber-50/50 dark:bg-amber-950/20"
     : "border-gray-200";
 
+  // Get user information
+  const userName = startup.profiles?.full_name || "Unknown";
+  const userEmail = startup.profiles?.email || null;
+
   return (
     <Card className={`overflow-hidden ${cardClass}`}>
       <CardContent className="p-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           <div className="md:col-span-9">
             <div className="flex items-start md:items-center flex-col md:flex-row gap-2 mb-2">
-              <h3 className="font-medium">{truncate(startup.name, 30)}</h3>
+              <div className="flex items-center gap-2">
+                {startup.logo_url && (
+                  <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200">
+                    <img 
+                      src={startup.logo_url} 
+                      alt={`${startup.name} logo`} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <h3 className="font-medium">{truncate(startup.name, 30)}</h3>
+              </div>
               
               <div className="flex flex-wrap gap-1">
                 <Badge className={`text-xs ${getBadgeColor(startup.status)}`}>
@@ -668,6 +756,16 @@ function SpamCard({
                   </Badge>
                 )}
               </div>
+            </div>
+            
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+              <User className="h-3 w-3" />
+              <span>{userName}</span>
+              {userEmail && (
+                <span className="text-muted-foreground/70 hidden md:inline">
+                  ({userEmail})
+                </span>
+              )}
             </div>
             
             <p className="text-xs text-muted-foreground">
@@ -714,7 +812,6 @@ function SpamCard({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Startup Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onApprove}>
                   <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
                   Approve
