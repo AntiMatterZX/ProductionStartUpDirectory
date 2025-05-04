@@ -55,7 +55,24 @@ export function DashboardSidebar() {
   }, [supabase])
 
   const userRole = profile?.roles?.name || "user"
-  const isActive = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(href))
+  const isActive = (href: string) => {
+    // Exact match for the path
+    if (pathname === href) return true;
+    
+    // Special case for /dashboard/startups/create
+    if (href === "/dashboard/startups/create") {
+      return pathname === "/dashboard/startups/create" || pathname.startsWith("/dashboard/startups/create/");
+    }
+    
+    // Special case for /dashboard/startups
+    if (href === "/dashboard/startups") {
+      return pathname.startsWith("/dashboard/startups") && 
+             !pathname.startsWith("/dashboard/startups/create");
+    }
+    
+    // Default case for other paths
+    return href !== "/dashboard" && pathname.startsWith(href);
+  }
 
   const variants = {
     visible: { 

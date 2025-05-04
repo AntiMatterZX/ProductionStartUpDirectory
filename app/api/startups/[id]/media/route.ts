@@ -91,7 +91,7 @@ export async function POST(
     // Get the current media arrays
     const { data: currentMedia, error: mediaFetchError } = await supabase
       .from("startups")
-      .select("media_images, media_documents, media_videos, logo_url, logo_media_url, pitch_deck_url")
+      .select("media_images, media_documents, media_videos, logo_url, pitch_deck_url")
       .eq("id", startupId)
       .single()
 
@@ -127,8 +127,7 @@ export async function POST(
     if (normalizedMediaType === "logo") {
       // For logos, we update the logo_url field and add to the media_images array if it's not already there
       updateData = {
-        logo_url: url,
-        logo_media_url: url
+        logo_url: url
       };
       
       // Only add to media_images if not already there
@@ -260,7 +259,7 @@ export async function DELETE(
     // First verify the user owns this startup
     const { data: startup, error: ownershipError } = await supabase
       .from("startups")
-      .select("user_id, slug, media_images, media_documents, media_videos, logo_url, logo_media_url, pitch_deck_url")
+      .select("user_id, slug, media_images, media_documents, media_videos, logo_url, pitch_deck_url")
       .eq("id", startupId)
       .single()
 
@@ -305,9 +304,8 @@ export async function DELETE(
       updateData.media_images = mediaImages.filter(item => item !== url);
       
       // If this was the logo, clear the logo field
-      if (startup.logo_url === url || startup.logo_media_url === url) {
+      if (startup.logo_url === url) {
         updateData.logo_url = null;
-        updateData.logo_media_url = null;
       }
     } else if (normalizedMediaType === "document") {
       updateData.media_documents = mediaDocuments.filter(item => item !== url);
