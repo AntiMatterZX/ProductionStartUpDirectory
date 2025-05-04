@@ -52,6 +52,54 @@ async function uploadFile(supabase: any, file: File, userId: string, type: 'logo
   }
 }
 
+// Add a helper function to parse team size ranges
+function parseTeamSize(teamSize: string | number | null): number | null {
+  if (teamSize === null || teamSize === undefined) return null;
+  
+  // If it's already a number, just return it
+  if (typeof teamSize === 'number') return teamSize;
+  
+  // Try to parse it directly as an integer first
+  const directParse = parseInt(teamSize);
+  if (!isNaN(directParse)) return directParse;
+  
+  // Handle ranges like "2-5" or "5-10" by taking the average
+  if (teamSize.includes('-')) {
+    const parts = teamSize.split('-');
+    const min = parseInt(parts[0]);
+    const max = parseInt(parts[1]);
+    
+    if (!isNaN(min) && !isNaN(max)) {
+      // Return the average rounded down
+      return Math.floor((min + max) / 2);
+    }
+  }
+  
+  // Extract numbers from strings like "2-5 employees"
+  const matches = teamSize.match(/\d+/g);
+  if (matches && matches.length > 0) {
+    return parseInt(matches[0]);
+  }
+  
+  return null;
+}
+
+// Add a helper function to parse currency/funding values
+function parseFundingAmount(amount: string | number | null): number | null {
+  if (amount === null || amount === undefined) return null;
+  
+  // If it's already a number, just return it
+  if (typeof amount === 'number') return amount;
+  
+  // Remove currency symbols, commas, and other non-numeric characters
+  const cleanedAmount = amount.toString().replace(/[$,€£¥\s]/g, '');
+  
+  // Try to parse it as a float
+  const parsedAmount = parseFloat(cleanedAmount);
+  
+  return isNaN(parsedAmount) ? null : parsedAmount;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerComponentClient()
@@ -187,6 +235,14 @@ export async function POST(request: NextRequest) {
     }
 
     try {
+      // Debug logging for values that might cause type conversion errors
+      console.log("Processing startup data with the following values:");
+      console.log(`- Team Size (raw): ${JSON.stringify(detailedInfo.teamSize)}`);
+      console.log(`- Team Size (processed): ${parseTeamSize(detailedInfo.teamSize)}`);
+      console.log(`- Funding Amount (raw): ${JSON.stringify(detailedInfo.fundingAmount)}`);
+      console.log(`- Funding Amount (processed): ${parseFundingAmount(detailedInfo.fundingAmount)}`);
+      console.log(`- Category ID: ${basicInfo.industry}`);
+      
       // Create the startup entry
       const { data: startup, error: createError } = await supabase
         .from("startups")
@@ -201,8 +257,8 @@ export async function POST(request: NextRequest) {
           website_url: basicInfo.website || null,
           status: "pending",
           funding_stage: detailedInfo.fundingStage,
-          funding_amount: detailedInfo.fundingAmount || null,
-          employee_count: detailedInfo.teamSize,
+          funding_amount: parseFundingAmount(detailedInfo.fundingAmount),
+          employee_count: parseTeamSize(detailedInfo.teamSize),
           location: detailedInfo.location,
           linkedin_url: mediaInfo.socialLinks?.linkedin || null,
           twitter_url: mediaInfo.socialLinks?.twitter || null,
