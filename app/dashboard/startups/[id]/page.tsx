@@ -29,7 +29,8 @@ import StartupLogoUpload from "@/app/components/StartupLogoUpload"
 import StartupMediaUpload from "@/app/components/StartupMediaUpload"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
-import { Pencil, PlusCircle, Image, FileText, Link2, Loader2 } from "lucide-react"
+import { Pencil, PlusCircle, Image, FileText, Link2, Loader2, LayoutTemplate } from "lucide-react"
+import StartupMedia from "@/components/startup/detail/StartupMedia"
 
 export default function StartupDetailPage({ params }: { params: { id: string } }) {
   const startupId = params.id;
@@ -225,27 +226,61 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
   
   // Handle media upload
   const handleMediaUploaded = (url: string, type: string) => {
-    if (type === "image" || type === "coverImage") {
+    if (type === "logo") {
+      setStartup((prev: any) => ({
+        ...prev,
+        logo_url: url
+      }));
+      
+      // Also add to images array if not already there
+      if (!mediaItems.images.includes(url)) {
+        setMediaItems((prev) => ({
+          ...prev,
+          images: [...prev.images, url]
+        }));
+      }
+    } else if (type === "banner") {
+      setStartup((prev: any) => ({
+        ...prev,
+        banner_url: url
+      }));
+      
+      // Also add to images array if not already there
+      if (!mediaItems.images.includes(url)) {
+        setMediaItems((prev) => ({
+          ...prev,
+          images: [...prev.images, url]
+        }));
+      }
+    } else if (type === "image" || type === "gallery") {
       setMediaItems((prev) => ({
         ...prev,
         images: [...prev.images, url]
-      }))
+      }));
     } else if (type === "document" || type === "pitch_deck" || type === "pitchDeck") {
+      // Update pitch_deck_url if it's a pitch deck
+      if (type === "pitch_deck" || type === "pitchDeck") {
+        setStartup((prev: any) => ({
+          ...prev,
+          pitch_deck_url: url
+        }));
+      }
+      
       setMediaItems((prev) => ({
         ...prev,
         documents: [...prev.documents, url]
-      }))
+      }));
     } else if (type === "video") {
       setMediaItems((prev) => ({
         ...prev,
         videos: [...prev.videos, url]
-      }))
+      }));
     }
     
     toast({
       title: "Media uploaded",
-      description: `Your ${type} has been uploaded successfully`
-    })
+      description: `Your ${type.replace('_', ' ')} has been uploaded successfully`
+    });
   }
 
   // Handle form field changes
@@ -495,7 +530,7 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
               <CardContent>
                 <Tabs defaultValue="logo">
                   <TabsList className="grid grid-cols-3 mb-6">
-                    <TabsTrigger value="logo">Logo & Images</TabsTrigger>
+                    <TabsTrigger value="logo">Logo & Branding</TabsTrigger>
                     <TabsTrigger value="documents">Documents</TabsTrigger>
                     <TabsTrigger value="links">Videos & Links</TabsTrigger>
                   </TabsList>
@@ -533,37 +568,75 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
                     
                     <Separator />
                     
-                    {/* Images section */}
+                    {/* Banner section */}
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-medium">Images</h3>
+                        <h3 className="text-lg font-medium">Banner Image</h3>
                         {userId && (
                           <StartupMediaUpload 
                             startupId={startupId}
                             userId={userId}
-                            mediaType="image"
-                            onUploaded={(url) => handleMediaUploaded(url, "image")}
-                            buttonLabel="Upload Image"
+                            mediaType="banner"
+                            onUploaded={(url) => handleMediaUploaded(url, "banner")}
+                            buttonLabel="Upload Banner"
+                          />
+                        )}
+                      </div>
+                      
+                      <div className="w-full aspect-video rounded-lg overflow-hidden bg-muted">
+                        {startup.banner_url ? (
+                          <img 
+                            src={startup.banner_url}
+                            alt={`${startup.name} banner`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                            <LayoutTemplate className="h-12 w-12 mb-2" />
+                            <p>No banner image uploaded yet</p>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        The banner image appears at the top of your startup profile page.
+                      </p>
+                    </div>
+                    
+                    <Separator />
+                    
+                    {/* Gallery Images section */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-medium">Gallery Images</h3>
+                        {userId && (
+                          <StartupMediaUpload 
+                            startupId={startupId}
+                            userId={userId}
+                            mediaType="gallery"
+                            onUploaded={(url) => handleMediaUploaded(url, "gallery")}
+                            buttonLabel="Add Gallery Image"
                           />
                         )}
                       </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {mediaItems.images.length > 0 ? (
-                          mediaItems.images.map((url, index) => (
-                            <div key={index} className="border rounded-lg overflow-hidden">
-                              <img 
-                                src={url}
-                                alt={`Startup image ${index + 1}`}
-                                className="w-full h-48 object-cover"
-                              />
-                            </div>
-                          ))
+                        {mediaItems.images.filter(url => url !== startup.logo_url && url !== startup.banner_url).length > 0 ? (
+                          mediaItems.images
+                            .filter(url => url !== startup.logo_url && url !== startup.banner_url)
+                            .map((url, index) => (
+                              <div key={index} className="border rounded-lg overflow-hidden">
+                                <img 
+                                  src={url}
+                                  alt={`Startup gallery image ${index + 1}`}
+                                  className="w-full h-48 object-cover"
+                                />
+                              </div>
+                            ))
                         ) : (
                           <div className="col-span-2 flex justify-center p-8 border-2 border-dashed rounded-lg">
                             <div className="flex flex-col items-center text-muted-foreground">
                               <Image className="h-12 w-12 mb-2" />
-                              <p>No images uploaded yet</p>
+                              <p>No gallery images uploaded yet</p>
                             </div>
                           </div>
                         )}

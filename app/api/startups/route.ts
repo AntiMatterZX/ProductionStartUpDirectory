@@ -175,9 +175,24 @@ export async function POST(request: NextRequest) {
       ? await uploadFile(supabase, logo, session.user.id, 'logos') 
       : basicInfo?.logoUrl || null;
       
-    const coverImageUrl = coverImage && typeof coverImage !== 'string'
-      ? await uploadFile(supabase, coverImage, session.user.id, 'images')
-      : mediaInfo?.coverImageUrl || null;
+    let coverImageUrl = null;
+    if (coverImage && typeof coverImage !== 'string') {
+      console.log("Uploading cover image...");
+      
+      try {
+        coverImageUrl = await uploadFile(supabase, coverImage, session.user.id, 'images');
+        
+        console.log("Cover image uploaded successfully:", coverImageUrl);
+        
+        // Add to media_images array if it's not already there
+        if (!mediaInfo.media_images.includes(coverImageUrl)) {
+          mediaInfo.media_images.push(coverImageUrl);
+        }
+      } catch (error) {
+        console.error("Error uploading cover image:", error);
+        throw new Error("Failed to upload cover image");
+      }
+    }
       
     const pitchDeckUrl = pitchDeck && typeof pitchDeck !== 'string'
       ? await uploadFile(supabase, pitchDeck, session.user.id, 'documents')
@@ -244,36 +259,37 @@ export async function POST(request: NextRequest) {
       console.log(`- Category ID: ${basicInfo.industry}`);
       
       // Create the startup entry
-      const { data: startup, error: createError } = await supabase
+      const { data: startup, error: insertError } = await supabase
         .from("startups")
         .insert({
-          name: basicInfo.name,
-          slug,
-          description: detailedInfo.description,
-          tagline: basicInfo.tagline || null,
+          name: basicInfo.name.trim(),
+          slug: slug,
+          tagline: basicInfo.tagline?.trim() || null,
+          description: detailedInfo.description?.trim() || null,
+          website_url: basicInfo.website?.trim() || null,
           logo_url: logoUrl,
-          category_id: basicInfo.industry,
-          founding_date: basicInfo.foundingDate,
-          website_url: basicInfo.website || null,
-          status: "pending",
-          funding_stage: detailedInfo.fundingStage,
-          funding_amount: parseFundingAmount(detailedInfo.fundingAmount),
-          employee_count: parseTeamSize(detailedInfo.teamSize),
-          location: detailedInfo.location,
-          linkedin_url: mediaInfo.socialLinks?.linkedin || null,
-          twitter_url: mediaInfo.socialLinks?.twitter || null,
+          banner_url: coverImageUrl,
+          pitch_deck_url: pitchDeckUrl,
+          founding_date: basicInfo.foundingDate || null,
+          employee_count: detailedInfo.teamSize ? parseInt(detailedInfo.teamSize) : null,
+          funding_stage: detailedInfo.fundingStage || null,
+          funding_amount: detailedInfo.fundingAmount ? parseFloat(detailedInfo.fundingAmount) : null,
+          location: detailedInfo.location?.trim() || null,
+          category_id: basicInfo.industry || null,
           user_id: session.user.id,
+          status: "active",
           media_images: mediaImages,
           media_documents: mediaDocuments,
-          media_videos: mediaVideos,
+          media_videos: [],
           looking_for: detailedInfo.lookingFor || [],
+          video_url: mediaInfo.videoUrl?.trim() || null,
         })
-        .select()
+        .select("id, slug")
         .single();
 
-      if (createError) {
-        console.error("Error creating startup:", createError);
-        return NextResponse.json({ message: "Failed to create startup in database", error: createError.message }, { status: 500 });
+      if (insertError) {
+        console.error("Error creating startup:", insertError);
+        return NextResponse.json({ message: "Failed to create startup in database", error: insertError.message }, { status: 500 });
       }
 
       // Send email notification about the new startup to admin

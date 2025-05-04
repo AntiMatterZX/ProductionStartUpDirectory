@@ -10,8 +10,8 @@ import { uploadFile } from "@/lib/utils/helpers/file-upload";
 
 interface UploadProps {
   startupId: string;
-  userId: string;
-  mediaType: "logo" | "image" | "document" | "pitch_deck" | "video";
+  userId?: string;
+  mediaType: "logo" | "image" | "document" | "pitch_deck" | "video" | "banner" | "gallery";
   onUploaded?: (url: string) => void;
   onCancelled?: () => void;
   buttonLabel?: string;
@@ -45,6 +45,8 @@ export default function StartupMediaUpload({
       switch (mediaType) {
         case "logo":
         case "image":
+        case "banner":
+        case "gallery":
           acceptedFileTypes = "image/*";
           break;
         case "document":
@@ -63,6 +65,8 @@ export default function StartupMediaUpload({
     switch (mediaType) {
       case "logo":
       case "image":
+      case "banner":
+      case "gallery":
         return <ImageIcon className="h-4 w-4 mr-2" />;
       case "video":
         return <FileVideo className="h-4 w-4 mr-2" />;
@@ -104,10 +108,42 @@ export default function StartupMediaUpload({
     }
   };
 
+  // Fetch current user ID if not provided
+  useEffect(() => {
+    async function fetchUserId() {
+      if (!userId) {
+        try {
+          // Attempt to fetch from local storage or API
+          const storedUserId = localStorage.getItem('userId');
+          if (storedUserId) {
+            userId = storedUserId;
+          }
+        } catch (error) {
+          console.error("Could not get user ID from local storage", error);
+        }
+      }
+    }
+    
+    fetchUserId();
+  }, [userId]);
+
   // Upload the file to Supabase storage
   const uploadMedia = async () => {
-    if (!selectedFile || !startupId || !userId) {
+    if (!selectedFile || !startupId) {
       setError("Missing required information");
+      return;
+    }
+    
+    // If userId is not provided, try to get from sessionStorage
+    const effectiveUserId = userId || sessionStorage.getItem('userId') || localStorage.getItem('userId');
+    
+    if (!effectiveUserId) {
+      setError("User ID not found. Please try logging in again.");
+      toast({
+        title: "Authentication error",
+        description: "User ID not found. Please try logging in again.",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -119,7 +155,7 @@ export default function StartupMediaUpload({
       // Use the centralized file upload utility with progress callback
       const fileUrl = await uploadFile(
         selectedFile,
-        userId,
+        effectiveUserId,
         mediaType,
         (progress) => setUploadProgress(progress)
       );
@@ -249,7 +285,7 @@ export default function StartupMediaUpload({
                 <span className="text-sm truncate max-w-[200px]">{selectedFile.name}</span>
                 <Button 
                   variant="ghost" 
-                  size="sm" 
+                  size="sm"
                   onClick={() => {
                     setSelectedFile(null);
                     if (previewUrl) {
@@ -267,47 +303,45 @@ export default function StartupMediaUpload({
               </div>
             )}
             
-            {isUploading && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Uploading...</span>
-                  <span className="text-sm font-medium">{uploadProgress}%</span>
-                </div>
-                <Progress value={uploadProgress} className="h-2" />
+            {error && (
+              <div className="text-destructive text-sm p-2 bg-destructive/10 rounded-md">
+                {error}
               </div>
             )}
             
-            {error && (
-              <div className="text-sm text-destructive p-2 bg-destructive/10 rounded-md">
-                {error}
+            {isUploading && (
+              <div className="space-y-2">
+                <Progress value={uploadProgress} className="h-2" />
+                <p className="text-xs text-center text-muted-foreground">
+                  {uploadProgress < 100 ? 'Uploading...' : 'Processing...'}
+                </p>
               </div>
             )}
           </div>
           
-          <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-between sm:space-x-2">
-            <Button
-              type="button"
-              variant="secondary"
+          <DialogFooter className="sm:justify-between">
+            <Button 
+              variant="secondary" 
               onClick={handleClose}
               disabled={isUploading}
             >
               Cancel
             </Button>
-            <Button
-              type="button"
-              disabled={!selectedFile || isUploading}
+            <Button 
+              variant="default" 
               onClick={uploadMedia}
+              disabled={!selectedFile || isUploading}
               className="gap-2"
             >
               {isUploading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Uploading...</span>
+                  Uploading...
                 </>
               ) : (
                 <>
                   <Upload className="h-4 w-4" />
-                  <span>Upload</span>
+                  Upload
                 </>
               )}
             </Button>

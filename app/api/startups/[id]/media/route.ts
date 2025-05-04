@@ -14,10 +14,15 @@ function normalizeMediaType(mediaType: string): string {
     case "coverimage":
     case "cover_image":
     case "cover":
-      return "image";
+    case "banner":
+    case "banner_image":
+      return "banner";
     case "pitchdeck":
     case "pitch_deck":
       return "document";
+    case "gallery":
+    case "gallery_image":
+      return "gallery";
     default:
       return mediaType.toLowerCase();
   }
@@ -91,7 +96,7 @@ export async function POST(
     // Get the current media arrays
     const { data: currentMedia, error: mediaFetchError } = await supabase
       .from("startups")
-      .select("media_images, media_documents, media_videos, logo_url, pitch_deck_url")
+      .select("media_images, media_documents, media_videos, logo_url, banner_url, pitch_deck_url")
       .eq("id", startupId)
       .single()
 
@@ -134,7 +139,17 @@ export async function POST(
       if (!mediaImages.includes(url)) {
         updateData.media_images = [...mediaImages, url];
       }
-    } else if (normalizedMediaType === "image") {
+    } else if (normalizedMediaType === "banner") {
+      // For banner images, we update the banner_url field and add to the media_images array if not already there
+      updateData = {
+        banner_url: url
+      };
+      
+      // Only add to media_images if not already there
+      if (!mediaImages.includes(url)) {
+        updateData.media_images = [...mediaImages, url];
+      }
+    } else if (normalizedMediaType === "gallery") {
       // Only add to media_images if not already there
       if (!mediaImages.includes(url)) {
         updateData.media_images = [...mediaImages, url];
@@ -259,7 +274,7 @@ export async function DELETE(
     // First verify the user owns this startup
     const { data: startup, error: ownershipError } = await supabase
       .from("startups")
-      .select("user_id, slug, media_images, media_documents, media_videos, logo_url, pitch_deck_url")
+      .select("user_id, slug, media_images, media_documents, media_videos, logo_url, banner_url, pitch_deck_url")
       .eq("id", startupId)
       .single()
 
@@ -300,13 +315,22 @@ export async function DELETE(
     }
 
     // Update the appropriate arrays or fields
-    if (normalizedMediaType === "logo" || normalizedMediaType === "image") {
+    if (normalizedMediaType === "logo") {
       updateData.media_images = mediaImages.filter(item => item !== url);
       
       // If this was the logo, clear the logo field
       if (startup.logo_url === url) {
         updateData.logo_url = null;
       }
+    } else if (normalizedMediaType === "banner") {
+      updateData.media_images = mediaImages.filter(item => item !== url);
+      
+      // If this was the banner, clear the banner field
+      if (startup.banner_url === url) {
+        updateData.banner_url = null;
+      }
+    } else if (normalizedMediaType === "gallery") {
+      updateData.media_images = mediaImages.filter(item => item !== url);
     } else if (normalizedMediaType === "document") {
       updateData.media_documents = mediaDocuments.filter(item => item !== url);
       

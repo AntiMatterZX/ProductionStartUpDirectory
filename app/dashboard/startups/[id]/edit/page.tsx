@@ -3,354 +3,241 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import BasicInfoForm from "../../create/basic-info/form"
-import DetailedInfoForm from "../../create/detailed-info/form"
-import MediaUploadForm from "../../create/media-upload/form"
-import { toast } from "@/components/ui/use-toast"
-import { createClientComponentClient } from "@/lib/supabase/client-component"
-import type { StartupFormData } from "@/types/startup"
-import type { Database } from "@/types/database"
-import { AnimatePresence, motion } from "framer-motion"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Edit, Save, Eye, CheckCircle2, Pencil } from "lucide-react"
-import type { BasicInfoFormValues, DetailedInfoFormValues, MediaUploadFormValues } from "@/lib/validations/startup"
-import LoadingIndicator from "@/components/ui/loading-indicator"
-import StartupLogoUpload from "@/app/components/StartupLogoUpload"
-import StartupMediaUpload from "@/app/components/StartupMediaUpload"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ArrowLeftCircle, Loader2, PencilIcon, Save } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "@/components/ui/use-toast"
+import { Database } from "@/types/database"
+import StartupMediaDisplay from "@/app/components/StartupMediaDisplay"
 
 export default function EditStartupPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const startupId = params.id
   const supabase = createClientComponentClient<Database>()
-  const [activeTab, setActiveTab] = useState("details")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // State
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   const [startupData, setStartupData] = useState<any>(null)
-  const [logoUrl, setLogoUrl] = useState<string | null>(null)
-  const [formData, setFormData] = useState<StartupFormData>({
-    basicInfo: {
-      name: "",
-      slug: "",
-      tagline: "",
-      industry: 0,
-      foundingDate: "",
-      website: "",
-    },
-    detailedInfo: {
-      description: "",
-      fundingStage: "",
-      fundingAmount: "",
-      teamSize: "",
-      location: "",
-      lookingFor: [],
-    },
-    mediaInfo: {
-      logo: undefined,
-      coverImage: undefined,
-      pitchDeck: undefined,
-      videoUrl: "",
-      socialLinks: {
-        linkedin: "",
-        twitter: "",
-      },
-    },
+  const [categories, setCategories] = useState<any[]>([])
+  const [lookingForOptions, setLookingForOptions] = useState<any[]>([])
+  const [mediaItems, setMediaItems] = useState({
+    images: [] as string[],
+    documents: [] as string[],
+    videos: [] as string[]
   })
-
-  // State for form validity
+  
+  // Form data for different steps
+  const [formData, setFormData] = useState({
+    basicInfo: {},
+    detailedInfo: {},
+    mediaInfo: {}
+  })
+  
+  // Form validation state
   const [formValidity, setFormValidity] = useState({
     step1: false,
     step2: false,
     step3: false
   })
-
-  // Fetch startup data and populate form
+  
+  // Fetch startup data
   useEffect(() => {
-    async function fetchStartupData() {
+    const fetchStartupData = async () => {
       try {
-        setIsLoading(true);
+        setIsLoading(true)
         
-        // Check authentication first
+        // Check authentication
         const { data: { session } } = await supabase.auth.getSession()
-        
         if (!session) {
           toast({
             title: "Authentication required",
-            description: "Please log in to edit a startup",
-            variant: "destructive",
+            description: "Please log in to edit your startup",
+            variant: "destructive"
           })
-          router.push(`/login?redirect=/dashboard/startups/${startupId}/edit`)
+          router.push("/login?redirect=/dashboard/startups")
           return
         }
-
-        // Fetch the startup data
+        
+        // Fetch startup data
         const { data: startup, error } = await supabase
           .from("startups")
           .select(`
             *,
             categories(id, name)
           `)
-          .eq("id", startupId)
+          .eq("id", params.id)
           .single()
-
-        if (error) {
-          console.error("Database error fetching startup:", error);
-          
-          // Handle specific error codes
-          if (error.code === 'PGRST116') {
-            // This is the "not found" error code
-            throw new Error("Startup not found. It may have been deleted or never existed.");
-          } else {
-            throw new Error(`Database error: ${error.message}`);
-          }
-        }
-
-        if (!startup) {
-          throw new Error("Startup not found. It may have been deleted.");
-        }
-
-        // Check if the user owns this startup
-        if (startup.user_id !== session.user.id) {
-          throw new Error("You don't have permission to edit this startup");
-        }
-
-        // Store startup data for display
-        setStartupData(startup);
-        setLogoUrl(startup.logo_url || null);
-
-        // Fetch social links separately
-        const { data: socialLinksData, error: socialLinksError } = await supabase
-          .from("social_links")
-          .select("id, platform, url")
-          .eq("startup_id", startupId);
-
-        if (socialLinksError) {
-          console.error("Error fetching social links:", socialLinksError);
-        }
-
-        // Add social links to the startup data
-        startup.social_links = socialLinksData || [];
-
-        // Map database data to form structure
-        const lookingForOptions = startup.looking_for || [];
-
-        const socialLinks = {
-          linkedin: "",
-          twitter: "",
-        };
-
-        // Extract social links
-        if (startup.social_links && Array.isArray(startup.social_links)) {
-          startup.social_links.forEach((link: any) => {
-            if (link.platform === "linkedin") {
-              socialLinks.linkedin = link.url || "";
-            }
-            if (link.platform === "twitter") {
-              socialLinks.twitter = link.url || "";
-            }
-          });
-        }
-
-        // Convert founding date to YYYY-MM-DD format for input field
-        let formattedFoundingDate = "";
-        if (startup.founding_date) {
-          try {
-            const date = new Date(startup.founding_date);
-            formattedFoundingDate = date.toISOString().split('T')[0];
-          } catch (e) {
-            console.error("Invalid date format:", startup.founding_date);
-            formattedFoundingDate = new Date().toISOString().split('T')[0]; // Fallback to today
-          }
-        }
-
-        // Populate form data
-        setFormData({
-          basicInfo: {
-            name: startup.name || "",
-            slug: startup.slug || "",
-            tagline: startup.tagline || "",
-            industry: startup.category_id || 0,
-            foundingDate: formattedFoundingDate,
-            website: startup.website_url || "",
-          },
-          detailedInfo: {
-            description: startup.description || "",
-            fundingStage: startup.funding_stage || "",
-            fundingAmount: startup.funding_amount?.toString() || "",
-            teamSize: startup.employee_count?.toString() || "",
-            location: startup.location || "",
-            lookingFor: lookingForOptions,
-          },
-          mediaInfo: {
-            logo: undefined, // Can't prefill file inputs
-            coverImage: undefined,
-            pitchDeck: undefined,
-            videoUrl: startup.video_url || "", 
-            socialLinks: socialLinks,
-          },
-        });
-
-        // Mark form as pre-filled for validation
-        setFormValidity({
-          step1: true,
-          step2: true,
-          step3: true
-        });
         
-        console.log("Startup data loaded successfully:", startup.name);
+        if (error) {
+          console.error("Error fetching startup:", error)
+          throw new Error(error.message)
+        }
+        
+        if (!startup) {
+          toast({
+            title: "Startup not found",
+            description: "The startup you're trying to edit doesn't exist or has been deleted",
+            variant: "destructive"
+          })
+          router.push("/dashboard/startups")
+          return
+        }
+        
+        // Check if user owns this startup
+        if (startup.user_id !== session.user.id) {
+          toast({
+            title: "Access denied",
+            description: "You don't have permission to edit this startup",
+            variant: "destructive"
+          })
+          router.push("/dashboard/startups")
+          return
+        }
+        
+        // Fetch categories
+        const { data: categoriesData } = await supabase
+          .from("categories")
+          .select("*")
+          .order("name")
+        
+        if (categoriesData) {
+          setCategories(categoriesData)
+        }
+        
+        // Fetch looking for options
+        const { data: lookingForOptionsData } = await supabase
+          .from("looking_for_options")
+          .select("*")
+          .order("name")
+        
+        if (lookingForOptionsData) {
+          setLookingForOptions(lookingForOptionsData)
+        }
+        
+        // Set startup data
+        setStartupData(startup)
+        
+        // Initialize media items
+        setMediaItems({
+          images: startup.media_images || [],
+          documents: startup.media_documents || [],
+          videos: startup.media_videos || []
+        })
+        
+        console.log("Startup data loaded successfully:", startup.name)
         
       } catch (error: any) {
-        console.error("Error fetching startup for editing:", error);
+        console.error("Error fetching startup for editing:", error)
         toast({
-          title: "Error loading startup",
-          description: error.message || "Failed to load startup data. Please try again.",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          router.push("/dashboard/startups");
-        }, 2000);
+          title: "Error",
+          description: error.message || "Failed to load startup data",
+          variant: "destructive"
+        })
+        router.push("/dashboard/startups")
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
     }
     
-    fetchStartupData();
-  }, [supabase, startupId, router]);
-
-  const handleSubmit = async (completeData: StartupFormData) => {
-    try {
-      setIsSubmitting(true);
-      
-      // Basic input validation
-      if (!completeData.basicInfo.name || completeData.basicInfo.name.trim().length < 3) {
-        toast({
-          title: "Validation Error",
-          description: "Startup name is too short",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Get current date in ISO format
-      const currentDate = new Date().toISOString();
-      
-      // Prepare data for database
-      const dataToUpdate = {
-        name: completeData.basicInfo.name.trim(),
-        slug: completeData.basicInfo.slug.trim(),
-        tagline: completeData.basicInfo.tagline.trim(),
-        category_id: completeData.basicInfo.industry,
-        founding_date: completeData.basicInfo.foundingDate,
-        website_url: completeData.basicInfo.website.trim(),
-        
-        // Detailed info
-        description: completeData.detailedInfo.description.trim(),
-        funding_stage: completeData.detailedInfo.fundingStage,
-        funding_amount: completeData.detailedInfo.fundingAmount 
-          ? parseFloat(completeData.detailedInfo.fundingAmount) 
-          : null,
-        employee_count: completeData.detailedInfo.teamSize 
-          ? parseInt(completeData.detailedInfo.teamSize) 
-          : null,
-        location: completeData.detailedInfo.location.trim(),
-        looking_for: completeData.detailedInfo.lookingFor,
-        
-        // Media info - handled separately through API
-        video_url: completeData.mediaInfo.videoUrl.trim(),
-        
-        // Update timestamp
-        updated_at: currentDate
-      };
-      
-      // Update the startup record
-      const { error: updateError } = await supabase
-        .from("startups")
-        .update(dataToUpdate)
-        .eq("id", startupId);
-      
-      if (updateError) {
-        throw new Error(`Failed to update startup: ${updateError.message}`);
-      }
-      
-      // Handle social links
-      try {
-        // First, delete existing links (simple approach)
-        await supabase
-          .from("social_links")
-          .delete()
-          .eq("startup_id", startupId);
-        
-        // Insert new links if present
-        const socialLinks = [];
-        
-        if (completeData.mediaInfo.socialLinks.linkedin) {
-          socialLinks.push({
-            startup_id: startupId,
-            platform: "linkedin",
-            url: completeData.mediaInfo.socialLinks.linkedin.trim(),
-          });
+    fetchStartupData()
+  }, [params.id, router, supabase])
+  
+  // Handle media deletion via the MediaDeleteButton component
+  const handleMediaRemoved = (mediaType: string, url: string) => {
+    switch (mediaType) {
+      case "logo":
+        setStartupData((prev: any) => ({
+          ...prev,
+          logo_url: null
+        }))
+        break
+      case "banner":
+        setStartupData((prev: any) => ({
+          ...prev,
+          banner_url: null
+        }))
+        break
+      case "gallery":
+      case "image":
+        setMediaItems((prev) => ({
+          ...prev,
+          images: prev.images.filter(item => item !== url)
+        }))
+        break
+      case "document":
+      case "pitch_deck":
+        if (startupData?.pitch_deck_url === url) {
+          setStartupData((prev: any) => ({
+            ...prev,
+            pitch_deck_url: null
+          }))
         }
-        
-        if (completeData.mediaInfo.socialLinks.twitter) {
-          socialLinks.push({
-            startup_id: startupId,
-            platform: "twitter",
-            url: completeData.mediaInfo.socialLinks.twitter.trim(),
-          });
-        }
-        
-        if (socialLinks.length > 0) {
-          const { error: socialLinkError } = await supabase
-            .from("social_links")
-            .insert(socialLinks);
-            
-          if (socialLinkError) {
-            console.error("Error updating social links:", socialLinkError);
-          }
-        }
-      } catch (socialError) {
-        console.error("Error managing social links:", socialError);
-        // Don't fail the entire operation for social link errors
-      }
-
-      toast({
-        title: "Startup updated",
-        description: "Your startup has been updated successfully",
-      });
-      
-      // Navigate back to view page
-      router.push(`/dashboard/startups/${startupId}`);
-      
-    } catch (error: any) {
-      console.error("Error updating startup:", error);
-      toast({
-        title: "Update failed",
-        description: error.message || "There was a problem updating your startup. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+        setMediaItems((prev) => ({
+          ...prev,
+          documents: prev.documents.filter(item => item !== url)
+        }))
+        break
+      case "video":
+        setMediaItems((prev) => ({
+          ...prev,
+          videos: prev.videos.filter(item => item !== url)
+        }))
+        break
     }
-  };
-
-  function handleLogoUploaded(url: string) {
-    setLogoUrl(url);
+    
     toast({
-      title: "Logo uploaded",
-      description: "Your startup logo has been updated"
-    });
+      title: "Media removed",
+      description: `The ${mediaType} has been deleted successfully.`
+    })
   }
-
-  function handleMediaUploaded(url: string) {
+  
+  // Handle media uploads
+  const handleMediaUploaded = (url: string, type: string) => {
+    if (type === "logo") {
+      setStartupData((prev: any) => ({
+        ...prev,
+        logo_url: url
+      }))
+    } else if (type === "banner") {
+      setStartupData((prev: any) => ({
+        ...prev,
+        banner_url: url
+      }))
+    } else if (type === "image" || type === "gallery") {
+      setMediaItems((prev) => ({
+        ...prev,
+        images: [...prev.images, url]
+      }))
+    } else if (type === "document" || type === "pitch_deck") {
+      if (type === "pitch_deck") {
+        setStartupData((prev: any) => ({
+          ...prev,
+          pitch_deck_url: url
+        }))
+      }
+      setMediaItems((prev) => ({
+        ...prev,
+        documents: [...prev.documents, url]
+      }))
+    } else if (type === "video") {
+      setMediaItems((prev) => ({
+        ...prev,
+        videos: [...prev.videos, url]
+      }))
+    }
+    
     toast({
       title: "Media uploaded",
-      description: "Your media has been added to the startup"
-    });
+      description: `Your ${type.replace('_', ' ')} has been uploaded successfully`
+    })
   }
-
+  
   const updateFormData = (step: number, data: any) => {
     if (step === 1) {
       setFormData(prev => ({
@@ -369,7 +256,7 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
       }))
     }
   }
-
+  
   const updateFormValidity = (step: number, isValid: boolean) => {
     if (step === 1) {
       setFormValidity(prev => ({ ...prev, step1: isValid }))
@@ -379,255 +266,284 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
       setFormValidity(prev => ({ ...prev, step3: isValid }))
     }
   }
-
+  
+  // Handle save - update startup in the database
+  const handleSave = async () => {
+    try {
+      setIsSaving(true)
+      
+      // Prepare update data
+      const updateData = {
+        ...startupData,
+        media_images: mediaItems.images,
+        media_documents: mediaItems.documents,
+        media_videos: mediaItems.videos,
+        updated_at: new Date().toISOString()
+      }
+      
+      // Remove any fields that shouldn't be sent
+      delete updateData.categories
+      delete updateData.created_at
+      
+      // Update startup in the database
+      const { error } = await supabase
+        .from("startups")
+        .update(updateData)
+        .eq("id", params.id)
+      
+      if (error) {
+        throw new Error(`Error updating startup: ${error.message}`)
+      }
+      
+      toast({
+        title: "Success",
+        description: "Your startup has been updated successfully"
+      })
+      
+      // Redirect to startup detail page
+      router.push(`/dashboard/startups/${params.id}`)
+      
+    } catch (error: any) {
+      console.error("Error updating startup:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update startup",
+        variant: "destructive"
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+  
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen py-12 px-4">
-        <LoadingIndicator size="lg" />
-        <p className="text-muted-foreground mt-4">Loading startup data...</p>
+      <div className="container mx-auto py-8 flex justify-center items-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-    );
+    )
   }
-
+  
   return (
-    <div className="container py-6 space-y-8 max-w-7xl mx-auto px-4 sm:px-6">
-      {/* Header with actions */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">{startupData?.name || "Edit Startup"}</h1>
-          <p className="text-muted-foreground mt-1">{startupData?.tagline || "A short, catchy description for my startup"}</p>
+    <div className="container mx-auto py-8 px-4">
+      {/* Header with back button and save */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link href={`/dashboard/startups/${params.id}`}>
+              <ArrowLeftCircle className="h-4 w-4 mr-2" />
+              Back to Startup
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-bold">Edit {startupData?.name}</h1>
         </div>
         
-        <div className="flex gap-3 w-full sm:w-auto">
-          <Button asChild variant="outline" className="flex-1 sm:flex-initial justify-center">
-            <Link href={`/startups/${startupData?.slug || startupId}`} target="_blank">
-              <Eye className="h-4 w-4 mr-2" />
-              View Public Page
-            </Link>
-          </Button>
-          
-          <Button asChild className="flex-1 sm:flex-initial justify-center">
-            <Link href={`/dashboard/startups/${startupId}/edit`}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit Startup
-            </Link>
-          </Button>
-        </div>
+        {/* Save button */}
+        <Button
+          onClick={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+          Save Changes
+        </Button>
       </div>
       
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column - Media */}
-        <div className="space-y-6">
-          <Card className="overflow-hidden">
-            <CardContent className="p-4 sm:p-6">
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Media</h2>
-                <p className="text-sm text-muted-foreground">
-                  Upload and manage your startup's media assets
-                </p>
-                
-                <Tabs defaultValue="logo" className="w-full">
-                  <TabsList className="grid grid-cols-3 mb-4 w-full">
-                    <TabsTrigger value="logo" className="text-xs sm:text-sm">Logo & Images</TabsTrigger>
-                    <TabsTrigger value="documents" className="text-xs sm:text-sm">Documents</TabsTrigger>
-                    <TabsTrigger value="videos" className="text-xs sm:text-sm">Videos & Links</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="logo" className="space-y-6">
-                    {/* Company Logo Section */}
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center flex-wrap gap-2">
-                        <h3 className="font-medium">Company Logo</h3>
-                        <StartupLogoUpload 
-                          startupId={startupId}
-                          userId={startupData?.user_id || ""}
-                          currentLogoUrl={logoUrl}
-                          onUploaded={handleLogoUploaded}
-                          buttonText="Upload Logo"
-                          className="flex items-center gap-1"
-                        />
-                      </div>
-                      
-                      <div className="border rounded-md p-4 sm:p-6 flex items-center justify-center bg-muted/20">
-                        {logoUrl ? (
-                          <img
-                            src={logoUrl}
-                            alt="Company Logo"
-                            className="max-w-[120px] sm:max-w-[180px] max-h-[120px] sm:max-h-[180px] object-contain"
-                          />
-                        ) : (
-                          <div className="text-center text-muted-foreground">
-                            <p>No logo uploaded yet</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Images Section */}
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center flex-wrap gap-2">
-                        <h3 className="font-medium">Images</h3>
-                        <StartupMediaUpload
-                          startupId={startupId}
-                          userId={startupData?.user_id || ""}
-                          mediaType="image"
-                          onUploaded={handleMediaUploaded}
-                          buttonLabel="Upload Image"
-                        />
-                      </div>
-                      
-                      <div className="border rounded-md p-4 sm:p-6 flex items-center justify-center bg-muted/20 min-h-[200px]">
-                        {startupData?.media_images && startupData.media_images.length > 0 ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {startupData.media_images.map((imageUrl: string, index: number) => (
-                              <img
-                                key={index}
-                                src={imageUrl}
-                                alt={`Startup image ${index + 1}`}
-                                className="w-full h-[100px] object-cover rounded-md"
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-center text-muted-foreground">
-                            <p>No images uploaded yet</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="documents" className="space-y-4">
-                    <div className="flex justify-between items-center flex-wrap gap-2">
-                      <h3 className="font-medium">Documents</h3>
-                      <StartupMediaUpload
-                        startupId={startupId}
-                        userId={startupData?.user_id || ""}
-                        mediaType="document"
-                        onUploaded={handleMediaUploaded}
-                        buttonLabel="Upload Document"
-                      />
-                    </div>
-                    
-                    <div className="border rounded-md p-4 sm:p-6 bg-muted/20 min-h-[200px]">
-                      {startupData?.media_documents && startupData.media_documents.length > 0 ? (
-                        <div className="space-y-3">
-                          {startupData.media_documents.map((docUrl: string, index: number) => (
-                            <div key={index} className="flex justify-between items-center p-3 bg-background rounded-md border">
-                              <span className="truncate max-w-[150px] sm:max-w-none">{docUrl.split('/').pop()}</span>
-                              <Button variant="ghost" size="sm" asChild>
-                                <a href={docUrl} target="_blank" rel="noopener noreferrer">View</a>
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center text-muted-foreground flex items-center justify-center h-[200px]">
-                          <p>No documents uploaded yet</p>
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="videos" className="space-y-4">
-                    <div className="flex justify-between items-center flex-wrap gap-2">
-                      <h3 className="font-medium">Videos</h3>
-                      <StartupMediaUpload
-                        startupId={startupId}
-                        userId={startupData?.user_id || ""}
-                        mediaType="video"
-                        onUploaded={handleMediaUploaded}
-                        buttonLabel="Add Video"
-                      />
-                    </div>
-                    
-                    <div className="border rounded-md p-4 sm:p-6 bg-muted/20 min-h-[200px]">
-                      {formData.mediaInfo.videoUrl ? (
-                        <div className="aspect-video overflow-hidden rounded-md">
-                          <iframe
-                            width="100%"
-                            height="100%"
-                            src={formData.mediaInfo.videoUrl}
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                          ></iframe>
-                        </div>
-                      ) : (
-                        <div className="text-center text-muted-foreground flex items-center justify-center h-[200px]">
-                          <p>No videos added yet</p>
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Main content */}
+      <Tabs defaultValue="details">
+        <TabsList className="mb-4">
+          <TabsTrigger value="details">Basic Details</TabsTrigger>
+          <TabsTrigger value="media">Media</TabsTrigger>
+          <TabsTrigger value="additional">Additional Info</TabsTrigger>
+        </TabsList>
         
-        {/* Right Column - Startup Details */}
-        <div className="space-y-6">
-          <Card className="overflow-hidden">
-            <CardContent className="p-4 sm:p-6">
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Startup Details</h2>
+        <TabsContent value="details">
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Details</CardTitle>
+              <CardDescription>Edit your startup's basic information</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Startup Name</Label>
+                  <Input
+                    id="name"
+                    value={startupData?.name || ""}
+                    onChange={(e) => setStartupData({ ...startupData, name: e.target.value })}
+                  />
+                </div>
                 
-                <Tabs defaultValue="basic" className="w-full">
-                  <TabsList className="grid grid-cols-2 mb-4 w-full">
-                    <TabsTrigger value="basic" className="text-xs sm:text-sm">Basic Info</TabsTrigger>
-                    <TabsTrigger value="detailed" className="text-xs sm:text-sm">Additional Details</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="basic">
-                    <BasicInfoForm
-                      initialData={formData.basicInfo}
-                      onSubmit={(data, isValid) => {
-                        updateFormData(1, data);
-                        updateFormValidity(1, isValid);
-                      }}
-                      hideButtons={true}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="detailed">
-                    <DetailedInfoForm
-                      initialData={formData.detailedInfo}
-                      onSubmit={(data, isValid) => {
-                        updateFormData(2, data);
-                        updateFormValidity(2, isValid);
-                      }}
-                      onBack={() => {}}
-                      hideButtons={true}
-                    />
-                  </TabsContent>
-                </Tabs>
+                <div className="space-y-2">
+                  <Label htmlFor="tagline">Tagline</Label>
+                  <Input
+                    id="tagline"
+                    value={startupData?.tagline || ""}
+                    onChange={(e) => setStartupData({ ...startupData, tagline: e.target.value })}
+                    placeholder="A short, catchy description of your startup"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={startupData?.description || ""}
+                    onChange={(e) => setStartupData({ ...startupData, description: e.target.value })}
+                    rows={5}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select
+                    value={startupData?.category_id?.toString() || ""}
+                    onValueChange={(value) => setStartupData({ ...startupData, category_id: parseInt(value) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id.toString()}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
-          
-          <div className="flex flex-col sm:flex-row justify-between gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => router.push(`/dashboard/startups/${startupId}`)}
-              className="w-full sm:w-auto order-2 sm:order-1"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
-            
-            <Button 
-              onClick={() => handleSubmit(formData)}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto order-1 sm:order-2"
-            >
-              {isSubmitting ? <LoadingIndicator size="sm" className="mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-              Save Changes
-            </Button>
-          </div>
-        </div>
-      </div>
+        </TabsContent>
+        
+        <TabsContent value="media">
+          <Card>
+            <CardHeader>
+              <CardTitle>Media Assets</CardTitle>
+              <CardDescription>
+                Manage your startup's logo, images, documents, and videos
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <StartupMediaDisplay
+                startupId={params.id}
+                mediaImages={mediaItems.images}
+                mediaDocuments={mediaItems.documents}
+                mediaVideos={mediaItems.videos}
+                logoUrl={startupData?.logo_url}
+                bannerUrl={startupData?.banner_url}
+                isEditing={true}
+                onMediaRemoved={handleMediaRemoved}
+                onMediaAdded={(mediaType, url) => handleMediaUploaded(url, mediaType)}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="additional">
+          <Card>
+            <CardHeader>
+              <CardTitle>Additional Information</CardTitle>
+              <CardDescription>More details about your startup</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website</Label>
+                  <Input
+                    id="website"
+                    value={startupData?.website_url || ""}
+                    onChange={(e) => setStartupData({ ...startupData, website_url: e.target.value })}
+                    placeholder="https://example.com"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={startupData?.location || ""}
+                    onChange={(e) => setStartupData({ ...startupData, location: e.target.value })}
+                    placeholder="City, Country"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="linkedin">LinkedIn URL</Label>
+                  <Input
+                    id="linkedin"
+                    value={startupData?.linkedin_url || ""}
+                    onChange={(e) => setStartupData({ ...startupData, linkedin_url: e.target.value })}
+                    placeholder="https://linkedin.com/company/..."
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="twitter">Twitter URL</Label>
+                  <Input
+                    id="twitter"
+                    value={startupData?.twitter_url || ""}
+                    onChange={(e) => setStartupData({ ...startupData, twitter_url: e.target.value })}
+                    placeholder="https://twitter.com/..."
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="founding-date">Founding Date</Label>
+                  <Input
+                    id="founding-date"
+                    type="date"
+                    value={startupData?.founding_date ? startupData.founding_date.substring(0, 10) : ""}
+                    onChange={(e) => setStartupData({ ...startupData, founding_date: e.target.value })}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="team-size">Team Size</Label>
+                  <Input
+                    id="team-size"
+                    type="number"
+                    min="1"
+                    value={startupData?.employee_count || ""}
+                    onChange={(e) => setStartupData({ ...startupData, employee_count: parseInt(e.target.value) })}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>What are you looking for?</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {lookingForOptions.map((option) => (
+                    <div key={option.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`looking-for-${option.id}`}
+                        checked={startupData?.looking_for?.includes(option.id) || false}
+                        onChange={(e) => {
+                          const currentOptions = [...(startupData?.looking_for || [])];
+                          if (e.target.checked) {
+                            // Add option
+                            setStartupData({
+                              ...startupData,
+                              looking_for: [...currentOptions, option.id]
+                            });
+                          } else {
+                            // Remove option
+                            setStartupData({
+                              ...startupData,
+                              looking_for: currentOptions.filter(id => id !== option.id)
+                            });
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`looking-for-${option.id}`}>{option.name}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
-  );
+  )
 } 

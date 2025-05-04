@@ -2,16 +2,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { StartupMedia } from "@/types/startup"
+import { Separator } from "@/components/ui/separator"
 
 interface StartupMediaProps {
   media?: StartupMedia[]
   videoUrl?: string
+  logoUrl?: string
+  bannerUrl?: string
 }
 
-export default function StartupMedia({ media, videoUrl }: StartupMediaProps) {
+export default function StartupMedia({ media, videoUrl, logoUrl, bannerUrl }: StartupMediaProps) {
   const pitchDeck = media?.find((m) => m.media_type === "document")
-
-  if (!media?.length && !videoUrl) return null
+  
+  // Filter gallery images (excluding logo and banner)
+  const galleryImages = media
+    ?.filter(m => m.media_type === "image" && 
+               !m.is_featured && 
+               m.url !== logoUrl && 
+               m.url !== bannerUrl)
+    || [];
+  
+  // If no media at all, don't show the component
+  if (!media?.length && !videoUrl && !logoUrl && !bannerUrl) return null
 
   return (
     <Card>
@@ -19,6 +31,20 @@ export default function StartupMedia({ media, videoUrl }: StartupMediaProps) {
         <CardTitle>Media</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Banner Image */}
+        {bannerUrl && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Banner Image</h3>
+            <div className="aspect-video rounded-md overflow-hidden bg-muted">
+              <img 
+                src={bannerUrl}
+                alt="Startup banner" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        )}
+        
         {/* Video Embed */}
         {videoUrl && (
           <div className="space-y-2">
@@ -52,21 +78,19 @@ export default function StartupMedia({ media, videoUrl }: StartupMediaProps) {
         )}
 
         {/* Gallery */}
-        {media?.filter((m) => m.media_type === "image" && !m.is_featured).length > 0 && (
+        {galleryImages.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-medium">Gallery</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {media
-                ?.filter((m) => m.media_type === "image" && !m.is_featured)
-                .map((image) => (
-                  <div key={image.id} className="aspect-square rounded-md overflow-hidden">
-                    <img
-                      src={image.url || "/placeholder.svg"}
-                      alt={image.title || "Startup image"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
+              {galleryImages.map((image) => (
+                <div key={image.id} className="aspect-square rounded-md overflow-hidden">
+                  <img
+                    src={image.url || "/placeholder.svg"}
+                    alt={image.title || "Startup image"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
             </div>
           </div>
         )}
