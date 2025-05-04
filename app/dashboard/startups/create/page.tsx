@@ -15,6 +15,8 @@ import type { Database } from "@/types/database"
 import { AnimatePresence, motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, ArrowRight, CheckCircle2, Save } from "lucide-react"
+import { useLoading } from "@/components/ui/loading-context"
+import PsychedelicLoader from "@/components/ui/psychedelic-loader"
 
 export default function CreateStartupPage() {
   const router = useRouter()
@@ -22,6 +24,7 @@ export default function CreateStartupPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const { startLoading, stopLoading } = useLoading()
   const [formData, setFormData] = useState<StartupFormData>({
     basicInfo: {
       name: "",
@@ -64,6 +67,7 @@ export default function CreateStartupPage() {
   useEffect(() => {
     async function checkAuth() {
       try {
+        startLoading("Checking authorization...")
         const { data: { session } } = await supabase.auth.getSession()
         
         if (!session) {
@@ -79,11 +83,12 @@ export default function CreateStartupPage() {
         console.error("Error checking auth:", error)
       } finally {
         setIsLoading(false)
+        stopLoading()
       }
     }
     
     checkAuth()
-  }, [supabase, router])
+  }, [supabase, router, startLoading, stopLoading])
 
   const handleStepChange = (step: number) => {
     // Only allow navigation to previously completed steps or the next available step
@@ -131,6 +136,7 @@ export default function CreateStartupPage() {
   const handleSubmit = async (completeData: StartupFormData) => {
     try {
       setIsSubmitting(true)
+      startLoading("Creating your startup... This might take a moment.")
 
       // Check authentication status again before submitting
       const { data: { session } } = await supabase.auth.getSession()
@@ -202,14 +208,16 @@ export default function CreateStartupPage() {
       })
     } finally {
       setIsSubmitting(false)
+      stopLoading()
     }
   }
 
   if (isLoading) {
     return (
       <div className="container max-w-4xl py-10 flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="ml-4 text-muted-foreground">Loading...</p>
+        <div className="h-64 w-64">
+          <PsychedelicLoader />
+        </div>
       </div>
     )
   }

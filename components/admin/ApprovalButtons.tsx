@@ -6,6 +6,8 @@ import { useToast } from "@/components/ui/use-toast"
 import { createClientComponentClient } from "@/lib/supabase/client-component"
 import { CheckCircle2, XCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useLoading } from "@/components/ui/loading-context"
+import LoadingIndicator from "@/components/ui/loading-indicator"
 
 interface ApprovalButtonsProps {
   startupId: string
@@ -13,6 +15,7 @@ interface ApprovalButtonsProps {
 
 export function ApprovalButtons({ startupId }: ApprovalButtonsProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const { startLoading, stopLoading } = useLoading()
   const { toast } = useToast()
   const router = useRouter()
   const supabase = createClientComponentClient()
@@ -20,6 +23,7 @@ export function ApprovalButtons({ startupId }: ApprovalButtonsProps) {
   async function handleApproval(approve: boolean) {
     try {
       setIsLoading(true)
+      startLoading(`${approve ? 'Approving' : 'Rejecting'} startup...`)
       
       const { error } = await supabase
         .from("startups")
@@ -51,6 +55,7 @@ export function ApprovalButtons({ startupId }: ApprovalButtonsProps) {
       console.error(error)
     } finally {
       setIsLoading(false)
+      stopLoading()
     }
   }
 
@@ -63,7 +68,7 @@ export function ApprovalButtons({ startupId }: ApprovalButtonsProps) {
         onClick={() => handleApproval(false)}
         disabled={isLoading}
       >
-        <XCircle className="h-4 w-4 mr-1" />
+        {isLoading ? <LoadingIndicator size="sm" className="mr-1" /> : <XCircle className="h-4 w-4 mr-1" />}
         Reject
       </Button>
       <Button 
@@ -73,7 +78,7 @@ export function ApprovalButtons({ startupId }: ApprovalButtonsProps) {
         onClick={() => handleApproval(true)}
         disabled={isLoading}
       >
-        <CheckCircle2 className="h-4 w-4 mr-1" />
+        {isLoading ? <LoadingIndicator size="sm" className="mr-1" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
         Approve
       </Button>
     </div>

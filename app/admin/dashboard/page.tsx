@@ -1,7 +1,17 @@
 import { createServerComponentClient } from "@/lib/supabase/server-component"
 import Link from "next/link"
+import { Suspense } from "react"
+import LoadingIndicator from "@/components/ui/loading-indicator"
 
 export default async function AdminDashboardPage() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent />
+    </Suspense>
+  )
+}
+
+async function DashboardContent() {
   // Get the Supabase client
   const supabase = await createServerComponentClient()
 
@@ -98,6 +108,28 @@ export default async function AdminDashboardPage() {
             <p className="text-center py-4 text-muted-foreground">No recent activity</p>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white rounded-lg border p-6 h-40 animate-pulse">
+            <div className="h-4 bg-slate-200 rounded w-1/3 mb-4"></div>
+            <div className="h-8 bg-slate-200 rounded w-1/4 mb-2"></div>
+            <div className="h-3 bg-slate-200 rounded w-2/3 mb-6"></div>
+            <div className="h-3 bg-slate-200 rounded w-1/4"></div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="mt-8 flex justify-center">
+        <LoadingIndicator size="lg" />
       </div>
     </div>
   )
