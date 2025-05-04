@@ -10,9 +10,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
-import { CheckCircle2, XCircle, Plus, Trash2, AlertCircle } from "lucide-react"
+import { CheckCircle2, XCircle, Plus, Trash2, AlertCircle, Calendar, User } from "lucide-react"
 import LoadingIndicator from "@/components/ui/loading-indicator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { motion } from "framer-motion"
 import { v4 as uuidv4 } from "uuid"
 
 // Force client-side rendering to ensure fresh data
@@ -282,7 +282,7 @@ export default function ModerationPage() {
     }
   }
 
-  // Change startup status
+  // Change startup status - for drag and drop
   async function changeStatus(id: string, newStatus: string) {
     try {
       const { error } = await supabase
@@ -312,131 +312,43 @@ export default function ModerationPage() {
     }
   }
 
-  // Render startup card
-  function StartupCard({ startup, showActions = true }: { startup: any, showActions?: boolean }) {
-    const isPending = typeof startup.status === 'string' && startup.status.toLowerCase() === 'pending'
-    const isApproved = typeof startup.status === 'string' && startup.status.toLowerCase() === 'approved'
-    const isRejected = typeof startup.status === 'string' && startup.status.toLowerCase() === 'rejected'
-    
-    // Normalize status display
-    const statusDisplay = typeof startup.status === 'string' 
-      ? startup.status.charAt(0).toUpperCase() + startup.status.slice(1).toLowerCase()
-      : 'Unknown'
-    
-    // Status-based styling classes
-    const cardClasses = isPending 
-      ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/20' 
-      : isApproved 
-        ? 'border-green-200 bg-green-50/50 dark:bg-green-950/20' 
-        : isRejected 
-          ? 'border-red-200 bg-red-50/50 dark:bg-red-950/20' 
-          : 'border-slate-200'
-          
-    const badgeClasses = isPending 
-      ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' 
-      : isApproved 
-        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
-        : isRejected 
-          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' 
-          : 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300'
+  // Handle drag end - when a card is dropped into a new column
+  const handleDragEnd = (result: any) => {
+    const { destination, source, draggableId } = result;
 
-    return (
-      <Card key={startup.id} className={`overflow-hidden ${cardClasses}`}>
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row justify-between gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-lg">{startup.name || "Unnamed Startup"}</h3>
-                <Badge variant="outline" className={badgeClasses}>
-                  {statusDisplay}
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                ID: {startup.id}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                User ID: {startup.user_id || "Unknown"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Created: {startup.created_at ? new Date(startup.created_at).toLocaleString() : "Unknown date"}
-              </p>
-              <p className="line-clamp-2 text-sm mt-2">
-                {startup.description || "No description provided"}
-              </p>
-            </div>
-            
-            {showActions && (
-              <div className="flex flex-col gap-2 self-end">
-                <div className="flex gap-2">
-                  {startup.slug && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      asChild
-                    >
-                      <Link href={`/startups/${startup.slug}`} target="_blank">
-                        Preview
-                      </Link>
-                    </Button>
-                  )}
-                  
-                  {isPending && (
-                    <>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="border-red-200 hover:bg-red-100 hover:text-red-900"
-                        onClick={() => handleApproval(startup.id, false)}
-                        disabled={approving === startup.id}
-                      >
-                        {approving === startup.id ? <LoadingIndicator size="sm" /> : <XCircle className="h-4 w-4 mr-1" />}
-                        Reject
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="border-green-200 hover:bg-green-100 hover:text-green-900"
-                        onClick={() => handleApproval(startup.id, true)}
-                        disabled={approving === startup.id}
-                      >
-                        {approving === startup.id ? <LoadingIndicator size="sm" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
-                        Approve
-                      </Button>
-                    </>
-                  )}
-                </div>
-                
-                <div className="flex gap-2 mt-2">
-                  {!isPending && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => changeStatus(startup.id, 'pending')}
-                    >
-                      Set as Pending
-                    </Button>
-                  )}
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="border-red-200 hover:bg-red-100 hover:text-red-900"
-                    onClick={() => handleDelete(startup.id)}
-                    disabled={deleting === startup.id}
-                  >
-                    {deleting === startup.id ? <LoadingIndicator size="sm" /> : <Trash2 className="h-4 w-4 mr-1" />}
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+    // If there's no destination or the card was dropped back to its original position
+    if (!destination || 
+        (destination.droppableId === source.droppableId && 
+         destination.index === source.index)) {
+      return;
+    }
+
+    // Get the new status based on the destination column
+    let newStatus;
+    switch (destination.droppableId) {
+      case 'pending':
+        newStatus = 'pending';
+        break;
+      case 'approved':
+        newStatus = 'approved';
+        break;
+      case 'rejected':
+        newStatus = 'rejected';
+        break;
+      case 'delete':
+        // If dropped on delete zone, delete the startup
+        handleDelete(draggableId);
+        return;
+      default:
+        return;
+    }
+
+    // Update the startup's status in the database
+    changeStatus(draggableId, newStatus);
+  };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-neutral-50 dark:bg-neutral-900 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">Startup Moderation</h1>
@@ -448,16 +360,21 @@ export default function ModerationPage() {
           variant="default" 
           onClick={fetchAllStartups}
           disabled={loading}
+          className="gap-2"
         >
-          {loading ? <LoadingIndicator size="sm" className="mr-2" /> : <AlertCircle className="h-4 w-4 mr-2" />}
+          {loading ? <LoadingIndicator size="sm" /> : <AlertCircle className="h-4 w-4" />}
           Refresh Data
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card className="md:col-span-2">
+      {/* Create Test Startup + Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <Card className="md:col-span-2 border-2 shadow-md hover:border-primary/30 transition-all duration-300">
           <CardHeader>
-            <CardTitle>Create Test Startup</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" /> 
+              Create Test Startup
+            </CardTitle>
             <CardDescription>
               Create a startup with "pending" status for testing
             </CardDescription>
@@ -471,6 +388,7 @@ export default function ModerationPage() {
                   placeholder="Enter test startup name"
                   value={testName}
                   onChange={(e) => setTestName(e.target.value)}
+                  className="border-2 focus:border-primary/50"
                 />
               </div>
               <div className="space-y-2">
@@ -480,6 +398,7 @@ export default function ModerationPage() {
                   placeholder="Enter startup description"
                   value={testDescription}
                   onChange={(e) => setTestDescription(e.target.value)}
+                  className="border-2 focus:border-primary/50 min-h-[100px]"
                 />
               </div>
             </div>
@@ -488,41 +407,44 @@ export default function ModerationPage() {
             <Button 
               onClick={createTestStartup}
               disabled={creating || !testName}
-              className="w-full"
+              className="w-full gap-2"
             >
-              {creating ? <LoadingIndicator size="sm" className="mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              {creating ? <LoadingIndicator size="sm" /> : <Plus className="h-4 w-4" />}
               Create Test Startup
             </Button>
           </CardFooter>
         </Card>
 
-        <Card>
+        <Card className="border-2 shadow-md hover:border-primary/30 transition-all duration-300">
           <CardHeader>
-            <CardTitle>Statistics</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-primary" />
+              Statistics
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Total Startups</span>
-                <Badge variant="outline" className="text-base">
+              <div className="flex justify-between items-center p-2 bg-neutral-100 dark:bg-neutral-800 rounded-md">
+                <span className="font-medium">Total Startups</span>
+                <Badge variant="outline" className="text-base bg-neutral-200 dark:bg-neutral-700">
                   {startups?.length || 0}
                 </Badge>
               </div>
-              <div className="flex justify-between items-center">
-                <span>Pending Approval</span>
-                <Badge variant="outline" className="bg-amber-100 text-amber-800 text-base">
+              <div className="flex justify-between items-center p-2 bg-amber-50 dark:bg-amber-950/30 rounded-md">
+                <span className="font-medium text-amber-800 dark:text-amber-300">Pending</span>
+                <Badge variant="outline" className="text-base bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">
                   {pendingStartups?.length || 0}
                 </Badge>
               </div>
-              <div className="flex justify-between items-center">
-                <span>Approved</span>
-                <Badge variant="outline" className="bg-green-100 text-green-800 text-base">
+              <div className="flex justify-between items-center p-2 bg-green-50 dark:bg-green-950/30 rounded-md">
+                <span className="font-medium text-green-800 dark:text-green-300">Approved</span>
+                <Badge variant="outline" className="text-base bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
                   {approvedStartups?.length || 0}
                 </Badge>
               </div>
-              <div className="flex justify-between items-center">
-                <span>Rejected</span>
-                <Badge variant="outline" className="bg-red-100 text-red-800 text-base">
+              <div className="flex justify-between items-center p-2 bg-red-50 dark:bg-red-950/30 rounded-md">
+                <span className="font-medium text-red-800 dark:text-red-300">Rejected</span>
+                <Badge variant="outline" className="text-base bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">
                   {rejectedStartups?.length || 0}
                 </Badge>
               </div>
@@ -531,97 +453,269 @@ export default function ModerationPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid grid-cols-4 mb-4">
-          <TabsTrigger value="pending">
-            Pending ({pendingStartups?.length || 0})
-          </TabsTrigger>
-          <TabsTrigger value="approved">
-            Approved ({approvedStartups?.length || 0})
-          </TabsTrigger>
-          <TabsTrigger value="rejected">
-            Rejected ({rejectedStartups?.length || 0})
-          </TabsTrigger>
-          <TabsTrigger value="all">
-            All Startups ({startups?.length || 0})
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="pending">
-          {loading ? (
-            <div className="flex justify-center py-10">
-              <LoadingIndicator size="lg" />
+      {/* Kanban Board */}
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <LoadingIndicator size="lg" />
+        </div>
+      ) : (
+        <div className="flex gap-6 overflow-x-auto pb-6 snap-x">
+          {/* Pending Column */}
+          <div className="min-w-[350px] w-1/3 snap-start">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-medium text-amber-600 dark:text-amber-400 text-lg">Pending</h3>
+              <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">
+                {pendingStartups?.length || 0}
+              </Badge>
             </div>
-          ) : !pendingStartups || pendingStartups.length === 0 ? (
-            <div className="text-center py-12 bg-muted/20 rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">No pending startups</h3>
-              <p className="text-muted-foreground">
-                All startups have been reviewed. Great job!
-              </p>
+            <div className="space-y-4 p-4 bg-amber-50/50 dark:bg-amber-950/10 rounded-lg min-h-[400px] border-2 border-amber-200 dark:border-amber-800/30">
+              {!pendingStartups || pendingStartups.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 text-amber-400 dark:text-amber-500 text-center p-6 border-2 border-dashed border-amber-200 dark:border-amber-800/30 rounded-lg bg-amber-50 dark:bg-amber-950/20">
+                  <p className="text-sm mb-2">No pending startups</p>
+                  <p className="text-xs text-amber-500/70 dark:text-amber-600/70">All startups have been reviewed</p>
+                </div>
+              ) : (
+                pendingStartups.map((startup) => (
+                  <StartupCard
+                    key={startup.id}
+                    startup={startup}
+                    onApprove={() => handleApproval(startup.id, true)}
+                    onReject={() => handleApproval(startup.id, false)}
+                    onDelete={() => handleDelete(startup.id)}
+                    isApproving={approving === startup.id}
+                    isDeleting={deleting === startup.id}
+                    primary="amber"
+                  />
+                ))
+              )}
             </div>
-          ) : (
-            <div className="space-y-4">
-              {pendingStartups.map((startup) => (
-                <StartupCard key={startup.id} startup={startup} />
-              ))}
+          </div>
+
+          {/* Approved Column */}
+          <div className="min-w-[350px] w-1/3 snap-start">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-medium text-green-600 dark:text-green-400 text-lg">Approved</h3>
+              <Badge variant="outline" className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                {approvedStartups?.length || 0}
+              </Badge>
             </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="approved">
-          {loading ? (
-            <div className="flex justify-center py-10">
-              <LoadingIndicator size="lg" />
+            <div className="space-y-4 p-4 bg-green-50/50 dark:bg-green-950/10 rounded-lg min-h-[400px] border-2 border-green-200 dark:border-green-800/30">
+              {!approvedStartups || approvedStartups.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 text-green-400 dark:text-green-500 text-center p-6 border-2 border-dashed border-green-200 dark:border-green-800/30 rounded-lg bg-green-50 dark:bg-green-950/20">
+                  <p className="text-sm mb-2">No approved startups</p>
+                  <p className="text-xs text-green-500/70 dark:text-green-600/70">Approve pending startups to see them here</p>
+                </div>
+              ) : (
+                approvedStartups.map((startup) => (
+                  <StartupCard
+                    key={startup.id}
+                    startup={startup}
+                    onDelete={() => handleDelete(startup.id)}
+                    onRevert={() => changeStatus(startup.id, 'pending')}
+                    isDeleting={deleting === startup.id}
+                    primary="green"
+                  />
+                ))
+              )}
             </div>
-          ) : !approvedStartups || approvedStartups.length === 0 ? (
-            <div className="text-center py-12 bg-muted/20 rounded-lg">
-              <p className="text-muted-foreground">No approved startups found</p>
+          </div>
+
+          {/* Rejected Column */}
+          <div className="min-w-[350px] w-1/3 snap-start">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-medium text-red-600 dark:text-red-400 text-lg">Rejected</h3>
+              <Badge variant="outline" className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+                {rejectedStartups?.length || 0}
+              </Badge>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {approvedStartups.map((startup) => (
-                <StartupCard key={startup.id} startup={startup} />
-              ))}
+            <div className="space-y-4 p-4 bg-red-50/50 dark:bg-red-950/10 rounded-lg min-h-[400px] border-2 border-red-200 dark:border-red-800/30">
+              {!rejectedStartups || rejectedStartups.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 text-red-400 dark:text-red-500 text-center p-6 border-2 border-dashed border-red-200 dark:border-red-800/30 rounded-lg bg-red-50 dark:bg-red-950/20">
+                  <p className="text-sm mb-2">No rejected startups</p>
+                  <p className="text-xs text-red-500/70 dark:text-red-600/70">Rejected startups will appear here</p>
+                </div>
+              ) : (
+                rejectedStartups.map((startup) => (
+                  <StartupCard
+                    key={startup.id}
+                    startup={startup}
+                    onDelete={() => handleDelete(startup.id)}
+                    onRevert={() => changeStatus(startup.id, 'pending')}
+                    isDeleting={deleting === startup.id}
+                    primary="red"
+                  />
+                ))
+              )}
             </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="rejected">
-          {loading ? (
-            <div className="flex justify-center py-10">
-              <LoadingIndicator size="lg" />
+          </div>
+
+          {/* Delete Zone */}
+          <div className="min-w-[200px] flex items-start pt-8 snap-start">
+            <div 
+              className="border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg p-6 h-[200px] w-full flex flex-col items-center justify-center text-neutral-500 dark:text-neutral-400 hover:bg-red-50 hover:border-red-300 dark:hover:bg-red-950/20 dark:hover:border-red-800/30 hover:text-red-500 dark:hover:text-red-400 transition-all duration-300 cursor-pointer"
+              onClick={() => toast({ 
+                title: "Delete Startups", 
+                description: "Drag and drop startups here to delete them" 
+              })}
+            >
+              <Trash2 className="h-10 w-10 mb-2" />
+              <p className="text-sm font-medium">Drop to Delete</p>
+              <p className="text-xs mt-1 text-center">Drag cards here to permanently delete startups</p>
             </div>
-          ) : !rejectedStartups || rejectedStartups.length === 0 ? (
-            <div className="text-center py-12 bg-muted/20 rounded-lg">
-              <p className="text-muted-foreground">No rejected startups found</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {rejectedStartups.map((startup) => (
-                <StartupCard key={startup.id} startup={startup} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="all">
-          {loading ? (
-            <div className="flex justify-center py-10">
-              <LoadingIndicator size="lg" />
-            </div>
-          ) : !startups || startups.length === 0 ? (
-            <div className="text-center py-12 bg-muted/20 rounded-lg">
-              <p className="text-muted-foreground">No startups found in the database</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {startups.map((startup) => (
-                <StartupCard key={startup.id} startup={startup} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+          </div>
+        </div>
+      )}
     </div>
   )
+}
+
+// Enhanced Startup Card Component
+interface StartupCardProps {
+  startup: any;
+  onApprove?: () => void;
+  onReject?: () => void;
+  onDelete: () => void;
+  onRevert?: () => void;
+  isApproving?: boolean;
+  isDeleting?: boolean;
+  primary: 'amber' | 'green' | 'red';
+}
+
+function StartupCard({ 
+  startup, 
+  onApprove, 
+  onReject, 
+  onDelete, 
+  onRevert,
+  isApproving, 
+  isDeleting,
+  primary
+}: StartupCardProps) {
+  const colorClasses = {
+    amber: {
+      bg: 'bg-amber-50 dark:bg-amber-950/20',
+      border: 'border-amber-200 dark:border-amber-800/30',
+      text: 'text-amber-800 dark:text-amber-300',
+      badge: 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300'
+    },
+    green: {
+      bg: 'bg-green-50 dark:bg-green-950/20',
+      border: 'border-green-200 dark:border-green-800/30',
+      text: 'text-green-800 dark:text-green-300',
+      badge: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300'
+    },
+    red: {
+      bg: 'bg-red-50 dark:bg-red-950/20',
+      border: 'border-red-200 dark:border-red-800/30',
+      text: 'text-red-800 dark:text-red-300',
+      badge: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300'
+    }
+  };
+
+  const isPending = primary === 'amber';
+  const colors = colorClasses[primary];
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className={`rounded-lg border-2 ${colors.border} ${colors.bg} shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden`}
+    >
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h3 className="font-bold text-lg leading-tight">{startup.name || "Unnamed Startup"}</h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+              ID: {startup.id ? startup.id.substring(0, 8) + '...' : "Unknown"}
+            </p>
+          </div>
+          <Badge variant="outline" className={`${colors.badge} font-medium`}>
+            {primary.charAt(0).toUpperCase() + primary.slice(1)}
+          </Badge>
+        </div>
+        
+        <div className="mb-3">
+          <p className="text-sm line-clamp-2 text-neutral-700 dark:text-neutral-300">
+            {startup.description || "No description provided"}
+          </p>
+        </div>
+        
+        <div className="flex flex-col space-y-2 mb-4 text-xs text-neutral-500 dark:text-neutral-400">
+          <div className="flex items-center gap-2">
+            <User className="h-3.5 w-3.5" />
+            User ID: {startup.user_id ? startup.user_id.substring(0, 8) + '...' : "Unknown"}
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar className="h-3.5 w-3.5" />
+            {startup.created_at ? new Date(startup.created_at).toLocaleString() : "Unknown date"}
+          </div>
+        </div>
+        
+        {/* Actions */}
+        <div className="flex flex-wrap gap-2 mt-auto">
+          {startup.slug && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              asChild
+              className="flex-1"
+            >
+              <Link href={`/startups/${startup.slug}`} target="_blank">
+                Preview
+              </Link>
+            </Button>
+          )}
+          
+          {isPending && onApprove && onReject && (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 border-red-200 hover:bg-red-100 hover:text-red-900 dark:border-red-800/30 dark:hover:bg-red-950/30"
+                onClick={onReject}
+                disabled={isApproving}
+              >
+                {isApproving ? <LoadingIndicator size="sm" /> : <XCircle className="h-4 w-4 mr-1" />}
+                Reject
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 border-green-200 hover:bg-green-100 hover:text-green-900 dark:border-green-800/30 dark:hover:bg-green-950/30"
+                onClick={onApprove}
+                disabled={isApproving}
+              >
+                {isApproving ? <LoadingIndicator size="sm" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+                Approve
+              </Button>
+            </>
+          )}
+          
+          {!isPending && onRevert && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="flex-1"
+              onClick={onRevert}
+            >
+              Set as Pending
+            </Button>
+          )}
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="border-red-200 hover:bg-red-100 hover:text-red-900 dark:border-red-800/30 dark:hover:bg-red-950/30"
+            onClick={onDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? <LoadingIndicator size="sm" /> : <Trash2 className="h-4 w-4 mr-1" />}
+            Delete
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
 } 
