@@ -318,6 +318,202 @@
         ]
       }
     },
+    "/startups/media": {
+      "delete": {
+        "tags": ["startups"],
+        "summary": "Delete a media item from a startup",
+        "description": "Removes a specific media item (logo, banner, image, document, or video) from a startup",
+        "parameters": [
+          {
+            "name": "startupId",
+            "in": "query",
+            "required": true,
+            "description": "ID of the startup",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "mediaType",
+            "in": "query",
+            "required": true,
+            "description": "Type of media to delete",
+            "schema": {
+              "type": "string",
+              "enum": ["logo", "banner", "image", "gallery", "document", "pitch_deck", "video"]
+            }
+          },
+          {
+            "name": "mediaUrl",
+            "in": "query",
+            "required": true,
+            "description": "URL of the media to delete",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "isAdmin",
+            "in": "query",
+            "required": false,
+            "description": "Flag indicating if the request is coming from an admin user",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Media deleted successfully"
+                    },
+                    "deletedBy": {
+                      "type": "string",
+                      "enum": ["owner", "admin"],
+                      "example": "owner"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing parameters or invalid media type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Missing required parameters"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - authentication required"
+          },
+          "403": {
+            "description": "Forbidden - user doesn't have permission"
+          },
+          "404": {
+            "description": "Startup not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/startups/{id}/media": {
+      "post": {
+        "tags": ["startups"],
+        "summary": "Add a new media item to a startup",
+        "description": "Adds a new media item (logo, banner, gallery image, document, or video) to a startup",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the startup",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["mediaType", "url"],
+                "properties": {
+                  "mediaType": {
+                    "type": "string",
+                    "enum": ["logo", "banner", "gallery", "document", "pitch_deck", "video"],
+                    "description": "Type of media being uploaded"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL of the uploaded media file"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Optional title or description for the media item"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Media added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Media added successfully"
+                    },
+                    "mediaType": {
+                      "type": "string",
+                      "example": "gallery"
+                    },
+                    "url": {
+                      "type": "string",
+                      "example": "https://example.com/image.jpg"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - authentication required"
+          },
+          "403": {
+            "description": "Forbidden - user doesn't have permission"
+          },
+          "404": {
+            "description": "Startup not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/auth/signin": {
       "post": {
         "tags": ["auth"],
@@ -600,6 +796,30 @@
           "video_url": {
             "type": "string",
             "format": "uri"
+          }
+        }
+      },
+      "MediaItem": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the media item"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["logo", "banner", "image", "document", "pitch_deck", "video"],
+            "description": "Type of media item"
+          },
+          "title": {
+            "type": "string",
+            "description": "Optional title or description"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the media was added"
           }
         }
       }

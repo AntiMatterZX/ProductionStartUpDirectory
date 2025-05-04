@@ -15,6 +15,7 @@ interface UploadProps {
   onUploaded?: (url: string) => void;
   onCancelled?: () => void;
   buttonLabel?: string;
+  buttonSize?: "default" | "sm" | "lg" | "icon";
   multiple?: boolean;
   maxSizeMB?: number;
   acceptedFileTypes?: string;
@@ -27,6 +28,7 @@ export default function StartupMediaUpload({
   onUploaded,
   onCancelled,
   buttonLabel = "Upload File",
+  buttonSize = "default",
   multiple = false,
   maxSizeMB = 10,
   acceptedFileTypes = "",
@@ -228,7 +230,7 @@ export default function StartupMediaUpload({
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)} variant="outline" size="sm" className="gap-2">
+      <Button onClick={() => setIsOpen(true)} variant="outline" size={buttonSize} className="gap-2">
         {getIcon()}
         {buttonLabel}
       </Button>

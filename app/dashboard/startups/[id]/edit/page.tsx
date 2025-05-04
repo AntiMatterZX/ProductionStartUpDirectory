@@ -324,9 +324,9 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
   }
   
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-4 px-4 h-[calc(100vh-2rem)] flex flex-col">
       {/* Header with back button and save */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
           <Button variant="outline" asChild>
             <Link href={`/dashboard/startups/${params.id}`}>
@@ -348,201 +348,203 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
       </div>
       
       {/* Main content */}
-      <Tabs defaultValue="details">
+      <Tabs defaultValue="details" className="flex-1 flex flex-col">
         <TabsList className="mb-4">
           <TabsTrigger value="details">Basic Details</TabsTrigger>
           <TabsTrigger value="media">Media</TabsTrigger>
           <TabsTrigger value="additional">Additional Info</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="details">
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Details</CardTitle>
-              <CardDescription>Edit your startup's basic information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Startup Name</Label>
-                  <Input
-                    id="name"
-                    value={startupData?.name || ""}
-                    onChange={(e) => setStartupData({ ...startupData, name: e.target.value })}
-                  />
+        <div className="flex-1 overflow-hidden">
+          <TabsContent value="details" className="h-full mt-0">
+            <Card className="h-full flex flex-col">
+              <CardHeader className="pb-2">
+                <CardTitle>Basic Details</CardTitle>
+                <CardDescription>Edit your startup's basic information</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-auto pr-6 space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Startup Name</Label>
+                    <Input
+                      id="name"
+                      value={startupData?.name || ""}
+                      onChange={(e) => setStartupData({ ...startupData, name: e.target.value })}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="tagline">Tagline</Label>
+                    <Input
+                      id="tagline"
+                      value={startupData?.tagline || ""}
+                      onChange={(e) => setStartupData({ ...startupData, tagline: e.target.value })}
+                      placeholder="A short, catchy description of your startup"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={startupData?.description || ""}
+                      onChange={(e) => setStartupData({ ...startupData, description: e.target.value })}
+                      rows={5}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Select
+                      value={startupData?.category_id?.toString() || ""}
+                      onValueChange={(value) => setStartupData({ ...startupData, category_id: parseInt(value) })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id.toString()}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="media" className="h-full mt-0">
+            <Card className="h-full flex flex-col">
+              <CardHeader className="pb-2">
+                <CardTitle>Media Assets</CardTitle>
+                <CardDescription>
+                  Manage your startup's logo, images, documents, and videos
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-auto pr-6">
+                <StartupMediaDisplay
+                  startupId={params.id}
+                  mediaImages={mediaItems.images}
+                  mediaDocuments={mediaItems.documents}
+                  mediaVideos={mediaItems.videos}
+                  logoUrl={startupData?.logo_url}
+                  bannerUrl={startupData?.banner_url}
+                  isEditing={true}
+                  onMediaRemoved={handleMediaRemoved}
+                  onMediaAdded={(mediaType, url) => handleMediaUploaded(url, mediaType)}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="additional" className="h-full mt-0">
+            <Card className="h-full flex flex-col">
+              <CardHeader className="pb-2">
+                <CardTitle>Additional Information</CardTitle>
+                <CardDescription>More details about your startup</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-auto pr-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      value={startupData?.website_url || ""}
+                      onChange={(e) => setStartupData({ ...startupData, website_url: e.target.value })}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={startupData?.location || ""}
+                      onChange={(e) => setStartupData({ ...startupData, location: e.target.value })}
+                      placeholder="City, Country"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="linkedin">LinkedIn URL</Label>
+                    <Input
+                      id="linkedin"
+                      value={startupData?.linkedin_url || ""}
+                      onChange={(e) => setStartupData({ ...startupData, linkedin_url: e.target.value })}
+                      placeholder="https://linkedin.com/company/..."
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="twitter">Twitter URL</Label>
+                    <Input
+                      id="twitter"
+                      value={startupData?.twitter_url || ""}
+                      onChange={(e) => setStartupData({ ...startupData, twitter_url: e.target.value })}
+                      placeholder="https://twitter.com/..."
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="founding-date">Founding Date</Label>
+                    <Input
+                      id="founding-date"
+                      type="date"
+                      value={startupData?.founding_date ? startupData.founding_date.substring(0, 10) : ""}
+                      onChange={(e) => setStartupData({ ...startupData, founding_date: e.target.value })}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="team-size">Team Size</Label>
+                    <Input
+                      id="team-size"
+                      type="number"
+                      min="1"
+                      value={startupData?.employee_count || ""}
+                      onChange={(e) => setStartupData({ ...startupData, employee_count: parseInt(e.target.value) })}
+                    />
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="tagline">Tagline</Label>
-                  <Input
-                    id="tagline"
-                    value={startupData?.tagline || ""}
-                    onChange={(e) => setStartupData({ ...startupData, tagline: e.target.value })}
-                    placeholder="A short, catchy description of your startup"
-                  />
+                  <Label>What are you looking for?</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {lookingForOptions.map((option) => (
+                      <div key={option.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`looking-for-${option.id}`}
+                          checked={startupData?.looking_for?.includes(option.id) || false}
+                          onChange={(e) => {
+                            const currentOptions = [...(startupData?.looking_for || [])];
+                            if (e.target.checked) {
+                              // Add option
+                              setStartupData({
+                                ...startupData,
+                                looking_for: [...currentOptions, option.id]
+                              });
+                            } else {
+                              // Remove option
+                              setStartupData({
+                                ...startupData,
+                                looking_for: currentOptions.filter(id => id !== option.id)
+                              });
+                            }
+                          }}
+                        />
+                        <Label htmlFor={`looking-for-${option.id}`}>{option.name}</Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={startupData?.description || ""}
-                    onChange={(e) => setStartupData({ ...startupData, description: e.target.value })}
-                    rows={5}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select
-                    value={startupData?.category_id?.toString() || ""}
-                    onValueChange={(value) => setStartupData({ ...startupData, category_id: parseInt(value) })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="media">
-          <Card>
-            <CardHeader>
-              <CardTitle>Media Assets</CardTitle>
-              <CardDescription>
-                Manage your startup's logo, images, documents, and videos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <StartupMediaDisplay
-                startupId={params.id}
-                mediaImages={mediaItems.images}
-                mediaDocuments={mediaItems.documents}
-                mediaVideos={mediaItems.videos}
-                logoUrl={startupData?.logo_url}
-                bannerUrl={startupData?.banner_url}
-                isEditing={true}
-                onMediaRemoved={handleMediaRemoved}
-                onMediaAdded={(mediaType, url) => handleMediaUploaded(url, mediaType)}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="additional">
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Information</CardTitle>
-              <CardDescription>More details about your startup</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    value={startupData?.website_url || ""}
-                    onChange={(e) => setStartupData({ ...startupData, website_url: e.target.value })}
-                    placeholder="https://example.com"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={startupData?.location || ""}
-                    onChange={(e) => setStartupData({ ...startupData, location: e.target.value })}
-                    placeholder="City, Country"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="linkedin">LinkedIn URL</Label>
-                  <Input
-                    id="linkedin"
-                    value={startupData?.linkedin_url || ""}
-                    onChange={(e) => setStartupData({ ...startupData, linkedin_url: e.target.value })}
-                    placeholder="https://linkedin.com/company/..."
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="twitter">Twitter URL</Label>
-                  <Input
-                    id="twitter"
-                    value={startupData?.twitter_url || ""}
-                    onChange={(e) => setStartupData({ ...startupData, twitter_url: e.target.value })}
-                    placeholder="https://twitter.com/..."
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="founding-date">Founding Date</Label>
-                  <Input
-                    id="founding-date"
-                    type="date"
-                    value={startupData?.founding_date ? startupData.founding_date.substring(0, 10) : ""}
-                    onChange={(e) => setStartupData({ ...startupData, founding_date: e.target.value })}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="team-size">Team Size</Label>
-                  <Input
-                    id="team-size"
-                    type="number"
-                    min="1"
-                    value={startupData?.employee_count || ""}
-                    onChange={(e) => setStartupData({ ...startupData, employee_count: parseInt(e.target.value) })}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>What are you looking for?</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {lookingForOptions.map((option) => (
-                    <div key={option.id} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={`looking-for-${option.id}`}
-                        checked={startupData?.looking_for?.includes(option.id) || false}
-                        onChange={(e) => {
-                          const currentOptions = [...(startupData?.looking_for || [])];
-                          if (e.target.checked) {
-                            // Add option
-                            setStartupData({
-                              ...startupData,
-                              looking_for: [...currentOptions, option.id]
-                            });
-                          } else {
-                            // Remove option
-                            setStartupData({
-                              ...startupData,
-                              looking_for: currentOptions.filter(id => id !== option.id)
-                            });
-                          }
-                        }}
-                      />
-                      <Label htmlFor={`looking-for-${option.id}`}>{option.name}</Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   )
