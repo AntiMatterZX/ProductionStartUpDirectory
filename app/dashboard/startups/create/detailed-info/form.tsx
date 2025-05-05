@@ -100,28 +100,28 @@ export default function DetailedInfoForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 sm:space-y-8">
-        <div className="space-y-2 sm:space-y-3">
-          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Startup Details</h2>
-          <p className="text-muted-foreground text-base sm:text-lg">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8 max-w-3xl mx-auto">
+        <div className="space-y-3">
+          <h2 className="text-2xl font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Startup Details</h2>
+          <p className="text-muted-foreground text-lg">
             Tell us more about your startup to help investors and partners understand your business.
           </p>
         </div>
 
         {/* Description Section */}
-        <div className="grid gap-4 sm:gap-6">
+        <div className="grid gap-6">
           <FormField
             control={form.control}
             name="description"
             render={({ field }) => (
               <FormItem>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between">
                   <FormLabel className="text-base">Startup Description*</FormLabel>
                   <span className={cn(
-                    "text-sm font-medium px-2 py-0.5 rounded",
+                    "text-sm font-medium",
                     descriptionLength < minDescriptionLength || descriptionLength > maxDescriptionLength 
-                      ? "bg-destructive/10 text-destructive" 
-                      : "bg-muted text-muted-foreground"
+                      ? "text-destructive" 
+                      : "text-muted-foreground"
                   )}>
                     {descriptionLength}/{maxDescriptionLength}
                   </span>
@@ -142,7 +142,7 @@ export default function DetailedInfoForm({
             )}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="fundingStage"
@@ -151,11 +151,11 @@ export default function DetailedInfoForm({
                   <FormLabel className="text-base">Funding Stage*</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="w-full text-base">
+                      <SelectTrigger className="text-base">
                         <SelectValue placeholder="Select funding stage" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="max-h-[300px]">
+                    <SelectContent>
                       {fundingStages.map((stage) => (
                         <SelectItem key={stage} value={stage} className="text-base">
                           {stage}
@@ -194,7 +194,7 @@ export default function DetailedInfoForm({
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="teamSize"
@@ -203,11 +203,11 @@ export default function DetailedInfoForm({
                   <FormLabel className="text-base">Team Size*</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="w-full text-base">
+                      <SelectTrigger className="text-base">
                         <SelectValue placeholder="Select team size" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="max-h-[300px]">
+                    <SelectContent>
                       {teamSizes.map((size) => (
                         <SelectItem key={size} value={size} className="text-base">
                           {size}
@@ -257,7 +257,7 @@ export default function DetailedInfoForm({
                     Select all that apply to your startup's current needs
                   </FormDescription>
                 </div>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {lookingForOptions.map((option) => (
                     <FormField
                       key={option.id}
@@ -267,7 +267,7 @@ export default function DetailedInfoForm({
                         return (
                           <FormItem
                             key={option.id}
-                            className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm hover:border-primary/50 transition-colors"
+                            className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm"
                           >
                             <FormControl>
                               <Checkbox
@@ -301,7 +301,7 @@ export default function DetailedInfoForm({
         </div>
 
         {!hideButtons && (
-          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 pt-4 sm:pt-6">
+          <div className="flex justify-between items-center pt-6">
             <Button
               type="button"
               variant="outline"

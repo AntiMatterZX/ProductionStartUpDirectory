@@ -221,15 +221,15 @@ export default function CreateStartupPage() {
   // Define step content and navigation
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <div className="flex-1 container py-6 sm:py-8 lg:py-10 px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Create Your Startup</h1>
-          <p className="text-muted-foreground text-base sm:text-lg">Complete the form below to add your startup to our platform.</p>
+      <div className="flex-1 container max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Create Your Startup</h1>
+          <p className="text-muted-foreground text-lg">Complete the form below to add your startup to our platform.</p>
         </div>
 
         {/* Step indicator */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex items-center justify-between max-w-2xl mx-auto px-4">
+        <div className="mb-8">
+          <div className="flex items-center justify-between max-w-2xl mx-auto">
             {[1, 2, 3, 4].map((step) => (
               <div key={step} className="flex flex-col items-center relative group">
                 <div 
@@ -253,7 +253,7 @@ export default function CreateStartupPage() {
               </div>
             ))}
           </div>
-          <div className="relative mt-4 max-w-2xl mx-auto px-4">
+          <div className="relative mt-4 max-w-2xl mx-auto">
             <div className="absolute top-0 left-0 h-2 bg-muted w-full rounded-full">
               <div 
                 className="h-2 bg-primary rounded-full transition-all duration-500 ease-in-out" 
@@ -263,8 +263,8 @@ export default function CreateStartupPage() {
           </div>
         </div>
 
-        <Card className="shadow-lg border border-border/50 backdrop-blur-sm mx-auto">
-          <div className="p-4 sm:p-6 lg:p-8">
+        <Card className="shadow-lg border border-border/50 backdrop-blur-sm">
+          <div className="p-8">
             {/* Step 1: Basic Info */}
             {currentStep === 1 && (
               <BasicInfoForm 

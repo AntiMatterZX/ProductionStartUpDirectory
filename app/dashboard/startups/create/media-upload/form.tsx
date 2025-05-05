@@ -289,32 +289,32 @@ export default function MediaUploadForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 sm:space-y-8">
-        <div className="space-y-2 sm:space-y-3">
-          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Media & Links</h2>
-          <p className="text-muted-foreground text-base sm:text-lg">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8 max-w-3xl mx-auto">
+        <div className="space-y-3">
+          <h2 className="text-2xl font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Media & Links</h2>
+          <p className="text-muted-foreground text-lg">
             Add visual content and social links to showcase your startup.
           </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 gap-4 bg-muted p-1">
+          <TabsList className="grid grid-cols-3 gap-4 bg-muted p-1">
             <TabsTrigger value="branding" className="data-[state=active]:bg-background">
-              <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-              <span className="text-sm sm:text-base">Branding</span>
+              <ImageIcon className="h-5 w-5 mr-2" />
+              Branding
             </TabsTrigger>
             <TabsTrigger value="gallery" className="data-[state=active]:bg-background">
-              <Upload className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-              <span className="text-sm sm:text-base">Gallery</span>
+              <Upload className="h-5 w-5 mr-2" />
+              Gallery
             </TabsTrigger>
             <TabsTrigger value="links" className="data-[state=active]:bg-background">
-              <LinkIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-              <span className="text-sm sm:text-base">Links</span>
+              <LinkIcon className="h-5 w-5 mr-2" />
+              Links
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="branding" className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <TabsContent value="branding" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Logo Upload */}
               <FormField
                 control={form.control}
@@ -620,7 +620,7 @@ export default function MediaUploadForm({
         </Tabs>
 
         {!hideButtons && (
-          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 pt-4 sm:pt-6">
+          <div className="flex justify-between items-center pt-6">
             <Button
               type="button"
               variant="outline"
