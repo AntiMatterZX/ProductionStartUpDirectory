@@ -33,10 +33,10 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
-      <body className={`${inter.variable} ${mono.variable} font-sans antialiased min-h-screen flex overflow-y-scroll`}>
+      <body className={`${inter.variable} ${mono.variable} font-sans antialiased min-h-screen flex flex-col`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <LoadingProvider>
-            <div className="flex flex-col flex-grow">{children}</div>
+            <div className="flex flex-grow">{children}</div>
             <Toaster />
           </LoadingProvider>
         </ThemeProvider>
