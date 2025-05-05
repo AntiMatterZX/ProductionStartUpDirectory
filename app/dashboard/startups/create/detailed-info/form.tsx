@@ -147,24 +147,28 @@ export default function DetailedInfoForm({
               control={form.control}
               name="fundingStage"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="w-full">
                   <FormLabel className="text-base">Funding Stage*</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger className="text-base">
-                          <SelectValue placeholder="Select funding stage" />
-                        </SelectTrigger>
-                        <SelectContent align="start" side="bottom" avoidCollisions className="z-[100]">
-                          {fundingStages.map((stage) => (
-                            <SelectItem key={stage} value={stage} className="text-base">
-                              {stage}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </FormControl>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full text-base">
+                        <SelectValue placeholder="Select funding stage" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent 
+                      position="popper" 
+                      className="w-full max-h-[300px] overflow-y-auto"
+                      align="start"
+                      sideOffset={4}
+                      collisionPadding={20}
+                    >
+                      {fundingStages.map((stage) => (
+                        <SelectItem key={stage} value={stage} className="text-base">
+                          {stage}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormDescription className="text-sm">Your startup's current funding stage</FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -201,24 +205,28 @@ export default function DetailedInfoForm({
               control={form.control}
               name="teamSize"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="w-full">
                   <FormLabel className="text-base">Team Size*</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger className="text-base">
-                          <SelectValue placeholder="Select team size" />
-                        </SelectTrigger>
-                        <SelectContent align="start" side="bottom" avoidCollisions className="z-[100]">
-                          {teamSizes.map((size) => (
-                            <SelectItem key={size} value={size} className="text-base">
-                              {size}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </FormControl>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full text-base">
+                        <SelectValue placeholder="Select team size" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent 
+                      position="popper" 
+                      className="w-full max-h-[300px] overflow-y-auto"
+                      align="start"
+                      sideOffset={4}
+                      collisionPadding={20}
+                    >
+                      {teamSizes.map((size) => (
+                        <SelectItem key={size} value={size} className="text-base">
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormDescription className="text-sm">Current number of team members</FormDescription>
                   <FormMessage />
                 </FormItem>

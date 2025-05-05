@@ -139,35 +139,52 @@ export default function CreateStartupPage() {
 
       // Prepare form data for submission
       const formDataObj = new FormData()
-      formDataObj.append("basicInfo", JSON.stringify(formData.basicInfo))
+      
+      // Add basic and detailed info
+      formDataObj.append("basicInfo", JSON.stringify({
+        ...formData.basicInfo,
+        // Add any existing URLs if available
+        logoUrl: formData.mediaInfo.logo instanceof File ? null : formData.mediaInfo.logo,
+      }))
       formDataObj.append("detailedInfo", JSON.stringify(formData.detailedInfo))
 
-      // Handle file uploads
-      if (formData.mediaInfo.logo) {
+      // Handle file uploads with proper type checking
+      if (formData.mediaInfo.logo instanceof File) {
         formDataObj.append("logo", formData.mediaInfo.logo)
       }
 
-      if (formData.mediaInfo.banner) {
+      if (formData.mediaInfo.banner instanceof File) {
         formDataObj.append("banner", formData.mediaInfo.banner)
       }
 
       if (formData.mediaInfo.gallery && formData.mediaInfo.gallery.length > 0) {
-        formData.mediaInfo.gallery.forEach(file => {
-          formDataObj.append("gallery", file)
+        formData.mediaInfo.gallery.forEach((file, index) => {
+          if (file instanceof File) {
+            formDataObj.append(`gallery`, file)
+          }
         })
       }
 
-      if (formData.mediaInfo.pitchDeck) {
+      if (formData.mediaInfo.pitchDeck instanceof File) {
         formDataObj.append("pitchDeck", formData.mediaInfo.pitchDeck)
       }
 
-      // Add remaining media info
-      const mediaInfoCopy = { ...formData.mediaInfo }
-      delete mediaInfoCopy.logo
-      delete mediaInfoCopy.banner
-      delete mediaInfoCopy.gallery
-      delete mediaInfoCopy.pitchDeck
+      // Add remaining media info (excluding File objects)
+      const mediaInfoCopy = {
+        videoUrl: formData.mediaInfo.videoUrl,
+        socialLinks: formData.mediaInfo.socialLinks,
+      }
       formDataObj.append("mediaInfo", JSON.stringify(mediaInfoCopy))
+
+      // Log FormData contents for debugging
+      console.log("FormData contents:")
+      for (const [key, value] of formDataObj.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}: File - ${value.name} (${value.type}, ${value.size} bytes)`)
+        } else {
+          console.log(`${key}: ${value}`)
+        }
+      }
 
       // Submit the form
       const response = await fetch("/api/startups", {

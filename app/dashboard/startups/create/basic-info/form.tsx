@@ -231,38 +231,42 @@ export default function BasicInfoForm({
             control={form.control}
             name="industry"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-full max-w-xl">
                 <FormLabel className="text-base">Industry*</FormLabel>
-                <FormControl>
-                  <div className="relative max-w-xl">
-                    <Select
-                      value={field.value.toString()}
-                      onValueChange={(value) => field.onChange(parseInt(value))}
-                      disabled={isLoading}
-                    >
-                      <SelectTrigger className="text-base">
-                        <SelectValue placeholder="Select your industry">
-                          {isLoading ? (
-                            <LoadingIndicator size="sm" />
-                          ) : (
-                            categories.find(cat => cat.id === field.value)?.name || "Select your industry"
-                          )}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent align="start" side="bottom" avoidCollisions className="z-[100]">
-                        {categories.map((category) => (
-                          <SelectItem 
-                            key={category.id} 
-                            value={category.id.toString()}
-                            className="text-base"
-                          >
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </FormControl>
+                <Select
+                  value={field.value.toString()}
+                  onValueChange={(value) => field.onChange(parseInt(value))}
+                  disabled={isLoading}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full text-base">
+                      <SelectValue placeholder="Select your industry">
+                        {isLoading ? (
+                          <LoadingIndicator size="sm" />
+                        ) : (
+                          categories.find(cat => cat.id === field.value)?.name || "Select your industry"
+                        )}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent 
+                    position="popper" 
+                    className="w-full max-h-[300px] overflow-y-auto"
+                    align="start"
+                    sideOffset={4}
+                    collisionPadding={20}
+                  >
+                    {categories.map((category) => (
+                      <SelectItem 
+                        key={category.id} 
+                        value={category.id.toString()}
+                        className="text-base"
+                      >
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormDescription className="text-sm">
                   Choose the industry that best describes your startup
                 </FormDescription>
