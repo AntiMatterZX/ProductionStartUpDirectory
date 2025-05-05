@@ -6,9 +6,6 @@ import type { Database } from "@/types/database"
 import { revalidatePath } from "next/cache"
 import { generateUniqueSlug } from "@/lib/utils/helpers/slug-generator"
 import { sendEmail, startupCreationTemplate } from "@/lib/email"
-import { auth } from "@/lib/auth"
-import { uploadFile } from "@/lib/storage"
-import { z } from "zod"
 
 const ADMIN_EMAIL = 'varunbhole@gmail.com'; // The email address to notify
 
@@ -119,138 +116,263 @@ function parseFundingAmount(amount: string | number | null): number | null {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify authentication
-    const user = await auth()
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const supabase = await createServerComponentClient()
+
+    // Get session
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    // Get form data
-    const formData = await request.formData()
+    // Extract data from the FormData
+    let formData;
+    try {
+      formData = await request.formData();
+    } catch (error) {
+      return NextResponse.json({ 
+        message: "Invalid form data in request",
+        error: error instanceof Error ? error.message : String(error)
+      }, { status: 400 });
+    }
 
-    // Parse JSON data
-    const basicInfo = JSON.parse(formData.get("basicInfo") as string)
-    const detailedInfo = JSON.parse(formData.get("detailedInfo") as string)
-    const mediaInfoJson = formData.get("mediaInfo") as string
-    const mediaInfo = mediaInfoJson ? JSON.parse(mediaInfoJson) : {}
-
-    // Create Supabase client
-    const supabase = createServerComponentClient()
-
-    // Upload media files
-    let logoImage = null
-    let bannerImage = null
-    let galleryImages = []
-    let pitchDeckUrl = null
+    // Parse JSON strings from FormData
+    let basicInfo, detailedInfo, mediaInfo;
+    try {
+      const basicInfoStr = formData.get("basicInfo") as string;
+      const detailedInfoStr = formData.get("detailedInfo") as string;
+      const mediaInfoStr = formData.get("mediaInfo") as string;
+      
+      if (!basicInfoStr) {
+        return NextResponse.json({ message: "Missing basicInfo in form data" }, { status: 400 });
+      }
+      
+      if (!detailedInfoStr) {
+        return NextResponse.json({ message: "Missing detailedInfo in form data" }, { status: 400 });
+      }
+      
+      if (!mediaInfoStr) {
+        return NextResponse.json({ message: "Missing mediaInfo in form data" }, { status: 400 });
+      }
+      
+      basicInfo = JSON.parse(basicInfoStr);
+      detailedInfo = JSON.parse(detailedInfoStr);
+      mediaInfo = JSON.parse(mediaInfoStr);
+    } catch (error) {
+      return NextResponse.json({ 
+        message: "Invalid JSON in form data",
+        error: error instanceof Error ? error.message : String(error)
+      }, { status: 400 });
+    }
     
-    // Upload logo if provided
-    const logoFile = formData.get("logo") as File
-    if (logoFile && logoFile instanceof File) {
-      const logoResult = await uploadFile(logoFile, "startups/logos")
-      if (logoResult) {
-        logoImage = logoResult
+    // Get files from FormData if present
+    const logo = formData.get("logo");
+    const banner = formData.get("banner");
+    const galleryFiles = formData.getAll("gallery");
+    const pitchDeck = formData.get("pitchDeck");
+    
+    // Make sure the "startups" bucket exists
+    const { error: bucketError } = await supabase.storage.getBucket("startups");
+    if (bucketError && bucketError.message.includes("does not exist")) {
+      const { error: createBucketError } = await supabase.storage.createBucket("startups", {
+        public: true
+      });
+      if (createBucketError) {
+        console.error("Error creating bucket:", createBucketError);
+        return NextResponse.json({ message: "Failed to create storage bucket", error: createBucketError.message }, { status: 500 });
       }
     }
     
-    // Upload banner if provided
-    const bannerFile = formData.get("banner") as File
-    if (bannerFile && bannerFile instanceof File) {
-      const bannerResult = await uploadFile(bannerFile, "startups/banners")
-      if (bannerResult) {
-        bannerImage = bannerResult
+    // Process file uploads and get URLs using our helper function
+    let logoImage = null;
+    if (logo && typeof logo !== 'string') {
+      try {
+        logoImage = await uploadFile(supabase, logo, session.user.id, 'logos');
+      } catch (logoError) {
+        console.error("Error uploading logo:", logoError);
+        // Don't throw here - allow creation to continue without logo
+      }
+    } else {
+      logoImage = basicInfo?.logoUrl || null;
+    }
+      
+    let bannerImage = null;
+    if (banner && typeof banner !== 'string') {
+      console.log("Uploading banner image...");
+      
+      try {
+        bannerImage = await uploadFile(supabase, banner, session.user.id, 'images');
+        
+        console.log("Banner image uploaded successfully:", bannerImage);
+      } catch (bannerError) {
+        console.error("Error uploading banner image:", bannerError);
+        // Don't throw here - allow creation to continue without banner image
       }
     }
-
-    // Upload gallery images if provided
-    const galleryFiles = formData.getAll("gallery") as File[]
-    if (galleryFiles.length > 0) {
-      const uploadPromises = galleryFiles.map(file => {
-        if (file instanceof File) {
-          return uploadFile(file, "startups/gallery")
+    
+    // Process gallery images
+    const galleryUrls: string[] = [];
+    if (galleryFiles && galleryFiles.length > 0) {
+      for (const galleryFile of galleryFiles) {
+        if (galleryFile && typeof galleryFile !== 'string') {
+          try {
+            const galleryUrl = await uploadFile(supabase, galleryFile, session.user.id, 'images');
+            galleryUrls.push(galleryUrl);
+          } catch (galleryError) {
+            console.error("Error uploading gallery image:", galleryError);
+            // Continue with other images
+          }
         }
-        return null
-      })
-      
-      const results = await Promise.all(uploadPromises)
-      galleryImages = results.filter(Boolean)
-    }
-    
-    // Upload pitch deck if provided
-    const pitchDeckFile = formData.get("pitchDeck") as File
-    if (pitchDeckFile && pitchDeckFile instanceof File) {
-      const pitchDeckResult = await uploadFile(pitchDeckFile, "startups/documents")
-      if (pitchDeckResult) {
-        pitchDeckUrl = pitchDeckResult
       }
     }
-
-    // Insert startup into database
-    const { data: startupData, error: startupError } = await supabase
-      .from("startups")
-      .insert({
-        name: basicInfo.name,
-        slug: basicInfo.slug,
-        tagline: basicInfo.tagline,
-        industry_id: basicInfo.industry,
-        founding_date: basicInfo.foundingDate,
-        website: basicInfo.website,
-        description: detailedInfo.description,
-        funding_stage: detailedInfo.fundingStage,
-        funding_amount: detailedInfo.fundingAmount,
-        team_size: detailedInfo.teamSize,
-        location: detailedInfo.location,
-        video_url: mediaInfo.videoUrl,
-        logo_image: logoImage,
-        banner_image: bannerImage,
-        gallery_images: galleryImages,
-        pitch_deck_url: pitchDeckUrl,
-        linkedin_url: mediaInfo.socialLinks?.linkedin,
-        twitter_url: mediaInfo.socialLinks?.twitter,
-        user_id: user.id,
-        created_at: new Date().toISOString(),
-      })
-      .select("id")
-      .single()
-
-    if (startupError) {
-      console.error("Database error creating startup:", startupError)
-      return NextResponse.json(
-        { error: `Database error: ${startupError.message}` },
-        { status: 500 }
-      )
-    }
-
-    // Insert looking_for relationships if provided
-    if (detailedInfo.lookingFor && detailedInfo.lookingFor.length > 0) {
-      const lookingForData = detailedInfo.lookingFor.map(optionId => ({
-        startup_id: startupData.id,
-        option_id: optionId
-      }))
       
-      const { error: lookingForError } = await supabase
-        .from("startup_looking_for")
-        .insert(lookingForData)
-      
-      if (lookingForError) {
-        console.error("Database error creating looking_for relationships:", lookingForError)
-        // Not returning an error here since the startup was created successfully
+    let pitchDeckUrl = null;
+    if (pitchDeck && typeof pitchDeck !== 'string') {
+      try {
+        pitchDeckUrl = await uploadFile(supabase, pitchDeck, session.user.id, 'documents');
+      } catch (pitchDeckError) {
+        console.error("Error uploading pitch deck:", pitchDeckError);
+        // Don't throw here - allow creation to continue without pitch deck
       }
+    } else {
+      pitchDeckUrl = mediaInfo?.pitchDeckUrl || null;
+    }
+      
+    const videoUrl = mediaInfo?.videoUrl || null;
+
+    // Verify required fields are present
+    if (!basicInfo?.name) {
+      return NextResponse.json({ message: "Startup name is required" }, { status: 400 });
     }
 
-    // Revalidate paths
-    revalidatePath("/dashboard/startups")
-    revalidatePath(`/startups/${basicInfo.slug}`)
+    if (!detailedInfo?.description) {
+      return NextResponse.json({ message: "Startup description is required" }, { status: 400 });
+    }
 
-    return NextResponse.json({ 
-      id: startupData.id,
-      slug: basicInfo.slug,
-      message: "Startup created successfully" 
-    })
+    // Generate a slug from the name or use the provided one
+    let slug = basicInfo.slug;
+    if (!slug) {
+      slug = basicInfo.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    // Prepare media arrays
+    const mediaImages: string[] = [...galleryUrls];
+
+    // Add banner to media_images array if it exists and isn't already there
+    if (bannerImage && !mediaImages.includes(bannerImage)) {
+      mediaImages.push(bannerImage);
+    }
+
+    // Add logo to media_images array if it exists and isn't already there
+    if (logoImage && !mediaImages.includes(logoImage)) {
+      mediaImages.push(logoImage);
+    }
+
+    // Add pitch deck to media_documents array if it exists
+    const mediaDocuments: string[] = [];
+    if (pitchDeckUrl) {
+      mediaDocuments.push(pitchDeckUrl);
+      // Note: The pitch deck is stored in the media_documents array instead of a separate column
+    }
+
+    // Add video URL to media_videos array if it exists
+    const mediaVideos: string[] = [];
+    if (videoUrl) {
+      mediaVideos.push(videoUrl);
+    }
+
+    // Also add any additional video URLs from mediaInfo if they exist
+    if (mediaInfo.videoUrl && !mediaVideos.includes(mediaInfo.videoUrl)) {
+      mediaVideos.push(mediaInfo.videoUrl);
+    }
+
+    try {
+      // Debug logging for values that might cause type conversion errors
+      console.log("Processing startup data with the following values:");
+      console.log(`- Team Size (raw): ${JSON.stringify(detailedInfo.teamSize)}`);
+      console.log(`- Team Size (processed): ${parseTeamSize(detailedInfo.teamSize)}`);
+      console.log(`- Funding Amount (raw): ${JSON.stringify(detailedInfo.fundingAmount)}`);
+      console.log(`- Funding Amount (processed): ${parseFundingAmount(detailedInfo.fundingAmount)}`);
+      console.log(`- Category ID: ${basicInfo.industry}`);
+      
+      // Create the startup entry
+      const { data: startup, error: insertError } = await supabase
+        .from("startups")
+        .insert({
+          name: basicInfo.name.trim(),
+          slug: slug,
+          tagline: basicInfo.tagline?.trim() || null,
+          description: detailedInfo.description?.trim() || null,
+          website_url: basicInfo.website?.trim() || null,
+          logo_image: logoImage,
+          banner_image: bannerImage,
+          pitch_deck_url: pitchDeckUrl,
+          founding_date: basicInfo.foundingDate || null,
+          employee_count: detailedInfo.teamSize ? parseInt(detailedInfo.teamSize) : null,
+          funding_stage: detailedInfo.fundingStage || null,
+          funding_amount: detailedInfo.fundingAmount ? parseFloat(detailedInfo.fundingAmount) : null,
+          location: detailedInfo.location?.trim() || null,
+          category_id: basicInfo.industry || null,
+          user_id: session.user.id,
+          status: "pending",
+          media_images: mediaImages,
+          media_documents: mediaDocuments,
+          media_videos: mediaVideos,
+          looking_for: detailedInfo.lookingFor || [],
+        })
+        .select("id, slug")
+        .single();
+
+      if (insertError) {
+        console.error("Error creating startup:", insertError);
+        return NextResponse.json({ message: "Failed to create startup in database", error: insertError.message }, { status: 500 });
+      }
+
+      // Send email notification about the new startup to admin
+      try {
+        await sendEmail({
+          to: ADMIN_EMAIL,
+          subject: `New Startup Pending: ${basicInfo.name}`,
+          html: startupCreationTemplate({
+            startupName: basicInfo.name,
+            startupId: startup.id,
+            userId: session.user.id,
+            userName: session.user.email || 'Unknown',
+            createdAt: new Date().toISOString()
+          })
+        });
+      } catch (emailError) {
+        // Log but don't fail the request if email sending fails
+        console.error("Error sending email notification:", emailError);
+      }
+
+      // Revalidate the startups page
+      revalidatePath('/startups');
+      revalidatePath('/admin/moderation');
+      revalidatePath(`/startups/${slug}`);
+
+      return NextResponse.json({ 
+        message: "Startup created successfully", 
+        id: startup.id, 
+        slug: startup.slug 
+      }, { status: 201 });
+    } catch (dbError) {
+      console.error("Database error:", dbError);
+      return NextResponse.json({ 
+        message: "Database error while creating startup", 
+        error: dbError instanceof Error ? dbError.message : String(dbError)
+      }, { status: 500 });
+    }
   } catch (error) {
-    console.error("Error creating startup:", error)
-    return NextResponse.json(
-      { error: "There was a problem creating your startup" },
-      { status: 500 }
-    )
+    console.error("Error in POST /api/startups:", error);
+    return NextResponse.json({ 
+      message: "Internal server error", 
+      error: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }

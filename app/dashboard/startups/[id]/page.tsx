@@ -105,8 +105,7 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
           .from("startups")
           .select(`
             *,
-            categories(id, name),
-            startup_looking_for(option_id, looking_for_options(*))
+            categories(id, name)
           `)
           .eq("id", startupId)
           .single();

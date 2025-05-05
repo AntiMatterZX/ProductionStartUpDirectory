@@ -9,15 +9,8 @@ import StartupMediaUpload from "@/app/components/StartupMediaUpload";
 import MediaDeleteButton from "@/app/components/MediaDeleteButton";
 import { Badge } from "@/components/ui/badge";
 
-interface Startup {
-  id: string;
-  gallery_images?: string[];
-  // other fields omitted for brevity
-}
-
 export interface MediaDisplayProps {
   startupId: string;
-  startup?: Startup;
   mediaImages?: string[];
   mediaDocuments?: string[];
   mediaVideos?: string[];
@@ -30,7 +23,6 @@ export interface MediaDisplayProps {
 
 export default function StartupMediaDisplay({
   startupId,
-  startup,
   mediaImages = [],
   mediaDocuments = [],
   mediaVideos = [],
@@ -42,9 +34,8 @@ export default function StartupMediaDisplay({
 }: MediaDisplayProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
-  // Use gallery_images if available, otherwise fallback to filtering mediaImages
-  const galleryImages = startup?.gallery_images || 
-    mediaImages.filter(img => img !== logoImage && img !== bannerImage);
+  // Filter gallery images to exclude logo and banner
+  const galleryImages = mediaImages.filter(img => img !== logoImage && img !== bannerImage);
   
   // Handle media deletion
   const handleDeleteMedia = (mediaType: string, url: string) => {
@@ -245,9 +236,9 @@ export default function StartupMediaDisplay({
           
           {/* Gallery Images Tab */}
           <TabsContent value="images" className="h-full overflow-auto">
-            {galleryImages && galleryImages.length > 0 ? (
+            {galleryImages.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {galleryImages.map((url: string, index: number) => (
+                {galleryImages.map((url, index) => (
                   <Card key={`image-${index}`} className="overflow-hidden">
                     <CardContent className="p-2">
                       <Dialog>

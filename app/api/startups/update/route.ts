@@ -102,47 +102,15 @@ export async function POST(request: Request) {
       console.error("Exception updating startup:", err);
     }
     
-    // 2. Handle looking_for options
-    if (lookingForOptions) {
-      try {
-        // 2.1 Delete existing options
-        const { error: deleteError } = await supabaseAdmin
-          .from("startup_looking_for")
-          .delete()
-          .eq("startup_id", startupId);
-        
-        if (deleteError) {
-          results.lookingFor.error = deleteError;
-          console.error("Error deleting looking_for options:", deleteError);
-        } else {
-          // 2.2 Insert new options
-          if (lookingForOptions.length > 0) {
-            const lookingForData = lookingForOptions.map((optionId: number) => ({
-              startup_id: startupId,
-              option_id: optionId,
-            }));
-            
-            const { data: insertData, error: insertError } = await supabaseAdmin
-              .from("startup_looking_for")
-              .insert(lookingForData)
-              .select();
-            
-            if (insertError) {
-              results.lookingFor.error = insertError;
-              console.error("Error inserting looking_for options:", insertError);
-            } else {
-              results.lookingFor.success = true;
-              results.lookingFor.data = insertData;
-              console.log("Looking for options inserted successfully:", insertData);
-            }
-          } else {
-            results.lookingFor.success = true;
-            console.log("No looking_for options to insert");
-          }
-        }
-      } catch (err) {
-        results.lookingFor.error = err;
-        console.error("Exception handling looking_for options:", err);
+    // 2. Handle looking_for options - update the array directly
+    if (lookingForOptions && lookingForOptions.length > 0) {
+      const { error: lookingForError } = await supabaseAdmin
+        .from("startups")
+        .update({ looking_for: lookingForOptions })
+        .eq("id", startupId)
+      
+      if (lookingForError) {
+        console.error("Error updating looking_for options:", lookingForError)
       }
     }
     
@@ -287,7 +255,7 @@ export async function POST(request: Request) {
         .select(`
           *,
           social_links(id, platform, url),
-          startup_looking_for(option_id)
+          looking_for
         `)
         .eq("id", startupId)
         .single();
@@ -298,7 +266,7 @@ export async function POST(request: Request) {
         console.log("Final state verification:", {
           startup: verifyData,
           socialLinks: verifyData.social_links,
-          lookingFor: verifyData.startup_looking_for
+          lookingFor: verifyData.looking_for
         });
       }
     } catch (err) {
