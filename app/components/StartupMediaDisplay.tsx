@@ -62,8 +62,8 @@ export default function StartupMediaDisplay({
   };
   
   return (
-    <div className="w-full h-full flex flex-col">
-      <Tabs defaultValue="images" className="w-full h-full flex flex-col">
+    <div className="w-full flex flex-col">
+      <Tabs defaultValue="images" className="w-full flex flex-col">
         <div className="flex items-center justify-between mb-3">
           <TabsList className="h-9">
             <TabsTrigger value="images" className="flex items-center text-xs px-2 py-1 h-7">
@@ -136,9 +136,9 @@ export default function StartupMediaDisplay({
           )}
         </div>
         
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1">
           {/* Branding Tab - Logo and Banner */}
-          <TabsContent value="branding" className="h-full overflow-auto">
+          <TabsContent value="branding" className="h-full">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Logo Section */}
               <Card className="overflow-hidden">
@@ -235,7 +235,7 @@ export default function StartupMediaDisplay({
           </TabsContent>
           
           {/* Gallery Images Tab */}
-          <TabsContent value="images" className="h-full overflow-auto">
+          <TabsContent value="images" className="h-full">
             {galleryImages.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {galleryImages.map((url, index) => (
@@ -283,7 +283,7 @@ export default function StartupMediaDisplay({
           </TabsContent>
           
           {/* Documents Tab */}
-          <TabsContent value="documents" className="h-full overflow-auto">
+          <TabsContent value="documents" className="h-full">
             {mediaDocuments.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {mediaDocuments.map((url, index) => (
@@ -321,7 +321,7 @@ export default function StartupMediaDisplay({
           </TabsContent>
           
           {/* Videos Tab */}
-          <TabsContent value="videos" className="h-full overflow-auto">
+          <TabsContent value="videos" className="h-full">
             {mediaVideos.length > 0 ? (
               <div className="grid grid-cols-1 gap-3">
                 {mediaVideos.map((url, index) => (
