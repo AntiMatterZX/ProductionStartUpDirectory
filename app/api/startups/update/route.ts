@@ -105,44 +105,22 @@ export async function POST(request: Request) {
     // 2. Handle looking_for options
     if (lookingForOptions) {
       try {
-        // 2.1 Delete existing options
-        const { error: deleteError } = await supabaseAdmin
-          .from("startup_looking_for")
-          .delete()
-          .eq("startup_id", startupId);
+        // Update the looking_for array directly in the startups table
+        const { error: updateError } = await supabaseAdmin
+          .from("startups")
+          .update({ looking_for: lookingForOptions })
+          .eq("id", startupId);
         
-        if (deleteError) {
-          results.lookingFor.error = deleteError;
-          console.error("Error deleting looking_for options:", deleteError);
+        if (updateError) {
+          results.lookingFor.error = updateError;
+          console.error("Error updating looking_for options:", updateError);
         } else {
-          // 2.2 Insert new options
-          if (lookingForOptions.length > 0) {
-            const lookingForData = lookingForOptions.map((optionId: number) => ({
-              startup_id: startupId,
-              option_id: optionId,
-            }));
-            
-            const { data: insertData, error: insertError } = await supabaseAdmin
-              .from("startup_looking_for")
-              .insert(lookingForData)
-              .select();
-            
-            if (insertError) {
-              results.lookingFor.error = insertError;
-              console.error("Error inserting looking_for options:", insertError);
-            } else {
-              results.lookingFor.success = true;
-              results.lookingFor.data = insertData;
-              console.log("Looking for options inserted successfully:", insertData);
-            }
-          } else {
-            results.lookingFor.success = true;
-            console.log("No looking_for options to insert");
-          }
+          results.lookingFor.success = true;
+          console.log("Looking_for options updated successfully");
         }
       } catch (err) {
         results.lookingFor.error = err;
-        console.error("Exception handling looking_for options:", err);
+        console.error("Exception updating looking_for options:", err);
       }
     }
     

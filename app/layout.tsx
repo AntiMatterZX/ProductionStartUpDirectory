@@ -33,7 +33,11 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
+<<<<<<< HEAD
       <body className={`${inter.variable} ${mono.variable} font-sans antialiased min-h-screen flex flex-col`}>
+=======
+      <body className={`${inter.variable} ${mono.variable} font-sans antialiased min-h-screen flex flex-col overflow-y-clip`}>
+>>>>>>> parent of 9c4c945 (LaunchPad105)
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <LoadingProvider>
             <div className="flex flex-grow">{children}</div>

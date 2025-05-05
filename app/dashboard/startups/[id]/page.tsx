@@ -194,12 +194,13 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
         const { data: lookingForOptionsData, error: lookingForOptionsError } = await supabase
           .from("looking_for_options")
           .select("*")
-          .order("name");
+          .in("id", data.looking_for || []);
         
         if (lookingForOptionsError) {
-          console.error("Error fetching looking for options:", lookingForOptionsError);
+          console.warn("Error fetching looking_for options:", lookingForOptionsError);
+          data.looking_for = [];
         } else {
-          setLookingForOptions(lookingForOptionsData || []);
+          data.looking_for = lookingForOptionsData || [];
         }
         
       } catch (error: any) {

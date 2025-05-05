@@ -324,6 +324,8 @@ export async function POST(request: NextRequest) {
           media_documents: mediaDocuments,
           media_videos: mediaVideos,
           looking_for: detailedInfo.lookingFor || [],
+          linkedin_url: detailedInfo.linkedin || null,
+          twitter_url: detailedInfo.twitter || null,
         })
         .select("id, slug")
         .single();
