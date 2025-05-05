@@ -220,31 +220,31 @@ export default function CreateStartupPage() {
 
   // Define step content and navigation
   return (
-    <div className="w-full min-h-screen bg-background">
-      <div className="container max-w-4xl py-8 px-4 sm:px-6">
+    <div className="flex flex-col min-h-screen bg-background">
+      <div className="flex-1 container max-w-4xl py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Create Your Startup</h1>
-          <p className="text-muted-foreground">Complete the form below to add your startup to our platform.</p>
+          <h1 className="text-3xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Create Your Startup</h1>
+          <p className="text-muted-foreground text-lg">Complete the form below to add your startup to our platform.</p>
         </div>
 
         {/* Step indicator */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between max-w-2xl mx-auto">
             {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex flex-col items-center">
+              <div key={step} className="flex flex-col items-center relative group">
                 <div 
-                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 mb-2
+                  className={`w-12 h-12 rounded-full flex items-center justify-center border-2 mb-2 transition-all duration-300
                     ${currentStep >= step 
-                      ? 'bg-primary border-primary text-primary-foreground' 
-                      : 'border-muted-foreground/40 text-muted-foreground'
+                      ? 'bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20' 
+                      : 'border-muted-foreground/40 text-muted-foreground hover:border-primary/50'
                     }`}
                 >
-                  {step === 1 && <Building2 className="h-5 w-5" />}
-                  {step === 2 && <ClipboardList className="h-5 w-5" />}
-                  {step === 3 && <ImageIcon className="h-5 w-5" />}
-                  {step === 4 && <CheckCircle2 className="h-5 w-5" />}
+                  {step === 1 && <Building2 className="h-6 w-6" />}
+                  {step === 2 && <ClipboardList className="h-6 w-6" />}
+                  {step === 3 && <ImageIcon className="h-6 w-6" />}
+                  {step === 4 && <CheckCircle2 className="h-6 w-6" />}
                 </div>
-                <span className={`text-xs font-medium ${currentStep >= step ? 'text-primary' : 'text-muted-foreground'}`}>
+                <span className={`text-sm font-medium transition-colors duration-300 ${currentStep >= step ? 'text-primary' : 'text-muted-foreground'}`}>
                   {step === 1 && "Basic Info"}
                   {step === 2 && "Details"}
                   {step === 3 && "Media"}
@@ -253,18 +253,18 @@ export default function CreateStartupPage() {
               </div>
             ))}
           </div>
-          <div className="relative mt-2">
-            <div className="absolute top-0 left-0 h-1 bg-muted w-full rounded">
+          <div className="relative mt-4 max-w-2xl mx-auto">
+            <div className="absolute top-0 left-0 h-2 bg-muted w-full rounded-full">
               <div 
-                className="h-1 bg-primary rounded transition-all duration-300" 
+                className="h-2 bg-primary rounded-full transition-all duration-500 ease-in-out" 
                 style={{ width: `${(currentStep - 1) * 33.33}%` }}
               />
             </div>
           </div>
         </div>
 
-        <Card className="shadow-sm border border-border">
-          <div className="p-6">
+        <Card className="shadow-lg border border-border/50 backdrop-blur-sm">
+          <div className="p-8">
             {/* Step 1: Basic Info */}
             {currentStep === 1 && (
               <BasicInfoForm 
@@ -297,109 +297,109 @@ export default function CreateStartupPage() {
 
             {/* Step 4: Review */}
             {currentStep === 4 && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-center py-4">
-                  <div className="bg-primary/10 p-3 rounded-full">
-                    <CheckCircle2 className="h-8 w-8 text-primary" />
+              <div className="space-y-8">
+                <div className="flex items-center justify-center py-6">
+                  <div className="bg-primary/10 p-4 rounded-full ring-4 ring-primary/5">
+                    <CheckCircle2 className="h-10 w-10 text-primary" />
                   </div>
                 </div>
 
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold mb-2">Review & Submit</h2>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    Please review your information before submitting. You can go back to edit any section if needed.
+                <div className="text-center max-w-xl mx-auto">
+                  <h2 className="text-2xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Ready to Launch!</h2>
+                  <p className="text-muted-foreground text-lg">
+                    You're almost there! Review your startup information below and make any final adjustments before submitting.
                   </p>
                 </div>
 
-                <div className="space-y-4 my-6">
+                <div className="space-y-6">
                   {/* Basic Info Summary */}
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold flex items-center mb-3">
-                      <Building2 className="mr-2 h-5 w-5 text-primary" />
+                  <div className="bg-card rounded-xl p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+                    <h3 className="text-xl font-semibold flex items-center mb-4">
+                      <Building2 className="mr-3 h-6 w-6 text-primary" />
                       Basic Information
                     </h3>
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Startup Name</p>
-                          <p className="font-medium">{formData.basicInfo.name || "Not provided"}</p>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-muted-foreground">Startup Name</p>
+                          <p className="text-lg font-medium">{formData.basicInfo.name || "Not provided"}</p>
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">URL Slug</p>
-                          <p className="font-medium">{formData.basicInfo.slug || "Not provided"}</p>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-muted-foreground">URL Slug</p>
+                          <p className="text-lg font-medium text-primary">{formData.basicInfo.slug || "Not provided"}</p>
                         </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Tagline</p>
-                        <p className="font-medium">{formData.basicInfo.tagline || "Not provided"}</p>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-muted-foreground">Tagline</p>
+                        <p className="text-lg font-medium">{formData.basicInfo.tagline || "Not provided"}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Detailed Info Summary */}
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold flex items-center mb-3">
-                      <ClipboardList className="mr-2 h-5 w-5 text-primary" />
+                  <div className="bg-card rounded-xl p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+                    <h3 className="text-xl font-semibold flex items-center mb-4">
+                      <ClipboardList className="mr-3 h-6 w-6 text-primary" />
                       Detailed Information
                     </h3>
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Location</p>
-                          <p className="font-medium">{formData.detailedInfo.location || "Not provided"}</p>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-muted-foreground">Location</p>
+                          <p className="text-lg font-medium">{formData.detailedInfo.location || "Not provided"}</p>
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Funding Stage</p>
-                          <p className="font-medium">{formData.detailedInfo.fundingStage || "Not provided"}</p>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-muted-foreground">Funding Stage</p>
+                          <p className="text-lg font-medium">{formData.detailedInfo.fundingStage || "Not provided"}</p>
                         </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Description</p>
-                        <p className="font-medium line-clamp-2">{formData.detailedInfo.description || "Not provided"}</p>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-muted-foreground">Description</p>
+                        <p className="text-lg font-medium line-clamp-3">{formData.detailedInfo.description || "Not provided"}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Media Info Summary */}
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold flex items-center mb-3">
-                      <ImageIcon className="mr-2 h-5 w-5 text-primary" />
+                  <div className="bg-card rounded-xl p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+                    <h3 className="text-xl font-semibold flex items-center mb-4">
+                      <ImageIcon className="mr-3 h-6 w-6 text-primary" />
                       Media Assets
                     </h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <p className="text-sm text-muted-foreground mb-2">Logo</p>
-                        <div className="h-16 flex items-center justify-center">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="bg-muted/30 rounded-lg p-4 text-center">
+                        <p className="text-sm font-medium text-muted-foreground mb-3">Logo</p>
+                        <div className="h-20 flex items-center justify-center">
                           {formData.mediaInfo.logo ? (
-                            <div className="border rounded-md p-1 inline-block bg-background">
-                              <CheckCircle2 className="h-5 w-5 text-green-500" />
+                            <div className="bg-primary/10 rounded-full p-3">
+                              <CheckCircle2 className="h-8 w-8 text-primary" />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground">None</span>
+                            <span className="text-muted-foreground">Not uploaded</span>
                           )}
                         </div>
                       </div>
-                      <div className="text-center">
-                        <p className="text-sm text-muted-foreground mb-2">Banner</p>
-                        <div className="h-16 flex items-center justify-center">
+                      <div className="bg-muted/30 rounded-lg p-4 text-center">
+                        <p className="text-sm font-medium text-muted-foreground mb-3">Banner</p>
+                        <div className="h-20 flex items-center justify-center">
                           {formData.mediaInfo.banner ? (
-                            <div className="border rounded-md p-1 inline-block bg-background">
-                              <CheckCircle2 className="h-5 w-5 text-green-500" />
+                            <div className="bg-primary/10 rounded-full p-3">
+                              <CheckCircle2 className="h-8 w-8 text-primary" />
                             </div>
                           ) : (
-                            <span className="text-muted-foreground">None</span>
+                            <span className="text-muted-foreground">Not uploaded</span>
                           )}
                         </div>
                       </div>
-                      <div className="text-center">
-                        <p className="text-sm text-muted-foreground mb-2">Gallery Images</p>
-                        <div className="h-16 flex items-center justify-center">
+                      <div className="bg-muted/30 rounded-lg p-4 text-center">
+                        <p className="text-sm font-medium text-muted-foreground mb-3">Gallery Images</p>
+                        <div className="h-20 flex items-center justify-center">
                           {formData.mediaInfo.gallery && formData.mediaInfo.gallery.length > 0 ? (
-                            <div className="border rounded-md p-1 inline-block bg-background">
-                              <span className="font-medium">{formData.mediaInfo.gallery.length}</span>
+                            <div className="bg-primary/10 rounded-full p-3">
+                              <span className="text-xl font-bold text-primary">{formData.mediaInfo.gallery.length}</span>
                             </div>
                           ) : (
-                            <span className="text-muted-foreground">None</span>
+                            <span className="text-muted-foreground">No images</span>
                           )}
                         </div>
                       </div>
@@ -407,21 +407,31 @@ export default function CreateStartupPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={handleBack} disabled={isSubmitting}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back
+                <div className="flex justify-between items-center pt-6">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleBack} 
+                    disabled={isSubmitting}
+                    className="gap-2 text-base"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Media
                   </Button>
-                  <Button onClick={handleFinalSubmit} disabled={isSubmitting}>
+                  <Button 
+                    onClick={handleFinalSubmit} 
+                    disabled={isSubmitting}
+                    size="lg"
+                    className="gap-2 text-base font-semibold"
+                  >
                     {isSubmitting ? (
                       <>
                         <Loader variant="spinner" size="sm" center={false} className="mr-2" />
-                        Submitting...
+                        Creating Startup...
                       </>
                     ) : (
                       <>
-                        <Send className="mr-2 h-4 w-4" />
-                        Submit Startup
+                        <Send className="h-5 w-5" />
+                        Launch Startup
                       </>
                     )}
                   </Button>

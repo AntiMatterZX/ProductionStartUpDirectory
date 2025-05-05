@@ -100,25 +100,25 @@ export default function DetailedInfoForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-semibold">Startup Details</h2>
-          <p className="text-muted-foreground">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8 max-w-3xl mx-auto">
+        <div className="space-y-3">
+          <h2 className="text-2xl font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Startup Details</h2>
+          <p className="text-muted-foreground text-lg">
             Tell us more about your startup to help investors and partners understand your business.
           </p>
         </div>
 
         {/* Description Section */}
-        <div className="space-y-4">
+        <div className="grid gap-6">
           <FormField
             control={form.control}
             name="description"
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel>Startup Description*</FormLabel>
+                  <FormLabel className="text-base">Startup Description*</FormLabel>
                   <span className={cn(
-                    "text-xs",
+                    "text-sm font-medium",
                     descriptionLength < minDescriptionLength || descriptionLength > maxDescriptionLength 
                       ? "text-destructive" 
                       : "text-muted-foreground"
@@ -130,43 +130,40 @@ export default function DetailedInfoForm({
                   <Textarea
                     placeholder="Provide a detailed description of your startup, including your mission, vision, and what problem you're solving."
                     {...field}
-                    className="min-h-[160px] resize-none"
+                    className="min-h-[200px] resize-none text-base"
                     maxLength={maxDescriptionLength}
                   />
                 </FormControl>
-                <FormDescription>Minimum 50 characters, maximum 2000 characters</FormDescription>
+                <FormDescription className="text-sm">
+                  Write a compelling description (minimum {minDescriptionLength} characters)
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-        </div>
 
-        {/* Funding & Team Section */}
-        <div className="space-y-6">
-          <h3 className="text-lg font-semibold">Funding & Team</h3>
-          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="fundingStage"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Funding Stage*</FormLabel>
+                  <FormLabel className="text-base">Funding Stage*</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="max-w-sm">
+                      <SelectTrigger className="text-base">
                         <SelectValue placeholder="Select funding stage" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {fundingStages.map((stage) => (
-                        <SelectItem key={stage} value={stage}>
+                        <SelectItem key={stage} value={stage} className="text-base">
                           {stage}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormDescription>Your startup's current funding stage</FormDescription>
+                  <FormDescription className="text-sm">Your startup's current funding stage</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -177,16 +174,20 @@ export default function DetailedInfoForm({
               name="fundingAmount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Funding Amount (Optional)</FormLabel>
+                  <FormLabel className="text-base">Funding Amount</FormLabel>
                   <FormControl>
-                    <div className="relative max-w-sm">
+                    <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <DollarSign className="h-5 w-5 text-muted-foreground" />
                       </div>
-                      <Input placeholder="e.g., 500000 (for $500K)" className="pl-8" {...field} />
+                      <Input 
+                        placeholder="e.g., 500000 (for $500K)" 
+                        className="pl-10 text-base" 
+                        {...field} 
+                      />
                     </div>
                   </FormControl>
-                  <FormDescription>Total funding raised so far in USD</FormDescription>
+                  <FormDescription className="text-sm">Total funding raised so far in USD (optional)</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -199,22 +200,22 @@ export default function DetailedInfoForm({
               name="teamSize"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Team Size*</FormLabel>
+                  <FormLabel className="text-base">Team Size*</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="max-w-sm">
+                      <SelectTrigger className="text-base">
                         <SelectValue placeholder="Select team size" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {teamSizes.map((size) => (
-                        <SelectItem key={size} value={size}>
+                        <SelectItem key={size} value={size} className="text-base">
                           {size}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormDescription>Number of people in your team</FormDescription>
+                  <FormDescription className="text-sm">Current number of team members</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -225,78 +226,100 @@ export default function DetailedInfoForm({
               name="location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Primary Location*</FormLabel>
+                  <FormLabel className="text-base">Location*</FormLabel>
                   <FormControl>
-                    <div className="relative max-w-sm">
+                    <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <MapPin className="h-5 w-5 text-muted-foreground" />
                       </div>
-                      <Input placeholder="e.g., San Francisco, CA" className="pl-8" {...field} />
+                      <Input 
+                        placeholder="City, Country" 
+                        className="pl-10 text-base" 
+                        {...field} 
+                      />
                     </div>
                   </FormControl>
-                  <FormDescription>Where your startup is headquartered</FormDescription>
+                  <FormDescription className="text-sm">Primary location of your startup</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-        </div>
 
-        {/* Looking For Section */}
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold">Looking For*</h3>
-            <FormDescription>Select what your startup is currently seeking</FormDescription>
-          </div>
-
-          {isLoading ? (
-            <div className="flex items-center justify-center h-24">
-              <LoadingIndicator />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {lookingForOptions.map((option) => (
-                <FormField
-                  key={option.id}
-                  control={form.control}
-                  name="lookingFor"
-                  render={({ field }) => (
-                    <FormItem key={option.id} className="flex items-start space-x-2 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value?.includes(option.id)}
-                          onCheckedChange={(checked) => {
-                            return checked
-                              ? field.onChange([...field.value, option.id])
-                              : field.onChange(field.value?.filter((value) => value !== option.id))
-                          }}
-                        />
-                      </FormControl>
-                      <FormLabel className="font-normal cursor-pointer text-sm">
-                        {option.name}
-                      </FormLabel>
-                    </FormItem>
-                  )}
-                />
-              ))}
-            </div>
-          )}
-          {form.formState.errors.lookingFor && (
-            <p className="text-sm font-medium text-destructive">
-              {form.formState.errors.lookingFor.message}
-            </p>
-          )}
+          <FormField
+            control={form.control}
+            name="lookingFor"
+            render={() => (
+              <FormItem>
+                <div className="mb-4">
+                  <FormLabel className="text-base">What are you looking for?*</FormLabel>
+                  <FormDescription className="text-sm">
+                    Select all that apply to your startup's current needs
+                  </FormDescription>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {lookingForOptions.map((option) => (
+                    <FormField
+                      key={option.id}
+                      control={form.control}
+                      name="lookingFor"
+                      render={({ field }) => {
+                        return (
+                          <FormItem
+                            key={option.id}
+                            className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(option.id)}
+                                onCheckedChange={(checked) => {
+                                  return checked
+                                    ? field.onChange([...field.value, option.id])
+                                    : field.onChange(
+                                        field.value?.filter(
+                                          (value) => value !== option.id
+                                        )
+                                      )
+                                }}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-base">
+                                {option.name}
+                              </FormLabel>
+                            </div>
+                          </FormItem>
+                        )
+                      }}
+                    />
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         {!hideButtons && (
-          <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onBack} className="w-full sm:w-auto order-2 sm:order-1">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Basic Info
+          <div className="flex justify-between items-center pt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onBack}
+              disabled={isSubmitting}
+              className="gap-2 text-base"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              Back to Basics
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto order-1 sm:order-2">
-              {isSubmitting ? <LoadingIndicator size="sm" /> : "Continue"}
-              <ArrowRight className="ml-2 h-4 w-4" />
+            <Button 
+              type="submit"
+              disabled={isSubmitting || !form.formState.isValid}
+              size="lg"
+              className="gap-2 text-base font-semibold"
+            >
+              Continue
+              <ArrowRight className="h-5 w-5" />
             </Button>
           </div>
         )}
