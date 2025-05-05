@@ -232,7 +232,7 @@ export default function DetailedInfoForm({
               <LoadingIndicator />
             </div>
           ) : (
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2">
               {lookingForOptions.map((option) => (
                 <FormField
                   key={option.id}
@@ -240,7 +240,7 @@ export default function DetailedInfoForm({
                   name="lookingFor"
                   render={({ field }) => {
                     return (
-                      <FormItem key={option.id} className="flex items-center space-x-2 space-y-0 min-w-[150px]">
+                      <FormItem key={option.id} className="flex items-start space-x-2 space-y-0">
                         <FormControl>
                           <Checkbox
                             checked={field.value?.includes(option.id)}
@@ -251,7 +251,9 @@ export default function DetailedInfoForm({
                             }}
                           />
                         </FormControl>
-                        <FormLabel className="font-normal cursor-pointer text-sm">{option.name}</FormLabel>
+                        <FormLabel className="font-normal cursor-pointer text-sm leading-tight">
+                          {option.name}
+                        </FormLabel>
                       </FormItem>
                     )
                   }}

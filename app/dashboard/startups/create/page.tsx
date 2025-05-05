@@ -213,18 +213,6 @@ export default function CreateStartupPage() {
       // Add the remaining media info as a JSON string
       formDataObj.append("mediaInfo", JSON.stringify(mediaInfoCopy))
 
-      // Log for debugging
-      console.log("Submitting startup data:", {
-        basicInfo: formData.basicInfo,
-        detailedInfo: formData.detailedInfo,
-        mediaInfo: {
-          ...mediaInfoCopy,
-          logo: formData.mediaInfo.logo ? "File attached" : null,
-          coverImage: formData.mediaInfo.coverImage ? "File attached" : null,
-          pitchDeck: formData.mediaInfo.pitchDeck ? "File attached" : null,
-        },
-      })
-
       const response = await fetch("/api/startups", {
         method: "POST",
         body: formDataObj,
@@ -375,9 +363,9 @@ export default function CreateStartupPage() {
   }
 
   return (
-    <div className="w-full pb-8">
+    <div className="w-full pb-16">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <h1 className="text-2xl font-bold mb-6">Create Your Startup Profile</h1>
+        <h1 className="text-2xl font-bold mb-6 pt-8">Create Your Startup Profile</h1>
 
         <div className="mb-8">
           <FormStepper
@@ -388,7 +376,7 @@ export default function CreateStartupPage() {
           />
         </div>
 
-        <Card className="shadow-sm mb-8">
+        <Card className="shadow-sm mb-16">
           <CardContent className="p-4 sm:p-6 md:p-8">{renderStep()}</CardContent>
         </Card>
       </div>

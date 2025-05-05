@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 export const AdminSidebar = () => {
   const [open, setOpen] = useState(true);
   const pathname = usePathname();
-  const currentPath = pathname.split("/")[2] || "dashboard"; 
+  const currentPath = pathname?.split("/")[2] || "dashboard"; 
 
   return (
     <motion.nav
