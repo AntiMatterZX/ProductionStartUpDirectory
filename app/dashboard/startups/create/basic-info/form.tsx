@@ -121,14 +121,14 @@ export default function BasicInfoForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8 max-w-3xl mx-auto">
-        <div className="space-y-3">
-          <h2 className="text-2xl font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Basic Information</h2>
-          <p className="text-muted-foreground text-lg">Let's start with the essential details about your startup.</p>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 sm:space-y-8">
+        <div className="space-y-2 sm:space-y-3">
+          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Basic Information</h2>
+          <p className="text-muted-foreground text-base sm:text-lg">Let's start with the essential details about your startup.</p>
         </div>
 
         {/* Startup Name & Slug Section */}
-        <div className="grid gap-6">
+        <div className="grid gap-4 sm:gap-6">
           <FormField
             control={form.control}
             name="name"
@@ -139,7 +139,7 @@ export default function BasicInfoForm({
                   <Input 
                     placeholder="Enter your startup name" 
                     {...field} 
-                    className="max-w-xl text-base" 
+                    className="text-base" 
                   />
                 </FormControl>
                 <FormDescription className="text-sm">The official name of your startup</FormDescription>
@@ -208,13 +208,13 @@ export default function BasicInfoForm({
               <FormItem>
                 <FormLabel className="text-base">Tagline*</FormLabel>
                 <FormControl>
-                  <div className="relative max-w-xl">
+                  <div className="relative">
                     <Textarea 
                       placeholder="A brief, catchy description of your startup" 
                       {...field}
-                      className="resize-none text-base min-h-[80px]"
+                      className="resize-none text-base min-h-[80px] pr-12"
                     />
-                    <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
+                    <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-background/80 px-1 rounded">
                       {taglineLength}/{maxTaglineLength}
                     </div>
                   </div>
@@ -313,12 +313,12 @@ export default function BasicInfoForm({
         </div>
 
         {!hideButtons && (
-          <div className="flex justify-end pt-6">
+          <div className="flex justify-end pt-4 sm:pt-6">
             <Button 
               type="submit" 
               disabled={isSubmitting || !form.formState.isValid}
               size="lg"
-              className="gap-2 text-base font-semibold"
+              className="gap-2 text-base font-semibold w-full sm:w-auto"
             >
               Continue
               <ArrowRight className="h-5 w-5" />
