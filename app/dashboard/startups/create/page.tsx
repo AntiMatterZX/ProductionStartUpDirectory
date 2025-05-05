@@ -54,7 +54,7 @@ export default function CreateStartupPage() {
   const [formValidity, setFormValidity] = useState({
     step1: false,
     step2: false,
-    step3: false
+    step3: false,
   })
 
   const totalSteps = 4
@@ -63,8 +63,10 @@ export default function CreateStartupPage() {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
         if (!session) {
           toast({
             title: "Authentication required",
@@ -80,7 +82,7 @@ export default function CreateStartupPage() {
         setIsLoading(false)
       }
     }
-    
+
     checkAuth()
   }, [supabase, router])
 
@@ -88,11 +90,11 @@ export default function CreateStartupPage() {
     // Only allow navigation to previously completed steps or the next available step
     if (step < currentStep || (step === currentStep + 1 && canProceedToNextStep())) {
       setCurrentStep(step)
-      
+
       // Scroll to top when changing steps
       window.scrollTo({
         top: 0,
-        behavior: "smooth"
+        behavior: "smooth",
       })
     }
   }
@@ -110,7 +112,7 @@ export default function CreateStartupPage() {
     }
   }
 
-  const handleNext = (data: any, isValid: boolean = true) => {
+  const handleNext = (data: any, isValid = true) => {
     // Update form validity state based on current step
     switch (currentStep) {
       case 1:
@@ -120,7 +122,7 @@ export default function CreateStartupPage() {
           setCurrentStep(2)
           window.scrollTo({
             top: 0,
-            behavior: "smooth"
+            behavior: "smooth",
           })
         }
         break
@@ -131,7 +133,7 @@ export default function CreateStartupPage() {
           setCurrentStep(3)
           window.scrollTo({
             top: 0,
-            behavior: "smooth"
+            behavior: "smooth",
           })
         }
         break
@@ -142,7 +144,7 @@ export default function CreateStartupPage() {
           setCurrentStep(4)
           window.scrollTo({
             top: 0,
-            behavior: "smooth"
+            behavior: "smooth",
           })
         }
         break
@@ -154,20 +156,22 @@ export default function CreateStartupPage() {
       setCurrentStep(currentStep - 1)
       window.scrollTo({
         top: 0,
-        behavior: "smooth"
+        behavior: "smooth",
       })
     }
   }
 
   const handleSubmit = async () => {
-    if (isSubmitting) return;
-    
+    if (isSubmitting) return
+
     try {
       setIsSubmitting(true)
 
       // Check authentication status again before submitting
-      const { data: { session } } = await supabase.auth.getSession()
-      
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
       if (!session) {
         toast({
           title: "Authentication required",
@@ -218,21 +222,21 @@ export default function CreateStartupPage() {
           logo: formData.mediaInfo.logo ? "File attached" : null,
           coverImage: formData.mediaInfo.coverImage ? "File attached" : null,
           pitchDeck: formData.mediaInfo.pitchDeck ? "File attached" : null,
-        }
-      });
+        },
+      })
 
       const response = await fetch("/api/startups", {
         method: "POST",
         body: formDataObj,
       })
 
-      const responseData = await response.json();
-      
+      const responseData = await response.json()
+
       if (!response.ok) {
-        console.error("Error response:", responseData);
+        console.error("Error response:", responseData)
         throw new Error(responseData.message || responseData.error || "Failed to create startup")
       }
-      
+
       toast({
         title: "Success!",
         description: "Your startup has been created successfully.",
@@ -240,19 +244,19 @@ export default function CreateStartupPage() {
 
       router.push(`/dashboard/startups/${responseData.id}`)
     } catch (error: any) {
-      console.error("Error creating startup:", error);
-      
+      console.error("Error creating startup:", error)
+
       // Provide more specific error messages based on error type
-      let errorMessage = "There was a problem creating your startup.";
-      
+      let errorMessage = "There was a problem creating your startup."
+
       if (error.message.includes("storage") || error.message.includes("bucket")) {
-        errorMessage = "File upload failed. Please try using smaller files or a different format.";
+        errorMessage = "File upload failed. Please try using smaller files or a different format."
       } else if (error.message.includes("database")) {
-        errorMessage = "Database error. Please check your input and try again.";
+        errorMessage = "Database error. Please check your input and try again."
       } else if (error.message.includes("slug")) {
-        errorMessage = "The startup URL slug is already taken. Please choose a different name.";
+        errorMessage = "The startup URL slug is already taken. Please choose a different name."
       }
-      
+
       toast({
         title: "Error",
         description: error.message || errorMessage,
@@ -276,11 +280,8 @@ export default function CreateStartupPage() {
     switch (currentStep) {
       case 1:
         return (
-          <BasicInfoForm 
-            onSubmit={(data, isValid) => handleNext(data, isValid)} 
-            initialData={formData.basicInfo} 
-          />
-        );
+          <BasicInfoForm onSubmit={(data, isValid) => handleNext(data, isValid)} initialData={formData.basicInfo} />
+        )
       case 2:
         return (
           <DetailedInfoForm
@@ -288,7 +289,7 @@ export default function CreateStartupPage() {
             initialData={formData.detailedInfo}
             onBack={handleBack}
           />
-        );
+        )
       case 3:
         return (
           <MediaUploadForm
@@ -297,7 +298,7 @@ export default function CreateStartupPage() {
             onBack={handleBack}
             isSubmitting={isSubmitting}
           />
-        );
+        )
       case 4:
         return (
           <div className="space-y-6">
@@ -306,49 +307,51 @@ export default function CreateStartupPage() {
                 <CheckCircle2 className="h-8 w-8 text-primary" />
               </div>
             </div>
-            
+
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-bold">Ready to Submit</h2>
-              <p className="text-muted-foreground">
-                Please review your information before final submission
-              </p>
+              <p className="text-muted-foreground">Please review your information before final submission</p>
             </div>
 
             <div className="space-y-4 my-6">
               <h3 className="font-medium">Basic Information</h3>
               <div className="bg-muted/50 p-4 rounded-md">
-                <p><span className="font-medium">Name:</span> {formData.basicInfo.name}</p>
-                <p><span className="font-medium">Tagline:</span> {formData.basicInfo.tagline}</p>
+                <p>
+                  <span className="font-medium">Name:</span> {formData.basicInfo.name}
+                </p>
+                <p>
+                  <span className="font-medium">Tagline:</span> {formData.basicInfo.tagline}
+                </p>
               </div>
-              
+
               <h3 className="font-medium">Detailed Information</h3>
               <div className="bg-muted/50 p-4 rounded-md">
-                <p><span className="font-medium">Location:</span> {formData.detailedInfo.location}</p>
-                <p><span className="font-medium">Funding Stage:</span> {formData.detailedInfo.fundingStage}</p>
+                <p>
+                  <span className="font-medium">Location:</span> {formData.detailedInfo.location}
+                </p>
+                <p>
+                  <span className="font-medium">Funding Stage:</span> {formData.detailedInfo.fundingStage}
+                </p>
               </div>
 
               <h3 className="font-medium">Media Information</h3>
               <div className="bg-muted/50 p-4 rounded-md">
-                <p><span className="font-medium">Logo:</span> {formData.mediaInfo.logo ? "Uploaded" : "None"}</p>
-                <p><span className="font-medium">Cover Image:</span> {formData.mediaInfo.coverImage ? "Uploaded" : "None"}</p>
+                <p>
+                  <span className="font-medium">Logo:</span> {formData.mediaInfo.logo ? "Uploaded" : "None"}
+                </p>
+                <p>
+                  <span className="font-medium">Cover Image:</span>{" "}
+                  {formData.mediaInfo.coverImage ? "Uploaded" : "None"}
+                </p>
               </div>
             </div>
 
             <div className="flex justify-between pt-4">
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={handleBack}
-                disabled={isSubmitting}
-              >
+              <Button type="button" variant="outline" onClick={handleBack} disabled={isSubmitting}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
               </Button>
-              <Button 
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-              >
+              <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <div className="mr-2">
@@ -365,30 +368,28 @@ export default function CreateStartupPage() {
               </Button>
             </div>
           </div>
-        );
+        )
       default:
-        return null;
+        return null
     }
-  };
+  }
 
   return (
-    <div className="w-full">
+    <div className="w-full pb-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <h1 className="text-2xl font-bold mb-6">Create Your Startup Profile</h1>
 
         <div className="mb-8">
-          <FormStepper 
-            currentStep={currentStep} 
-            totalSteps={totalSteps} 
+          <FormStepper
+            currentStep={currentStep}
+            totalSteps={totalSteps}
             stepTitles={stepTitles}
-            onStepChange={handleStepChange} 
+            onStepChange={handleStepChange}
           />
         </div>
 
-        <Card className="shadow-sm mb-6">
-          <CardContent className="p-4 sm:p-6 md:p-8">
-            {renderStep()}
-          </CardContent>
+        <Card className="shadow-sm mb-8">
+          <CardContent className="p-4 sm:p-6 md:p-8">{renderStep()}</CardContent>
         </Card>
       </div>
     </div>
