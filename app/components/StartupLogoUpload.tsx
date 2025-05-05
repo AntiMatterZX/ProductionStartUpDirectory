@@ -77,78 +77,56 @@ export default function StartupLogoUpload({
   };
   
   // Upload logo
-  const uploadLogo = async () => {
-    if (!selectedFile || !startupId || !userId) {
-      setError("Missing required information");
-      return;
-    }
+  const handleUpload = async () => {
+    if (!selectedFile || !startupId || !userId) return;
     
     setIsUploading(true);
     setUploadProgress(0);
-    setError(null);
     
     try {
-      // Use the centralized file upload utility
-      const logoUrl = await uploadFile(
-        selectedFile,
-        userId,
-        "logo",
+      // Upload file to storage
+      const fileUrl = await uploadFile(
+        selectedFile, 
+        userId, 
+        'logo',
         (progress) => setUploadProgress(progress)
       );
       
-      // Update the startup record with new logo URL
-      const response = await fetch(`/api/startups/${startupId}/media`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mediaType: "logo",
-          url: logoUrl,
-          title: "Company Logo"
-        }),
-      });
-      
-      let errorMessage = "Failed to update logo";
-      
-      if (!response.ok) {
-        // Try to get a detailed error message from the response
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-          if (errorData.error) {
-            errorMessage += `: ${errorData.error}`;
-          }
-        } catch (jsonError) {
-          // If we can't parse the JSON, use the status text
-          errorMessage = `Error (${response.status}): ${response.statusText || errorMessage}`;
-        }
-        throw new Error(errorMessage);
+      // Update startup record with new logo_url
+      const { error } = await supabase
+        .from('startups')
+        .update({ logo_image: fileUrl })
+        .eq('id', startupId);
+        
+      if (error) {
+        throw new Error(error.message);
       }
+      
+      // Update success
+      setIsOpen(false);
+      setSelectedFile(null);
+      setPreviewUrl(null);
       
       toast({
         title: "Logo updated",
-        description: "Your startup logo has been updated successfully",
+        description: "Your company logo has been updated successfully"
       });
       
-      setIsOpen(false);
-      
-      // Notify parent component
       if (onUploaded) {
-        onUploaded(logoUrl);
+        onUploaded(fileUrl);
       }
       
     } catch (error: any) {
-      console.error("Logo upload error:", error);
-      const errorMessage = error.message || "There was a problem uploading your logo";
-      setError(errorMessage);
+      console.error('Error uploading logo:', error);
+      setError(error.message);
       toast({
         title: "Upload failed",
-        description: errorMessage,
-        variant: "destructive"
+        description: error.message || "Something went wrong uploading your logo",
+        variant: "destructive",
       });
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
   
@@ -272,7 +250,7 @@ export default function StartupLogoUpload({
             </Button>
             
             <Button
-              onClick={uploadLogo}
+              onClick={handleUpload}
               disabled={!selectedFile || isUploading}
             >
               {isUploading ? "Uploading..." : "Upload Logo"}

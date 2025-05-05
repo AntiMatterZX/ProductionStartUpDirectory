@@ -169,7 +169,8 @@ export async function POST(request: NextRequest) {
     
     // Get files from FormData if present
     const logo = formData.get("logo");
-    const coverImage = formData.get("coverImage");
+    const banner = formData.get("banner");
+    const galleryFiles = formData.getAll("gallery");
     const pitchDeck = formData.get("pitchDeck");
     
     // Make sure the "startups" bucket exists
@@ -185,34 +186,45 @@ export async function POST(request: NextRequest) {
     }
     
     // Process file uploads and get URLs using our helper function
-    let logoUrl = null;
+    let logoImage = null;
     if (logo && typeof logo !== 'string') {
       try {
-        logoUrl = await uploadFile(supabase, logo, session.user.id, 'logos');
+        logoImage = await uploadFile(supabase, logo, session.user.id, 'logos');
       } catch (logoError) {
         console.error("Error uploading logo:", logoError);
         // Don't throw here - allow creation to continue without logo
       }
     } else {
-      logoUrl = basicInfo?.logoUrl || null;
+      logoImage = basicInfo?.logoUrl || null;
     }
       
-    let coverImageUrl = null;
-    if (coverImage && typeof coverImage !== 'string') {
-      console.log("Uploading cover image...");
+    let bannerImage = null;
+    if (banner && typeof banner !== 'string') {
+      console.log("Uploading banner image...");
       
       try {
-        coverImageUrl = await uploadFile(supabase, coverImage, session.user.id, 'images');
+        bannerImage = await uploadFile(supabase, banner, session.user.id, 'images');
         
-        console.log("Cover image uploaded successfully:", coverImageUrl);
-        
-        // Add to media_images array if it's not already there
-        if (coverImageUrl && Array.isArray(mediaInfo.media_images) && !mediaInfo.media_images.includes(coverImageUrl)) {
-          mediaInfo.media_images.push(coverImageUrl);
+        console.log("Banner image uploaded successfully:", bannerImage);
+      } catch (bannerError) {
+        console.error("Error uploading banner image:", bannerError);
+        // Don't throw here - allow creation to continue without banner image
+      }
+    }
+    
+    // Process gallery images
+    const galleryUrls: string[] = [];
+    if (galleryFiles && galleryFiles.length > 0) {
+      for (const galleryFile of galleryFiles) {
+        if (galleryFile && typeof galleryFile !== 'string') {
+          try {
+            const galleryUrl = await uploadFile(supabase, galleryFile, session.user.id, 'images');
+            galleryUrls.push(galleryUrl);
+          } catch (galleryError) {
+            console.error("Error uploading gallery image:", galleryError);
+            // Continue with other images
+          }
         }
-      } catch (coverError) {
-        console.error("Error uploading cover image:", coverError);
-        // Don't throw here - allow creation to continue without cover image
       }
     }
       
@@ -249,27 +261,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare media arrays
-    const mediaImages: string[] = [];
-    const mediaDocuments: string[] = [];
-    const mediaVideos: string[] = [];
+    const mediaImages: string[] = [...galleryUrls];
 
-    // Add cover image to media_images array if it exists
-    if (coverImageUrl) {
-      mediaImages.push(coverImageUrl);
+    // Add banner to media_images array if it exists and isn't already there
+    if (bannerImage && !mediaImages.includes(bannerImage)) {
+      mediaImages.push(bannerImage);
     }
 
-    // Add logo to media_images array if it exists
-    if (logoUrl) {
-      mediaImages.push(logoUrl);
+    // Add logo to media_images array if it exists and isn't already there
+    if (logoImage && !mediaImages.includes(logoImage)) {
+      mediaImages.push(logoImage);
     }
 
     // Add pitch deck to media_documents array if it exists
+    const mediaDocuments: string[] = [];
     if (pitchDeckUrl) {
       mediaDocuments.push(pitchDeckUrl);
       // Note: The pitch deck is stored in the media_documents array instead of a separate column
     }
 
     // Add video URL to media_videos array if it exists
+    const mediaVideos: string[] = [];
     if (videoUrl) {
       mediaVideos.push(videoUrl);
     }
@@ -297,8 +309,8 @@ export async function POST(request: NextRequest) {
           tagline: basicInfo.tagline?.trim() || null,
           description: detailedInfo.description?.trim() || null,
           website_url: basicInfo.website?.trim() || null,
-          logo_url: logoUrl,
-          banner_url: coverImageUrl,
+          logo_image: logoImage,
+          banner_image: bannerImage,
           pitch_deck_url: pitchDeckUrl,
           founding_date: basicInfo.foundingDate || null,
           employee_count: detailedInfo.teamSize ? parseInt(detailedInfo.teamSize) : null,

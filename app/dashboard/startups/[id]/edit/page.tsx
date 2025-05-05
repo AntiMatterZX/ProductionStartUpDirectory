@@ -470,11 +470,11 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
                   mediaImages={mediaItems.images}
                   mediaDocuments={mediaItems.documents}
                   mediaVideos={mediaItems.videos}
-                  logoUrl={startupData?.logo_url}
-                  bannerUrl={startupData?.banner_url}
+                  logoImage={startupData?.logo_image}
+                  bannerImage={startupData?.banner_image}
                   isEditing={true}
                   onMediaRemoved={handleMediaRemoved}
-                  onMediaAdded={(mediaType, url) => handleMediaUploaded(url, mediaType)}
+                  onMediaAdded={(url, type) => handleMediaUploaded(url, type)}
                 />
               </CardContent>
             </Card>

@@ -30,7 +30,8 @@ export const detailedInfoSchema = z.object({
 // Media Upload Validation Schema
 export const mediaUploadSchema = z.object({
   logo: z.any().optional(),
-  coverImage: z.any().optional(),
+  banner: z.any().optional(),
+  gallery: z.array(z.any()).default([]),
   pitchDeck: z.any().optional(),
   videoUrl: z.string().url({ message: "Please enter a valid URL" }).optional().or(z.literal("")),
   socialLinks: z.object({

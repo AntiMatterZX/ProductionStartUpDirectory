@@ -2,23 +2,23 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Image, FileText, Video, LayoutTemplate, ImageIcon } from "lucide-react";
+import { Image, FileText, Video, LayoutTemplate, ImageIcon, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import StartupMediaUpload from "@/app/components/StartupMediaUpload";
 import MediaDeleteButton from "@/app/components/MediaDeleteButton";
 import { Badge } from "@/components/ui/badge";
 
-interface MediaDisplayProps {
+export interface MediaDisplayProps {
   startupId: string;
-  mediaImages: string[];
-  mediaDocuments: string[];
-  mediaVideos: string[];
-  logoUrl?: string | null;
-  bannerUrl?: string | null;
+  mediaImages?: string[];
+  mediaDocuments?: string[];
+  mediaVideos?: string[];
+  logoImage?: string | null;
+  bannerImage?: string | null;
   isEditing?: boolean;
-  onMediaRemoved?: (mediaType: string, url: string) => void;
-  onMediaAdded?: (mediaType: string, url: string) => void;
+  onMediaRemoved?: (url: string, type: string) => void;
+  onMediaAdded?: (url: string, type: string) => void;
 }
 
 export default function StartupMediaDisplay({
@@ -26,8 +26,8 @@ export default function StartupMediaDisplay({
   mediaImages = [],
   mediaDocuments = [],
   mediaVideos = [],
-  logoUrl = null,
-  bannerUrl = null,
+  logoImage = null,
+  bannerImage = null,
   isEditing = false,
   onMediaRemoved,
   onMediaAdded
@@ -35,12 +35,12 @@ export default function StartupMediaDisplay({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   // Filter gallery images to exclude logo and banner
-  const galleryImages = mediaImages.filter(img => img !== logoUrl && img !== bannerUrl);
+  const galleryImages = mediaImages.filter(img => img !== logoImage && img !== bannerImage);
   
   // Handle media deletion
   const handleDeleteMedia = (mediaType: string, url: string) => {
     if (onMediaRemoved) {
-      onMediaRemoved(mediaType, url);
+      onMediaRemoved(url, mediaType);
     }
     
     // Close image preview if it's the deleted image
@@ -52,7 +52,7 @@ export default function StartupMediaDisplay({
   // Handle media upload
   const handleMediaUploaded = (mediaType: string, url: string) => {
     if (onMediaAdded) {
-      onMediaAdded(mediaType, url);
+      onMediaAdded(url, mediaType);
     }
     
     toast({
@@ -147,25 +147,21 @@ export default function StartupMediaDisplay({
                     <h3 className="text-sm font-medium">Company Logo</h3>
                     <Badge variant="outline" className="text-xs px-1 py-0 h-5">Logo</Badge>
                   </div>
-                  <div className="w-full h-36 bg-muted rounded-md flex items-center justify-center p-2 mb-2">
-                    {logoUrl ? (
-                      <div className="relative group w-full h-full flex items-center justify-center">
+                  <div className="relative p-4 bg-background rounded-md border">
+                    {logoImage ? (
+                      <div className="relative">
                         <img 
-                          src={logoUrl} 
-                          alt="Company Logo" 
-                          className="max-w-full max-h-full object-contain"
+                          src={logoImage} 
+                          alt="Company logo" 
+                          className="w-20 h-20 object-contain mx-auto" 
                         />
-                        
                         {isEditing && (
-                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <MediaDeleteButton
-                              startupId={startupId}
-                              mediaType="logo"
-                              mediaUrl={logoUrl}
-                              onDelete={() => logoUrl && handleDeleteMedia("logo", logoUrl)}
-                              size="sm"
-                            />
-                          </div>
+                          <button
+                            onClick={() => handleDeleteMedia("logo", logoImage)}
+                            className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-sm"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
                         )}
                       </div>
                     ) : (
@@ -197,25 +193,21 @@ export default function StartupMediaDisplay({
                     <h3 className="text-sm font-medium">Banner Image</h3>
                     <Badge variant="outline" className="text-xs px-1 py-0 h-5">Banner</Badge>
                   </div>
-                  <div className="w-full h-36 bg-muted rounded-md flex items-center justify-center p-2 mb-2">
-                    {bannerUrl ? (
-                      <div className="relative group w-full h-full">
+                  <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted border">
+                    {bannerImage ? (
+                      <div className="relative">
                         <img 
-                          src={bannerUrl} 
-                          alt="Banner Image" 
-                          className="w-full h-full object-cover"
+                          src={bannerImage} 
+                          alt="Banner image" 
+                          className="w-full h-full object-cover" 
                         />
-                        
                         {isEditing && (
-                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <MediaDeleteButton
-                              startupId={startupId}
-                              mediaType="banner"
-                              mediaUrl={bannerUrl}
-                              onDelete={() => bannerUrl && handleDeleteMedia("banner", bannerUrl)}
-                              size="sm"
-                            />
-                          </div>
+                          <button
+                            onClick={() => handleDeleteMedia("banner", bannerImage)}
+                            className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-sm"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
                         )}
                       </div>
                     ) : (

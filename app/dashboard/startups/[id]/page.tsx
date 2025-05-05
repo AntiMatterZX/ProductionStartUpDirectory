@@ -222,7 +222,7 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
   const handleLogoUpdated = (url: string) => {
     setStartup((prev: any) => ({
       ...prev,
-      logo_url: url
+      logo_image: url
     }));
     
     toast({
@@ -236,7 +236,7 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
     if (type === "logo") {
       setStartup((prev: any) => ({
         ...prev,
-        logo_url: url
+        logo_image: url
       }));
       
       // Also add to images array if not already there
@@ -249,7 +249,7 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
     } else if (type === "banner") {
       setStartup((prev: any) => ({
         ...prev,
-        banner_url: url
+        banner_image: url
       }));
       
       // Also add to images array if not already there
@@ -551,16 +551,16 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
                           <StartupLogoUpload 
                             startupId={startupId}
                             userId={userId}
-                            currentLogoUrl={startup.logo_url} 
+                            currentLogoUrl={startup.logo_image} 
                             onUploaded={handleLogoUpdated}
                           />
                         )}
                       </div>
                       
                       <div className="flex justify-center p-8 border-2 border-dashed rounded-lg">
-                        {startup.logo_url ? (
+                        {startup.logo_image ? (
                           <img 
-                            src={startup.logo_url}
+                            src={startup.logo_image}
                             alt={`${startup.name} logo`}
                             className="max-h-48 object-contain"
                           />
@@ -591,9 +591,9 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
                       </div>
                       
                       <div className="w-full aspect-video rounded-lg overflow-hidden bg-muted">
-                        {startup.banner_url ? (
+                        {startup.banner_image ? (
                           <img 
-                            src={startup.banner_url}
+                            src={startup.banner_image}
                             alt={`${startup.name} banner`}
                             className="w-full h-full object-cover"
                           />
@@ -627,9 +627,9 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
                       </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {mediaItems.images.filter(url => url !== startup.logo_url && url !== startup.banner_url).length > 0 ? (
+                        {mediaItems.images.filter(url => url !== startup.logo_image && url !== startup.banner_image).length > 0 ? (
                           mediaItems.images
-                            .filter(url => url !== startup.logo_url && url !== startup.banner_url)
+                            .filter(url => url !== startup.logo_image && url !== startup.banner_image)
                             .map((url, index) => (
                               <div key={index} className="border rounded-lg overflow-hidden">
                                 <img 

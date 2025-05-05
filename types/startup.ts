@@ -30,7 +30,8 @@ export interface Startup {
   slug: string
   description: string | null
   website_url: string | null
-  logo_url: string | null
+  logo_image: string | null
+  banner_image: string | null
   founding_date: string | null
   employee_count: number | null
   funding_stage: string | null
@@ -59,6 +60,7 @@ export interface Startup {
     avatar_url: string | null
   }
   tagline?: string | null
+  media_images?: string[]
 }
 
 export interface StartupFormData {
@@ -87,7 +89,8 @@ export interface StartupDetailedInfo {
 
 export interface StartupMediaInfo {
   logo: File | null | undefined
-  coverImage: File | null | undefined
+  banner: File | null | undefined
+  gallery: File[] | undefined
   pitchDeck: File | null | undefined
   videoUrl: string
   socialLinks: {

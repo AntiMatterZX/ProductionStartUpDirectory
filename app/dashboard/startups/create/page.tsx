@@ -40,7 +40,8 @@ export default function CreateStartupPage() {
     },
     mediaInfo: {
       logo: null,
-      coverImage: null,
+      banner: null,
+      gallery: [],
       pitchDeck: null,
       videoUrl: "",
       socialLinks: {
@@ -197,8 +198,15 @@ export default function CreateStartupPage() {
         formDataObj.append("logo", formData.mediaInfo.logo)
       }
 
-      if (formData.mediaInfo.coverImage) {
-        formDataObj.append("coverImage", formData.mediaInfo.coverImage)
+      if (formData.mediaInfo.banner) {
+        formDataObj.append("banner", formData.mediaInfo.banner)
+      }
+
+      // Add gallery images
+      if (formData.mediaInfo.gallery && formData.mediaInfo.gallery.length > 0) {
+        formData.mediaInfo.gallery.forEach(file => {
+          formDataObj.append("gallery", file)
+        })
       }
 
       if (formData.mediaInfo.pitchDeck) {
@@ -207,7 +215,8 @@ export default function CreateStartupPage() {
 
       // Remove file objects from the JSON representation
       delete mediaInfoCopy.logo
-      delete mediaInfoCopy.coverImage
+      delete mediaInfoCopy.banner
+      delete mediaInfoCopy.gallery
       delete mediaInfoCopy.pitchDeck
 
       // Add the remaining media info as a JSON string
@@ -328,8 +337,7 @@ export default function CreateStartupPage() {
                   <span className="font-medium">Logo:</span> {formData.mediaInfo.logo ? "Uploaded" : "None"}
                 </p>
                 <p>
-                  <span className="font-medium">Cover Image:</span>{" "}
-                  {formData.mediaInfo.coverImage ? "Uploaded" : "None"}
+                  <span className="font-medium">Banner:</span> {formData.mediaInfo.banner ? "Uploaded" : "None"}
                 </p>
               </div>
             </div>
