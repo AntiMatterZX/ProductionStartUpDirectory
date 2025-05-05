@@ -237,7 +237,7 @@ export default function CreateStartupPage() {
 
   // Define step content and navigation
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex overflow-hidden">
       <div className="container max-w-5xl py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Create Your Startup</h1>
