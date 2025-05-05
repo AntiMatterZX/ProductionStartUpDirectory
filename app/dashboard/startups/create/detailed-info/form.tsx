@@ -147,22 +147,24 @@ export default function DetailedInfoForm({
               control={form.control}
               name="fundingStage"
               render={({ field }) => (
-                <FormItem className="relative">
+                <FormItem>
                   <FormLabel className="text-base">Funding Stage*</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="text-base">
-                        <SelectValue placeholder="Select funding stage" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent position="popper" sideOffset={4}>
-                      {fundingStages.map((stage) => (
-                        <SelectItem key={stage} value={stage} className="text-base">
-                          {stage}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <div className="relative">
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger className="text-base">
+                          <SelectValue placeholder="Select funding stage" />
+                        </SelectTrigger>
+                        <SelectContent align="start" side="bottom" avoidCollisions className="z-[100]">
+                          {fundingStages.map((stage) => (
+                            <SelectItem key={stage} value={stage} className="text-base">
+                              {stage}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </FormControl>
                   <FormDescription className="text-sm">Your startup's current funding stage</FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -199,22 +201,24 @@ export default function DetailedInfoForm({
               control={form.control}
               name="teamSize"
               render={({ field }) => (
-                <FormItem className="relative">
+                <FormItem>
                   <FormLabel className="text-base">Team Size*</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="text-base">
-                        <SelectValue placeholder="Select team size" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent position="popper" sideOffset={4}>
-                      {teamSizes.map((size) => (
-                        <SelectItem key={size} value={size} className="text-base">
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <div className="relative">
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger className="text-base">
+                          <SelectValue placeholder="Select team size" />
+                        </SelectTrigger>
+                        <SelectContent align="start" side="bottom" avoidCollisions className="z-[100]">
+                          {teamSizes.map((size) => (
+                            <SelectItem key={size} value={size} className="text-base">
+                              {size}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </FormControl>
                   <FormDescription className="text-sm">Current number of team members</FormDescription>
                   <FormMessage />
                 </FormItem>
