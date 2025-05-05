@@ -239,7 +239,7 @@ export default function BasicInfoForm({
                     onValueChange={(value) => field.onChange(parseInt(value))}
                     disabled={isLoading}
                   >
-                    <SelectTrigger className="max-w-xl text-base">
+                    <SelectTrigger className="w-full text-base">
                       <SelectValue placeholder="Select your industry">
                         {isLoading ? (
                           <LoadingIndicator size="sm" />
@@ -248,7 +248,7 @@ export default function BasicInfoForm({
                         )}
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px]">
                       {categories.map((category) => (
                         <SelectItem 
                           key={category.id} 

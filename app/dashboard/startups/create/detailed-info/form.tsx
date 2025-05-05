@@ -151,11 +151,11 @@ export default function DetailedInfoForm({
                   <FormLabel className="text-base">Funding Stage*</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="text-base">
+                      <SelectTrigger className="w-full text-base">
                         <SelectValue placeholder="Select funding stage" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px]">
                       {fundingStages.map((stage) => (
                         <SelectItem key={stage} value={stage} className="text-base">
                           {stage}
@@ -203,11 +203,11 @@ export default function DetailedInfoForm({
                   <FormLabel className="text-base">Team Size*</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="text-base">
+                      <SelectTrigger className="w-full text-base">
                         <SelectValue placeholder="Select team size" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px]">
                       {teamSizes.map((size) => (
                         <SelectItem key={size} value={size} className="text-base">
                           {size}
