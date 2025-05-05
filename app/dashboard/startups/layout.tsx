@@ -8,7 +8,7 @@ interface StartupsLayoutProps {
 
 export default function StartupsLayout({ children }: StartupsLayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex">
       <main className="flex-grow">
         <Suspense
           fallback={
