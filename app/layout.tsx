@@ -33,7 +33,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
-      <body className={`${inter.variable} ${mono.variable} font-sans antialiased min-h-screen flex flex-col overflow-y-clip`}>
+      <body className={`${inter.variable} ${mono.variable} font-sans antialiased min-h-screen flex flex-col overflow-y-hidden`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <LoadingProvider>
             <div className="flex flex-col flex-grow">{children}</div>
