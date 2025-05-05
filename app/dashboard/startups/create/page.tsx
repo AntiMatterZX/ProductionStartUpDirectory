@@ -12,7 +12,7 @@ import { createClientComponentClient } from "@/lib/supabase/client-component"
 import type { StartupFormData } from "@/types/startup"
 import type { Database } from "@/types/database"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, CheckCircle2, Save } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Save } from 'lucide-react'
 import Loader from "@/components/ui/loader"
 
 export default function CreateStartupPage() {
@@ -334,7 +334,7 @@ export default function CreateStartupPage() {
               </div>
             </div>
 
-            <div className="flex justify-between pt-4">
+            <div className="flex justify-between pt-4 pb-8">
               <Button type="button" variant="outline" onClick={handleBack} disabled={isSubmitting}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
@@ -363,9 +363,9 @@ export default function CreateStartupPage() {
   }
 
   return (
-    <div className="w-full pb-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <h1 className="text-2xl font-bold mb-6 pt-8">Create Your Startup Profile</h1>
+    <div className="w-full pb-20">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6 pt-4">Create Your Startup Profile</h1>
 
         <div className="mb-8">
           <FormStepper

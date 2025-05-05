@@ -2,107 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.5% 48%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-
-  /* Fix for scrollbar issues */
-  html,
-  body {
-    height: 100%;
-    overflow-x: hidden;
-  }
-
-  /* Ensure content takes up full height */
-  #__next,
-  #root {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
-  }
-}
-
-/* Fix for footer scrollbar */
-.overflow-hidden-footer {
-  overflow: hidden;
-}
-
-
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -159,7 +58,12 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-heading tracking-tight;
   }
 
@@ -177,6 +81,23 @@
 
   p {
     @apply leading-relaxed;
+  }
+
+  /* Critical layout fixes for dashboard */
+  html,
+  body {
+    min-height: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  #__next,
+  #root,
+  body > div {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
   }
 }
 
@@ -204,14 +125,40 @@
   .section-container {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20;
   }
+
+  /* Dashboard layout components */
+  .dashboard-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .dashboard-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Form container fixes */
+  form {
+    margin-bottom: 2rem;
+  }
+
+  /* Looking For section grid */
+  .looking-for-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+    padding-bottom: 1rem;
+  }
 }
 
 @keyframes animate-in {
-  from { 
+  from {
     opacity: 0;
     transform: translateY(10px);
   }
-  to { 
+  to {
     opacity: 1;
     transform: translateY(0);
   }
@@ -264,7 +211,8 @@
 }
 
 /* Responsive layout fixes */
-html, body {
+html,
+body {
   overflow-x: hidden;
   max-width: 100vw;
 }
@@ -274,9 +222,9 @@ html, body {
   .section-container {
     @apply py-8 px-4;
   }
-  
+
   /* Better touch targets for mobile */
-  button, 
+  button,
   [role="button"],
   select,
   input[type="submit"],
@@ -285,4 +233,32 @@ html, body {
   input[type="radio"] {
     @apply min-h-[44px] min-w-[44px];
   }
+}
+
+/* Additional fixes for dashboard layout */
+.flex-col.min-h-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-1.overflow-y-auto {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Fix for footer positioning */
+footer {
+  position: relative;
+  width: 100%;
+}
+
+/* Fix for form padding */
+.pb-8 {
+  padding-bottom: 2rem;
+}
+
+/* Fix for card bottom margin */
+.mb-16 {
+  margin-bottom: 4rem;
 }

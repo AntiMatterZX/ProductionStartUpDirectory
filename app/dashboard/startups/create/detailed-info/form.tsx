@@ -92,7 +92,7 @@ export default function DetailedInfoForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 w-full max-w-4xl mx-auto">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 w-full max-w-4xl mx-auto pb-8">
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Startup Details</h2>
           <p className="text-muted-foreground">
@@ -221,7 +221,7 @@ export default function DetailedInfoForm({
           </div>
         </div>
 
-        <div className="space-y-4 p-6 bg-muted/10 rounded-lg border">
+        <div className="p-6 bg-muted/10 rounded-lg border">
           <div className="mb-4">
             <FormLabel className="text-base">Looking For*</FormLabel>
             <FormDescription>Select what your startup is currently seeking</FormDescription>
@@ -232,7 +232,7 @@ export default function DetailedInfoForm({
               <LoadingIndicator />
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2">
+            <div className="looking-for-grid pb-4">
               {lookingForOptions.map((option) => (
                 <FormField
                   key={option.id}
