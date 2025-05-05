@@ -168,26 +168,16 @@ export async function POST(request: NextRequest) {
     }
     
     // Get files from FormData if present
-    const logo = formData.get("logo") as File | null;
-    const banner = formData.get("banner") as File | null;
-    const galleryFiles = formData.getAll("gallery") as File[];
-    const pitchDeck = formData.get("pitchDeck") as File | null;
+    const logo = formData.get("logo");
+    const banner = formData.get("banner");
+    const galleryFiles = formData.getAll("gallery");
+    const pitchDeck = formData.get("pitchDeck");
     
     // Make sure the "startups" bucket exists
     const { error: bucketError } = await supabase.storage.getBucket("startups");
     if (bucketError && bucketError.message.includes("does not exist")) {
       const { error: createBucketError } = await supabase.storage.createBucket("startups", {
-        public: true,
-        fileSizeLimit: 5242880, // 5MB
-        allowedMimeTypes: [
-          'image/jpeg',
-          'image/png',
-          'image/gif',
-          'image/webp',
-          'application/pdf',
-          'application/vnd.ms-powerpoint',
-          'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-        ]
+        public: true
       });
       if (createBucketError) {
         console.error("Error creating bucket:", createBucketError);
@@ -195,108 +185,62 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Process file uploads and get URLs
-    let logoUrl = null;
-    if (logo instanceof File) {
+    // Process file uploads and get URLs using our helper function
+    let logoImage = null;
+    if (logo && typeof logo !== 'string') {
       try {
-        const fileExt = logo.name.split('.').pop()?.toLowerCase();
-        const fileName = `${session.user.id}/logos/logo-${Date.now()}.${fileExt}`;
+        logoImage = await uploadFile(supabase, logo, session.user.id, 'logos');
+      } catch (logoError) {
+        console.error("Error uploading logo:", logoError);
+        // Don't throw here - allow creation to continue without logo
+      }
+    } else {
+      logoImage = basicInfo?.logoUrl || null;
+    }
+      
+    let bannerImage = null;
+    if (banner && typeof banner !== 'string') {
+      console.log("Uploading banner image...");
+      
+      try {
+        bannerImage = await uploadFile(supabase, banner, session.user.id, 'images');
         
-        const { error: uploadError } = await supabase.storage
-          .from("startups")
-          .upload(fileName, logo, {
-            cacheControl: "3600",
-            upsert: false
-          });
-          
-        if (uploadError) throw uploadError;
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from("startups")
-          .getPublicUrl(fileName);
-          
-        logoUrl = publicUrl;
-      } catch (error) {
-        console.error("Error uploading logo:", error);
+        console.log("Banner image uploaded successfully:", bannerImage);
+      } catch (bannerError) {
+        console.error("Error uploading banner image:", bannerError);
+        // Don't throw here - allow creation to continue without banner image
       }
     }
     
-    let bannerUrl = null;
-    if (banner instanceof File) {
-      try {
-        const fileExt = banner.name.split('.').pop()?.toLowerCase();
-        const fileName = `${session.user.id}/banners/banner-${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from("startups")
-          .upload(fileName, banner, {
-            cacheControl: "3600",
-            upsert: false
-          });
-          
-        if (uploadError) throw uploadError;
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from("startups")
-          .getPublicUrl(fileName);
-          
-        bannerUrl = publicUrl;
-      } catch (error) {
-        console.error("Error uploading banner:", error);
-      }
-    }
-    
+    // Process gallery images
     const galleryUrls: string[] = [];
-    for (const file of galleryFiles) {
-      if (file instanceof File) {
-        try {
-          const fileExt = file.name.split('.').pop()?.toLowerCase();
-          const fileName = `${session.user.id}/gallery/image-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-          
-          const { error: uploadError } = await supabase.storage
-            .from("startups")
-            .upload(fileName, file, {
-              cacheControl: "3600",
-              upsert: false
-            });
-            
-          if (uploadError) throw uploadError;
-          
-          const { data: { publicUrl } } = supabase.storage
-            .from("startups")
-            .getPublicUrl(fileName);
-            
-          galleryUrls.push(publicUrl);
-        } catch (error) {
-          console.error("Error uploading gallery image:", error);
+    if (galleryFiles && galleryFiles.length > 0) {
+      for (const galleryFile of galleryFiles) {
+        if (galleryFile && typeof galleryFile !== 'string') {
+          try {
+            const galleryUrl = await uploadFile(supabase, galleryFile, session.user.id, 'images');
+            galleryUrls.push(galleryUrl);
+          } catch (galleryError) {
+            console.error("Error uploading gallery image:", galleryError);
+            // Continue with other images
+          }
         }
       }
     }
-    
+      
     let pitchDeckUrl = null;
-    if (pitchDeck instanceof File) {
+    if (pitchDeck && typeof pitchDeck !== 'string') {
       try {
-        const fileExt = pitchDeck.name.split('.').pop()?.toLowerCase();
-        const fileName = `${session.user.id}/documents/pitch-deck-${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from("startups")
-          .upload(fileName, pitchDeck, {
-            cacheControl: "3600",
-            upsert: false
-          });
-          
-        if (uploadError) throw uploadError;
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from("startups")
-          .getPublicUrl(fileName);
-          
-        pitchDeckUrl = publicUrl;
-      } catch (error) {
-        console.error("Error uploading pitch deck:", error);
+        pitchDeckUrl = await uploadFile(supabase, pitchDeck, session.user.id, 'documents');
+      } catch (pitchDeckError) {
+        console.error("Error uploading pitch deck:", pitchDeckError);
+        // Don't throw here - allow creation to continue without pitch deck
       }
+    } else {
+      pitchDeckUrl = mediaInfo?.pitchDeckUrl || null;
     }
+      
+    const videoUrl = mediaInfo?.videoUrl || null;
 
     // Verify required fields are present
     if (!basicInfo?.name) {
@@ -320,13 +264,13 @@ export async function POST(request: NextRequest) {
     const mediaImages: string[] = [...galleryUrls];
 
     // Add banner to media_images array if it exists and isn't already there
-    if (bannerUrl && !mediaImages.includes(bannerUrl)) {
-      mediaImages.push(bannerUrl);
+    if (bannerImage && !mediaImages.includes(bannerImage)) {
+      mediaImages.push(bannerImage);
     }
 
     // Add logo to media_images array if it exists and isn't already there
-    if (logoUrl && !mediaImages.includes(logoUrl)) {
-      mediaImages.push(logoUrl);
+    if (logoImage && !mediaImages.includes(logoImage)) {
+      mediaImages.push(logoImage);
     }
 
     // Add pitch deck to media_documents array if it exists
@@ -338,7 +282,12 @@ export async function POST(request: NextRequest) {
 
     // Add video URL to media_videos array if it exists
     const mediaVideos: string[] = [];
-    if (mediaInfo.videoUrl) {
+    if (videoUrl) {
+      mediaVideos.push(videoUrl);
+    }
+
+    // Also add any additional video URLs from mediaInfo if they exist
+    if (mediaInfo.videoUrl && !mediaVideos.includes(mediaInfo.videoUrl)) {
       mediaVideos.push(mediaInfo.videoUrl);
     }
 
@@ -360,8 +309,8 @@ export async function POST(request: NextRequest) {
           tagline: basicInfo.tagline?.trim() || null,
           description: detailedInfo.description?.trim() || null,
           website_url: basicInfo.website?.trim() || null,
-          logo_url: logoUrl,
-          banner_url: bannerUrl,
+          logo_image: logoImage,
+          banner_image: bannerImage,
           pitch_deck_url: pitchDeckUrl,
           founding_date: basicInfo.foundingDate || null,
           employee_count: detailedInfo.teamSize ? parseInt(detailedInfo.teamSize) : null,

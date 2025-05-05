@@ -289,365 +289,443 @@ export default function MediaUploadForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8 max-w-3xl mx-auto">
-        <div className="space-y-3">
-          <h2 className="text-2xl font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary">Media & Links</h2>
-          <p className="text-muted-foreground text-lg">
-            Add visual content and social links to showcase your startup.
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-semibold">Media & Social Links</h2>
+          <p className="text-muted-foreground">
+            Upload your startup's media assets and add social media links.
           </p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-3 gap-4 bg-muted p-1">
-            <TabsTrigger value="branding" className="data-[state=active]:bg-background">
-              <ImageIcon className="h-5 w-5 mr-2" />
-              Branding
-            </TabsTrigger>
-            <TabsTrigger value="gallery" className="data-[state=active]:bg-background">
-              <Upload className="h-5 w-5 mr-2" />
-              Gallery
-            </TabsTrigger>
-            <TabsTrigger value="links" className="data-[state=active]:bg-background">
-              <LinkIcon className="h-5 w-5 mr-2" />
-              Links
-            </TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-6 w-full max-w-2xl">
+            <TabsTrigger value="branding" className="flex-1">Branding</TabsTrigger>
+            <TabsTrigger value="gallery" className="flex-1">Gallery</TabsTrigger>
+            <TabsTrigger value="documents" className="flex-1">Documents</TabsTrigger>
+            <TabsTrigger value="social" className="flex-1">Social</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="branding" className="space-y-6">
+          {/* Branding Tab: Logo and Banner */}
+          <TabsContent value="branding" className="pt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Logo Upload */}
-              <FormField
-                control={form.control}
-                name="logo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base">Company Logo</FormLabel>
-                    <FormControl>
-                      <div className="space-y-4">
-                        <div 
-                          className="border-2 border-dashed rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer bg-muted/30"
-                          onClick={() => logoInputRef.current?.click()}
+              {/* Logo Upload Section */}
+              <div className="space-y-4 p-5 bg-muted/10 rounded-lg border">
+                <h3 className="text-lg font-semibold">Company Logo</h3>
+          <p className="text-sm text-muted-foreground">
+                  Your main brand identifier displayed throughout the platform.
+          </p>
+
+          <FormField
+            control={form.control}
+            name="logo"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                        <div className="flex flex-col items-center space-y-4">
+                    {logoPreview ? (
+                            <div className="relative w-36 h-36">
+                        <img
+                                src={logoPreview}
+                          alt="Logo preview"
+                          className="w-full h-full object-contain rounded-md border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => clearFile(field, setLogoPreview, logoInputRef)}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-sm"
                         >
-                          <input
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                              <div className="flex items-center justify-center w-36 h-36 border-2 border-dashed rounded-md border-muted-foreground/25">
+                          {isUploading ? (
+                                  <Loader2 className="h-8 w-8 text-primary/50 animate-spin" />
+                          ) : (
+                                  <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
+                          )}
+                        </div>
+                              <label htmlFor="logo-upload" className="cursor-pointer mt-3">
+                                <Button type="button" variant="outline" size="sm" className="gap-2">
+                            <Upload className="h-4 w-4" />
+                            <span>Upload Logo</span>
+                                </Button>
+                          <Input
+                            id="logo-upload"
                             type="file"
-                            ref={logoInputRef}
-                            className="hidden"
                             accept="image/*"
+                            className="hidden"
                             onChange={(e) => handleFileChange(e, field, setLogoPreview)}
+                            disabled={isUploading}
+                            ref={logoInputRef}
                           />
-                          <div className="flex flex-col items-center justify-center gap-2">
-                            {logoPreview ? (
-                              <div className="relative w-32 h-32">
-                                <img
-                                  src={logoPreview}
-                                  alt="Logo preview"
-                                  className="w-full h-full object-contain"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    field.onChange(null)
-                                    setLogoPreview(null)
-                                  }}
-                                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              </div>
-                            ) : (
-                              <>
-                                <ImageIcon className="h-10 w-10 text-muted-foreground" />
-                                <p className="text-sm text-muted-foreground text-center">
-                                  Click to upload your logo
-                                  <br />
-                                  <span className="text-xs">SVG, PNG, or JPG (max 5MB)</span>
-                                </p>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                        </label>
                       </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    )}
+                  </div>
+                </FormControl>
+                      <FormDescription className="text-center text-xs mt-4">
+                        Upload your startup logo (PNG or JPG, max 5MB)
+                      </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-              {/* Banner Upload */}
+              {/* Banner Upload Section */}
+              <div className="space-y-4 p-5 bg-muted/10 rounded-lg border">
+                <h3 className="text-lg font-semibold">Banner Image</h3>
+                <p className="text-sm text-muted-foreground">
+                  This image appears at the top of your profile page.
+                </p>
+
+          <FormField
+            control={form.control}
+                  name="banner"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                        <div className="flex flex-col items-center space-y-4">
+                          {bannerPreview ? (
+                            <div className="relative w-full h-28">
+                        <img
+                                src={bannerPreview}
+                                alt="Banner image preview"
+                          className="w-full h-full object-cover rounded-md border"
+                        />
+                        <button
+                          type="button"
+                                onClick={() => clearFile(field, setBannerPreview, bannerInputRef)}
+                          className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-sm"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center w-full">
+                              <div className="flex items-center justify-center w-full h-28 border-2 border-dashed rounded-md border-muted-foreground/25">
+                                {isUploading ? (
+                                  <Loader2 className="h-8 w-8 text-primary/50 animate-spin" />
+                                ) : (
+                                  <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
+                                )}
+                              </div>
+                              <label htmlFor="banner-upload" className="cursor-pointer mt-3">
+                                <Button type="button" variant="outline" size="sm" className="gap-2">
+                                  <Upload className="h-4 w-4" />
+                                  <span>Upload Banner</span>
+                                </Button>
+                                <Input
+                                  id="banner-upload"
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => handleFileChange(e, field, setBannerPreview)}
+                                  disabled={isUploading}
+                                  ref={bannerInputRef}
+                                />
+                              </label>
+                            </div>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormDescription className="text-center text-xs mt-4">
+                        Recommended size: 1200x300px (max 5MB)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Gallery Tab */}
+          <TabsContent value="gallery" className="pt-2">
+            <div className="p-5 bg-muted/10 rounded-lg border">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Gallery Images</h3>
+                <p className="text-sm text-muted-foreground">
+                  Add up to {MAX_GALLERY_IMAGES} images to showcase your product, team, or workspace.
+                </p>
+              </div>
+
               <FormField
                 control={form.control}
-                name="banner"
+                name="gallery"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base">Banner Image</FormLabel>
                     <FormControl>
                       <div className="space-y-4">
-                        <div 
-                          className="border-2 border-dashed rounded-lg aspect-video hover:border-primary/50 transition-colors cursor-pointer bg-muted/30"
-                          onClick={() => bannerInputRef.current?.click()}
-                        >
-                          <input
-                            type="file"
-                            ref={bannerInputRef}
-                            className="hidden"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(e, field, setBannerPreview)}
-                          />
-                          <div className="flex flex-col items-center justify-center h-full gap-2">
-                            {bannerPreview ? (
-                              <div className="relative w-full h-full">
+                        {galleryPreviews.length > 0 ? (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {galleryPreviews.map((preview, index) => (
+                              <div key={index} className="relative aspect-square">
                                 <img
-                                  src={bannerPreview}
-                                  alt="Banner preview"
-                                  className="w-full h-full object-cover rounded-lg"
+                                  src={preview}
+                                  alt={`Gallery image ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-md border"
                                 />
                                 <button
                                   type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    field.onChange(null)
-                                    setBannerPreview(null)
-                                  }}
-                                  className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                                  onClick={() => removeGalleryImage(index)}
+                                  className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-sm"
                                 >
                                   <X className="h-4 w-4" />
                                 </button>
                               </div>
-                            ) : (
-                              <>
-                                <ImageIcon className="h-10 w-10 text-muted-foreground" />
-                                <p className="text-sm text-muted-foreground text-center">
-                                  Click to upload a banner image
-                                  <br />
-                                  <span className="text-xs">Recommended size: 1200x630px (max 5MB)</span>
-                                </p>
-                              </>
+                            ))}
+                            
+                            {galleryPreviews.length < MAX_GALLERY_IMAGES && (
+                              <label 
+                                htmlFor="gallery-upload" 
+                                className="cursor-pointer flex flex-col items-center justify-center aspect-square border-2 border-dashed rounded-md border-muted-foreground/25 hover:bg-muted/20 transition-colors"
+                              >
+                                <PlusCircle className="h-8 w-8 text-primary/60 mb-2" />
+                                <span className="text-sm text-muted-foreground">Add Image</span>
+                                <Input
+                                  id="gallery-upload"
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  multiple
+                                  onChange={handleGalleryChange}
+                                  disabled={isUploading}
+                                  ref={galleryInputRef}
+                                />
+                              </label>
                             )}
                           </div>
+                        ) : (
+                          <div className="flex flex-col items-center w-full p-6">
+                            <div className="flex items-center justify-center w-full h-40 border-2 border-dashed rounded-md border-muted-foreground/25 mb-4">
+                          {isUploading ? (
+                            <Loader2 className="h-10 w-10 text-primary/50 animate-spin" />
+                          ) : (
+                            <ImageIcon className="h-10 w-10 text-muted-foreground/50" />
+                          )}
                         </div>
+                            <label htmlFor="gallery-upload" className="cursor-pointer">
+                              <Button type="button" className="gap-2">
+                            <Upload className="h-4 w-4" />
+                                <span>Upload Gallery Images</span>
+                              </Button>
+                          <Input
+                                id="gallery-upload"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                                multiple
+                                onChange={handleGalleryChange}
+                            disabled={isUploading}
+                                ref={galleryInputRef}
+                          />
+                        </label>
                       </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                    )}
+                  </div>
+                </FormControl>
+                    <FormDescription className="text-xs mt-4">
+                      Add images of your product, team, or workspace (PNG or JPG, max 5MB each)
+                    </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+          </TabsContent>
 
-            {/* Pitch Deck Upload */}
+          {/* Documents Tab */}
+          <TabsContent value="documents" className="pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Pitch Deck Section */}
+              <div className="space-y-4 p-5 bg-muted/10 rounded-lg border">
+                <h3 className="text-lg font-semibold">Pitch Deck</h3>
+                <p className="text-sm text-muted-foreground">
+                  Upload your startup's pitch deck to share with investors.
+                </p>
+
             <FormField
               control={form.control}
               name="pitchDeck"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">Pitch Deck</FormLabel>
                   <FormControl>
-                    <div 
-                      className="border-2 border-dashed rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer bg-muted/30"
-                      onClick={() => pitchDeckInputRef.current?.click()}
-                    >
-                      <input
-                        type="file"
-                        ref={pitchDeckInputRef}
-                        className="hidden"
-                        accept=".pdf,.ppt,.pptx"
-                        onChange={(e) => handlePitchDeckChange(e, field)}
-                      />
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        {pitchDeckName ? (
-                          <div className="flex items-center gap-3">
-                            <FileText className="h-8 w-8 text-primary" />
-                            <span className="text-sm font-medium">{pitchDeckName}</span>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                field.onChange(null)
-                                setPitchDeckName(null)
-                              }}
-                              className="bg-destructive text-destructive-foreground rounded-full p-1"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <>
-                            <FileText className="h-10 w-10 text-muted-foreground" />
-                            <p className="text-sm text-muted-foreground text-center">
-                              Click to upload your pitch deck
-                              <br />
-                              <span className="text-xs">PDF or PowerPoint (max 5MB)</span>
-                            </p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </TabsContent>
-
-          <TabsContent value="gallery" className="space-y-6">
-            <FormField
-              control={form.control}
-              name="gallery"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">Gallery Images</FormLabel>
-                  <FormDescription className="text-sm">
-                    Upload up to {MAX_GALLERY_IMAGES} images to showcase your startup
-                  </FormDescription>
-                  <FormControl>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {galleryPreviews.map((preview, index) => (
-                          <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-muted/30">
-                            <img
-                              src={preview}
-                              alt={`Gallery image ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newGallery = [...field.value]
-                                newGallery.splice(index, 1)
-                                field.onChange(newGallery)
-                                const newPreviews = [...galleryPreviews]
-                                newPreviews.splice(index, 1)
-                                setGalleryPreviews(newPreviews)
-                              }}
-                              className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
-                        {galleryPreviews.length < MAX_GALLERY_IMAGES && (
-                          <div
-                            className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors cursor-pointer bg-muted/30"
-                            onClick={() => galleryInputRef.current?.click()}
+                        <div className="flex flex-col items-center space-y-4">
+                      {pitchDeckName ? (
+                        <div className="relative flex items-center p-3 w-full border rounded-md bg-muted/5">
+                          <FileText className="h-5 w-5 mr-2 text-muted-foreground" />
+                              <span className="text-sm truncate max-w-[calc(100%-3rem)]">
+                                {pitchDeckName}
+                              </span>
+                          <button
+                            type="button"
+                            onClick={() => clearPitchDeck(field, pitchDeckInputRef)}
+                            className="ml-auto bg-destructive text-destructive-foreground rounded-full p-1"
                           >
-                            <input
-                              type="file"
-                              ref={galleryInputRef}
-                              className="hidden"
-                              accept="image/*"
-                              multiple
-                              onChange={handleGalleryChange}
-                            />
-                            <PlusCircle className="h-8 w-8 text-muted-foreground" />
-                            <p className="text-sm text-muted-foreground text-center">
-                              Add Image
-                              <br />
-                              <span className="text-xs">Max 5MB each</span>
-                            </p>
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center w-full">
+                              <div className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-md border-muted-foreground/25 mb-2">
+                            {isUploading ? (
+                                  <Loader2 className="h-8 w-8 text-primary/50 animate-spin" />
+                            ) : (
+                                  <FileText className="h-8 w-8 text-muted-foreground/50" />
+                            )}
                           </div>
-                        )}
-                      </div>
+                          <label htmlFor="pitch-deck-upload" className="cursor-pointer mt-2">
+                                <Button type="button" variant="outline" size="sm" className="gap-2">
+                              <Upload className="h-4 w-4" />
+                              <span>Upload Pitch Deck</span>
+                                </Button>
+                            <Input
+                              id="pitch-deck-upload"
+                              type="file"
+                              accept=".pdf,.pptx,.ppt"
+                              className="hidden"
+                              onChange={(e) => handlePitchDeckChange(e, field)}
+                              disabled={isUploading}
+                              ref={pitchDeckInputRef}
+                            />
+                          </label>
+                        </div>
+                      )}
                     </div>
                   </FormControl>
+                      <FormDescription className="text-center text-xs mt-4">
+                        Upload your pitch deck (PDF or PowerPoint, max 5MB)
+                      </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </TabsContent>
+              </div>
 
-          <TabsContent value="links" className="space-y-6">
-            {/* Video URL */}
+              {/* Demo Video Section */}
+              <div className="space-y-4 p-5 bg-muted/10 rounded-lg border">
+                <h3 className="text-lg font-semibold">Demo Video</h3>
+                <p className="text-sm text-muted-foreground">
+                  Add a link to your demo or pitch video.
+                </p>
+
             <FormField
               control={form.control}
               name="videoUrl"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">Video URL</FormLabel>
+                    <FormItem className="mt-8">
+                      <FormLabel>Video URL</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="https://youtube.com/watch?v=..." 
-                      {...field}
-                      className="text-base"
-                    />
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                          <Input 
+                            placeholder="https://youtube.com/watch?v=..." 
+                            className="pl-10" 
+                            {...field} 
+                          />
+                    </div>
                   </FormControl>
-                  <FormDescription className="text-sm">
-                    Add a YouTube or Vimeo video showcasing your startup
-                  </FormDescription>
+                      <FormDescription>
+                        YouTube or Vimeo URL to your startup's demo or pitch video
+                      </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+          </TabsContent>
+
+          {/* Social Links Tab */}
+          <TabsContent value="social" className="pt-2">
+            <div className="space-y-6 p-5 bg-muted/10 rounded-lg border">
+              <div className="mb-2">
+                <h3 className="text-lg font-semibold">Social Links</h3>
+                <p className="text-sm text-muted-foreground">
+                  Connect your social media accounts to increase visibility.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="socialLinks.linkedin"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>LinkedIn</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                          <Input 
+                            placeholder="https://linkedin.com/company/..." 
+                            className="pl-10" 
+                            {...field} 
+                          />
+                    </div>
+                  </FormControl>
+                      <FormDescription>
+                        Your company's LinkedIn profile
+                      </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Social Links */}
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="socialLinks.linkedin"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base">LinkedIn</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="https://linkedin.com/company/..." 
-                        {...field}
-                        className="text-base"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="socialLinks.twitter"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base">Twitter</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="https://twitter.com/..." 
-                        {...field}
-                        className="text-base"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="socialLinks.twitter"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Twitter</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                          <Input 
+                            placeholder="https://twitter.com/..." 
+                            className="pl-10" 
+                            {...field} 
+                          />
+                    </div>
+                  </FormControl>
+                      <FormDescription>
+                        Your company's Twitter handle
+                      </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
           </TabsContent>
         </Tabs>
 
         {!hideButtons && (
-          <div className="flex justify-between items-center pt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onBack}
-              disabled={isSubmitting}
-              className="gap-2 text-base"
+          <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onBack} 
+              className="w-full sm:w-auto order-2 sm:order-1"
             >
-              <ArrowLeft className="h-5 w-5" />
-              Back to Details
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Detailed Info
             </Button>
             <Button 
-              type="submit"
-              disabled={isSubmitting || !form.formState.isValid}
-              size="lg"
-              className="gap-2 text-base font-semibold"
+              type="submit" 
+              disabled={isSubmitting} 
+              className="w-full sm:w-auto order-1 sm:order-2"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  Continue
-                  <ArrowRight className="h-5 w-5" />
-                </>
-              )}
+              {isSubmitting ? <LoadingIndicator size="sm" /> : "Continue"}
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         )}
