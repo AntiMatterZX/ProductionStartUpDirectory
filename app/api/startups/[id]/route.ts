@@ -213,12 +213,23 @@ export async function PUT(
     
     console.log("Successfully updated startup:", updatedStartup);
     
-    // Handle looking_for options - update the array directly
+    // Handle looking_for options - delete existing and insert new ones
     if (detailedInfo.lookingFor && detailedInfo.lookingFor.length > 0) {
+      // Delete existing options
+      await supabase
+        .from("startup_looking_for")
+        .delete()
+        .eq("startup_id", startupId)
+      
+      // Insert new options
+      const lookingForData = detailedInfo.lookingFor.map((optionId: number) => ({
+        startup_id: startupId,
+        option_id: optionId,
+      }))
+      
       const { error: lookingForError } = await supabase
-        .from("startups")
-        .update({ looking_for: detailedInfo.lookingFor })
-        .eq("id", startupId)
+        .from("startup_looking_for")
+        .insert(lookingForData)
       
       if (lookingForError) {
         console.error("Error updating looking_for options:", lookingForError)
@@ -396,7 +407,10 @@ export async function PUT(
       .from("startups")
       .select(`
         *,
-        categories(*)
+        categories(*),
+        startup_looking_for(option_id, looking_for_options(*)),
+        social_links(id, platform, url),
+        startup_media(id, media_type, url, title, description, is_featured)
       `)
       .eq("id", startupId)
       .single();
@@ -460,6 +474,12 @@ export async function DELETE(
     // Delete social links
     await supabase
       .from("social_links")
+      .delete()
+      .eq("startup_id", startupId)
+    
+    // Delete looking_for options
+    await supabase
+      .from("startup_looking_for")
       .delete()
       .eq("startup_id", startupId)
     
