@@ -231,7 +231,7 @@ export default function BasicInfoForm({
             control={form.control}
             name="industry"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="relative">
                 <FormLabel className="text-base">Industry*</FormLabel>
                 <FormControl>
                   <Select
@@ -248,7 +248,7 @@ export default function BasicInfoForm({
                         )}
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" sideOffset={4}>
                       {categories.map((category) => (
                         <SelectItem 
                           key={category.id} 
